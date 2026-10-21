@@ -6,6 +6,7 @@ import { localDateKey } from "@/lib/dates";
 import { WIDGETS, type WidgetPref } from "@/features/dashboard/widgets";
 import { DEMO_RESULT, type ActionResult } from "./result";
 import { liveContext } from "./guard";
+import { setTaskStatus } from "./tasks";
 
 const uuid = z.uuid();
 
@@ -49,18 +50,9 @@ export async function saveEveningReview(input: EveningReviewInput): Promise<Acti
 }
 
 export async function setTaskDone(taskId: string, done: boolean): Promise<ActionResult> {
-  if (!uuid.safeParse(taskId).success) return { ok: false, error: "Invalid task." };
-  const ctx = await liveContext();
-  if (!ctx) return DEMO_RESULT;
-  const { data, error } = await ctx.supabase
-    .from("tasks")
-    .update(done ? { status: "done", completed_at: new Date().toISOString() } : { status: "todo", completed_at: null })
-    .eq("id", taskId)
-    .select("id");
-  if (error) return { ok: false, error: "Couldn't update the task." };
-  if (!data?.length) return { ok: false, error: "Task not found." };
-  revalidatePath("/");
-  return { ok: true, message: done ? "Task completed." : "Task reopened." };
+  // Shares the Tasks module's logic so repeating tasks roll forward here too.
+  const r = await setTaskStatus(taskId, done ? "done" : "todo");
+  return r.ok ? { ok: true, message: r.message } : r;
 }
 
 export async function setHabitDoneToday(habitId: string, done: boolean): Promise<ActionResult> {

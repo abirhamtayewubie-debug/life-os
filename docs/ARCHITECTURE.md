@@ -115,6 +115,7 @@ user taps "Confirm" ─► normal Server Action executes the proposal ─► aud
 
 - `reminders.remind_at` is `timestamptz`; the user's IANA time zone is stored on the profile and on recurring rules so DST shifts are correct.
 - A dispatcher (pg_cron → `/api/cron/reminders`, or Vercel Cron) claims due reminders with `FOR UPDATE SKIP LOCKED`, writes a `reminder_deliveries` row per channel, and retries with backoff.
+- Built in Phase 2: in-app only. A client component polls `claimDueReminders` once a minute while a tab is visible; the unique `(reminder_id, channel, scheduled_for)` key makes each alert fire once across tabs. The server-side dispatcher below arrives with push/email in Phase 7.
 - Channels: in-app is first. Web push and email are added only when configured **and** verified end-to-end; until then the UI says plainly that reminders only appear while the app is open.
 
 ## 6. Security posture

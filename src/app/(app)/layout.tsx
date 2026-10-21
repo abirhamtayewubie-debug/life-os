@@ -4,6 +4,7 @@ import { TopBar } from "@/components/shell/top-bar";
 import { DemoBanner } from "@/components/shell/demo-banner";
 import { getViewer } from "@/server/viewer";
 import { getHiddenModules } from "@/server/modules";
+import { ReminderNotifier } from "@/features/reminders/reminder-notifier";
 
 export default async function AppLayout({ children }: LayoutProps<"/">) {
   const [viewer, hidden, cookieStore] = await Promise.all([getViewer(), getHiddenModules(), cookies()]);
@@ -23,6 +24,7 @@ export default async function AppLayout({ children }: LayoutProps<"/">) {
           {children}
         </main>
       </div>
+      {!demo && <ReminderNotifier />}
     </div>
   );
 }
