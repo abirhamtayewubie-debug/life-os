@@ -1,36 +1,48 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Life OS
 
-## Getting Started
+A personal operating system: priorities, plans, money, health, reflection and progress in one secure app.
 
-First, run the development server:
+- Architecture: [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md)
+- Database: [docs/DATABASE.md](docs/DATABASE.md)
+- Design system: [docs/DESIGN_SYSTEM.md](docs/DESIGN_SYSTEM.md)
+- Roadmap & log: [docs/ROADMAP.md](docs/ROADMAP.md)
+
+## Run it
+
+Requires Node 20.9+.
 
 ```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+npm install
+npm run dev            # http://localhost:3000
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+With no `.env.local` the app runs in **demo mode**: clearly labelled sample data, nothing saved.
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+### With a database (local)
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+Requires Docker.
 
-## Learn More
+```bash
+npx supabase start                 # prints the API URL and publishable key
+cp .env.example .env.local         # fill NEXT_PUBLIC_SUPABASE_URL / _PUBLISHABLE_KEY
+npm run dev
+```
 
-To learn more about Next.js, take a look at the following resources:
+Sign up at `/signup` (local Supabase skips email confirmation). Load sample data from **Settings → Your data**, and remove it the same way.
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+### With a hosted Supabase project
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+Create a project, then `npx supabase link --project-ref <ref>` and `npx supabase db push`. Put the project URL and publishable key in your host's environment variables. Configure Auth → URL configuration with your site URL and `<site>/auth/callback`.
 
-## Deploy on Vercel
+## Checks
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+```bash
+npm run check          # typecheck + lint + unit tests
+npm run test:db        # RLS isolation tests (local Supabase running)
+npm run build && PORT=3200 npm start &
+npm run test:e2e       # Playwright end-to-end (needs the local stack)
+```
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+## Environment variables
+
+See [.env.example](.env.example). Only the Supabase URL and publishable key are public; RLS protects the data. Secrets (service key, cron secret, Anthropic key) are server-only and not used until their phases.
