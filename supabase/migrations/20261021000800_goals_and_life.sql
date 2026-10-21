@@ -5,17 +5,10 @@
 
 -- ---------------------------------------------------------------------------
 -- Goals: the hierarchy runs vision → long_term → annual → quarterly. A child
--- must sit at a lower level than its parent, and loops are refused.
+-- must sit at a lower level than its parent, and loops are refused. The enum
+-- is declared broadest first, so enum comparison gives the order. (Trigger
+-- helpers stay self-contained: app roles have no access to schema private.)
 -- ---------------------------------------------------------------------------
-create or replace function private.goal_level_rank(l public.goal_level)
-returns smallint
-language sql
-immutable
-set search_path = ''
-as $$
-  select case l when 'vision' then 0 when 'long_term' then 1 when 'annual' then 2 else 3 end::smallint
-$$;
-
 create or replace function private.check_goal_parent()
 returns trigger
 language plpgsql
@@ -23,9 +16,12 @@ set search_path = ''
 as $$
 declare parent_level public.goal_level;
 begin
+  if tg_op = 'UPDATE' and exists (select 1 from public.goals c where c.parent_id = new.id and c.level <= new.level) then
+    raise exception 'Move or re-level its sub-goals first: they must stay narrower than this goal' using errcode = '23514';
+  end if;
   if new.parent_id is null then return new; end if;
   select g.level into parent_level from public.goals g where g.id = new.parent_id;
-  if parent_level is not null and private.goal_level_rank(parent_level) >= private.goal_level_rank(new.level) then
+  if parent_level is not null and parent_level >= new.level then
     raise exception 'A goal must sit under a broader goal' using errcode = '23514';
   end if;
   if exists (
