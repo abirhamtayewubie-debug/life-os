@@ -9,7 +9,7 @@ import { liveContext } from "./guard";
 import { invalid, isUuid, optionalDate, optionalText, optionalUrl, optionalUuid } from "./validation";
 
 const optionalInt = (min: number, max: number, msg: string) =>
-  z.union([z.coerce.number().int(msg).min(min, msg).max(max, msg), z.literal("")]).optional().transform((v) => (v === "" || v === undefined ? null : v));
+  z.union([z.literal(""), z.coerce.number().int(msg).min(min, msg).max(max, msg)]).optional().transform((v) => (v === "" || v === undefined ? null : v));
 
 const itemSchema = z
   .object({

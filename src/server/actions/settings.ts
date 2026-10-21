@@ -14,6 +14,7 @@ const profileSchema = z.object({
   baseCurrency: z.enum(["ETB", "USD", "CAD", "EUR", "GBP", "KES", "AED"]),
   locale: z.enum(["en-US", "en-CA", "en-GB", "am-ET"]),
   weekStartsOn: z.coerce.number().int().min(0).max(6),
+  measurementSystem: z.enum(["metric", "imperial"]).default("metric"),
 });
 
 export type ProfileInput = z.input<typeof profileSchema>;
@@ -26,7 +27,7 @@ export async function updateProfile(input: ProfileInput): Promise<ActionResult> 
   const v = parsed.data;
   const { error } = await ctx.supabase
     .from("profiles")
-    .update({ display_name: v.displayName || null, timezone: v.timezone, base_currency: v.baseCurrency, locale: v.locale, week_starts_on: v.weekStartsOn })
+    .update({ display_name: v.displayName || null, timezone: v.timezone, base_currency: v.baseCurrency, locale: v.locale, week_starts_on: v.weekStartsOn, measurement_system: v.measurementSystem })
     .eq("id", ctx.viewer.userId);
   if (error) return { ok: false, error: "Couldn't save your preferences." };
   revalidatePath("/", "layout");
@@ -90,6 +91,10 @@ export async function loadSampleData(): Promise<ActionResult<{ rows: number }>> 
     ["budget_lines", withUser(s.budget_lines)],
     ["wellness_logs", withUser(s.wellness_logs)],
     ["sleep_logs", withUser(s.sleep_logs.map(({ duration_minutes: _d, ...r }) => r))],
+    ["workouts", withUser(s.workouts)],
+    ["workout_sets", withUser(s.workout_sets)],
+    ["body_measurements", withUser(s.body_measurements)],
+    ["hydration_logs", withUser(s.hydration_logs)],
     ["journal_entries", withUser(s.journal_entries)],
     ["notes", withUser(s.notes.map(({ updated_at: _u, ...r }) => r))],
     ["record_links", withUser(s.note_links)],

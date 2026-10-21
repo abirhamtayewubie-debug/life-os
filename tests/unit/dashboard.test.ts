@@ -5,7 +5,7 @@ import { normalizeLayout, DEFAULT_LAYOUT } from "@/features/dashboard/widgets";
 import { generateSampleSet, sampleToRaw } from "@/lib/sample-data";
 
 const TZ = "Africa/Addis_Ababa";
-const profile: ViewerProfile = { displayName: null, timezone: TZ, locale: "en-US", baseCurrency: "ETB" };
+const profile: ViewerProfile = { displayName: null, timezone: TZ, locale: "en-US", baseCurrency: "ETB", measurementSystem: "metric" };
 const NOW = new Date("2026-10-21T07:00:00Z"); // 10:00 local, Wednesday
 
 const empty: RawLifeData = {

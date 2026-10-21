@@ -330,10 +330,52 @@ export function generateSampleSet(now: Date, tz: string, baseCurrency = "ETB", i
     { id: id(), name: "Family", description: null as string | null, sort_order: 2, source: S },
   ];
 
+  // Health: older check-ins and nights, workouts, measurements, water ------------
+  // Fixed patterns (no random draws) so the rest of the sample set stays the same.
+  for (let d = -27; d <= -7; d++) {
+    const i = -d;
+    wellness_logs.push({ id: id(), log_date: addDays(today, d), logged_at: at(d, "21:00"), mood: [3, 4, 4, 3, 2, 4, 3][i % 7], energy: [3, 4, 3, 3, 2, 3, 4][i % 7], stress: [3, 2, 2, 3, 4, 2, 3][i % 7], source: S });
+    const bed = ["23:20", "23:50", "00:30", "23:05", "23:40", "00:10", "22:55"][i % 7];
+    const wake = ["06:30", "06:35", "06:40", "06:25", "07:30", "06:45", "06:30"][i % 7];
+    const bedtime = at(bed < "12:00" ? d : d - 1, bed);
+    const wake_time = at(d, wake);
+    sleep_logs.push({ id: id(), sleep_date: addDays(today, d), bedtime, wake_time, duration_minutes: Math.round((new Date(wake_time).getTime() - new Date(bedtime).getTime()) / 60000), quality: [3, 4, 2, 4, 3, 3, 4][i % 7] as 2 | 3 | 4, source: S });
+  }
+  wellness_logs.sort((a, b) => a.log_date.localeCompare(b.log_date));
+  sleep_logs.sort((a, b) => a.sleep_date.localeCompare(b.sleep_date));
+
+  const workouts: { id: string; goal_id: string | null; performed_on: string; started_at: string; activity: string; duration_minutes: number | null; perceived_effort: number | null; notes: string | null; source: typeof S }[] = [];
+  const workout_sets: { id: string; workout_id: string; exercise: string; set_number: number; reps: number | null; weight: string | null; weight_unit: "kg" | null; duration_seconds: number | null; distance_m: string | null }[] = [];
+  for (let d = -27; d <= 0; d++) {
+    const wd = weekdayOf(addDays(today, d));
+    if (d === -2) {
+      workouts.push({ id: id(), goal_id: gHealth.id, performed_on: addDays(today, d), started_at: at(d, "07:30"), activity: "Run", duration_minutes: 41, perceived_effort: 7, notes: "Long run, 6.5 km.", source: S });
+      continue;
+    }
+    if (d === 0 || ![1, 3, 5].includes(wd)) continue;
+    const strength = wd === 3;
+    const w = { id: id(), goal_id: strength ? null : gHealth.id as string | null, performed_on: addDays(today, d), started_at: at(d, "18:30"), activity: strength ? "Strength" : "Run", duration_minutes: strength ? 45 : 28 + (-d % 3) * 3, perceived_effort: strength ? 7 : 6, notes: null, source: S };
+    workouts.push(w);
+    if (strength) {
+      const week = Math.floor((d + 27) / 7);
+      for (const [exercise, reps, kg] of [["Squat", 8, 60 + week * 2.5], ["Push-up", 15, null], ["Dumbbell row", 10, 16]] as const) {
+        for (let n = 1; n <= 3; n++) workout_sets.push({ id: id(), workout_id: w.id, exercise, set_number: n, reps, weight: kg === null ? null : kg.toFixed(2), weight_unit: kg === null ? null : "kg", duration_seconds: null, distance_m: null });
+      }
+    }
+  }
+  const body_measurements = [
+    ...[82.4, 82.1, 81.9, 81.8, 81.4, 81.3, 81.0, 80.9].map((v, i) => ({ id: id(), measured_at: at(-49 + i * 7, "06:45"), metric: "weight" as const, value: v.toFixed(1), unit: "kg", source: S })),
+    ...[64, 62, 61].map((v, i) => ({ id: id(), measured_at: at(-42 + i * 21, "06:50"), metric: "resting_hr" as const, value: String(v), unit: "bpm", source: S })),
+    { id: id(), measured_at: at(-42, "07:00"), metric: "waist" as const, value: "91.0", unit: "cm", source: S },
+    { id: id(), measured_at: at(-1, "07:00"), metric: "waist" as const, value: "89.5", unit: "cm", source: S },
+  ];
+  const hydration_logs = Array.from({ length: 6 }, (_, i) => -6 + i).flatMap((d) =>
+    [500, 250, 500, 750, 250].slice(0, 3 + (-d % 3)).map((ml) => ({ id: id(), log_date: addDays(today, d), amount_ml: ml, source: S })));
+
   return {
     wheel_categories, wheel_assessments, wheel_ratings, goals, projects, tasks, calendar_events, reminders,
     habits, habit_logs, financial_accounts, transaction_categories, transactions, budgets: [budget], budget_lines, exchange_rates, recurring_transactions, savings_goals,
-    wellness_logs, sleep_logs, journal_entries, notes, note_links, daily_reviews,
+    wellness_logs, sleep_logs, workouts, workout_sets, body_measurements, hydration_logs, journal_entries, notes, note_links, daily_reviews,
     milestones, time_entries, people, interactions, important_dates, learning_items, skills, admin_items, personal_values,
   };
 }

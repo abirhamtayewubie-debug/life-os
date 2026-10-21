@@ -4,7 +4,7 @@ import { useEffect, useRef, useState } from "react";
 import { usePathname, useRouter } from "next/navigation";
 import { Command } from "cmdk";
 import { useTheme } from "next-themes";
-import { BookHeart, Briefcase, CalendarDays, CalendarPlus, FilePlus, FileText, LayoutGrid, ListChecks, ListPlus, Monitor, Moon, Orbit, Repeat, Search, Sun, Sunset, Target, UserPlus, Users, Wallet } from "lucide-react";
+import { BookHeart, Briefcase, CalendarDays, CalendarPlus, FilePlus, FileText, LayoutGrid, ListChecks, ListPlus, Monitor, Moon, Orbit, Repeat, Search, Sun, Sunset, Target, UserPlus, Users, Wallet, Smile, Dumbbell, BedDouble } from "lucide-react";
 import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
 import { Kbd } from "@/components/ui/kbd";
 import { BUILT_THROUGH_PHASE, MODULES } from "@/lib/modules";
@@ -24,6 +24,9 @@ export const APP_EVENTS = {
   newAssessment: "lifeos:new-assessment",
   newPerson: "lifeos:new-person",
   newTransaction: "lifeos:new-transaction",
+  newCheckin: "lifeos:new-checkin",
+  newWorkout: "lifeos:new-workout",
+  newSleep: "lifeos:new-sleep",
 } as const;
 
 const HIT_ICON = { task: ListChecks, event: CalendarDays, habit: Repeat, goal: Target, project: Briefcase, note: FileText, person: Users } as const;
@@ -129,6 +132,9 @@ export function CommandPalette({ hidden }: { hidden: string[] }) {
               <Command.Item className={item} onSelect={() => goAndFire("/wheel", APP_EVENTS.newAssessment)}><Orbit /> Wheel of Life check-in</Command.Item>
               <Command.Item className={item} onSelect={() => goAndFire("/relationships", APP_EVENTS.newPerson)}><UserPlus /> Add a person</Command.Item>
               <Command.Item className={item} onSelect={() => goAndFire("/finance", APP_EVENTS.newTransaction)}><Wallet /> New transaction</Command.Item>
+              <Command.Item className={item} onSelect={() => goAndFire("/health", APP_EVENTS.newCheckin)}><Smile /> Mood &amp; energy check-in</Command.Item>
+              <Command.Item className={item} onSelect={() => run(() => (pathname === "/health" ? window.dispatchEvent(new Event(APP_EVENTS.newWorkout)) : router.push("/health?tab=workouts&new=1")))}><Dumbbell /> Log a workout</Command.Item>
+              <Command.Item className={item} onSelect={() => goAndFire("/sleep", APP_EVENTS.newSleep)}><BedDouble /> Log sleep</Command.Item>
               <Command.Item className={item} onSelect={() => run(() => { router.push("/"); setTimeout(() => window.dispatchEvent(new Event(APP_EVENTS.eveningReview)), 150); })}>
                 <Sunset /> Start evening review
               </Command.Item>

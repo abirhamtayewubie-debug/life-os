@@ -1,7 +1,19 @@
-import { ModulePlaceholder } from "@/components/shell/module-placeholder";
+import { PageHeader } from "@/components/shell/page-header";
+import { HealthScreen, type HealthTab } from "@/features/health/health-screen";
+import { getHealthWorkspace } from "@/server/health";
 
 export const metadata = { title: "Health & Fitness" };
 
-export default function Page() {
-  return <ModulePlaceholder moduleKey="health" />;
+const TABS = new Set<string>(["today", "workouts", "body", "trends"] satisfies HealthTab[]);
+
+export default async function HealthPage({ searchParams }: PageProps<"/health">) {
+  const sp = await searchParams;
+  const ws = await getHealthWorkspace();
+  const tab = (typeof sp.tab === "string" && TABS.has(sp.tab) ? sp.tab : "today") as HealthTab;
+  return (
+    <div className="animate-rise">
+      <PageHeader title="Health & Fitness" description="Check-ins, water, workouts and body measurements, exactly as you logged them." />
+      <HealthScreen ws={ws} tab={tab} startNew={sp.new === "1"} />
+    </div>
+  );
 }
