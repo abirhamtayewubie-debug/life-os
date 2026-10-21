@@ -17,6 +17,8 @@ export type ReportView = {
   /** When this period's facts were last saved as a snapshot, if ever. */
   savedAt: string | null;
   interpretation: string | null;
+  interpretationModel: string | null;
+  interpretedAt: string | null;
   today: string;
   locale: string;
   demo: boolean;
@@ -72,7 +74,7 @@ export async function getReport(sp: Record<string, string | string[] | undefined
   let weekStart = 1;
   let raw: Raw;
   let projectNames: Record<string, string>;
-  let saved: { generated_at: string; interpretation: string | null } | null = null;
+  let saved: { generated_at: string; interpretation: string | null; interpretation_model: string | null; interpreted_at: string | null } | null = null;
 
   if (viewer.mode === "demo") {
     const s = generateSampleSet(now, timezone, viewer.profile.baseCurrency);
@@ -113,7 +115,7 @@ export async function getReport(sp: Record<string, string | string[] | undefined
     supabase.from("learning_items").select("title, finished_on").eq("status", "completed").gte("finished_on", from).lte("finished_on", end),
     supabase.from("interactions").select("occurred_on").gte("occurred_on", from).lte("occurred_on", end).limit(10000),
     supabase.from("projects").select("id, name"),
-    supabase.from("reports").select("generated_at, interpretation").eq("period", period).eq("period_start", start).maybeSingle(),
+    supabase.from("reports").select("generated_at, interpretation, interpretation_model, interpreted_at").eq("period", period).eq("period_start", start).maybeSingle(),
   ]);
   for (const r of [tasks, habits, habitLogs, time, workouts, sleep, wellness, hydration, money, journal, goals, milestones, learning, interactions, projects, report]) {
     if (r.error) throw new Error(`Could not load the report: ${r.error.message}`);
@@ -138,7 +140,7 @@ export async function getReport(sp: Record<string, string | string[] | undefined
       current: computeReport(input, period, start, end, today, timezone),
       // The previous period is compared over the same number of days, so a week in progress isn't set against a full one.
       previous: computeReport(input, period, prev.start, prev.end, addDays(prev.start, diffDays(start, today < end ? today : end)), timezone),
-      projectNames, savedAt: saved?.generated_at ?? null, interpretation: saved?.interpretation ?? null, today, locale, demo: viewer.mode === "demo",
+      projectNames, savedAt: saved?.generated_at ?? null, interpretation: saved?.interpretation ?? null, interpretationModel: saved?.interpretation_model ?? null, interpretedAt: saved?.interpreted_at ?? null, today, locale, demo: viewer.mode === "demo",
     };
   }
 }

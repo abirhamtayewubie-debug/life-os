@@ -7,8 +7,11 @@ import { Card } from "@/components/ui/card";
 import { formatMoney, fromMinor, toMinor, type Money } from "@/lib/money";
 import { cn } from "@/lib/utils";
 import { saveReportSnapshot } from "@/server/actions/reports";
+import { interpretReport } from "@/server/actions/assistant";
+import { modelLabel } from "@/features/assistant/models";
 import type { ReportView } from "@/server/reports";
 import { useServerAction } from "@/features/dashboard/use-server-action";
+import { Markdown } from "@/features/assistant/markdown";
 import { formatMinutes } from "@/features/health/metrics";
 import { delta, periodLabel, PERIODS, shiftPeriod, type ReportPeriod } from "./compute";
 
@@ -104,13 +107,24 @@ export function ReportsScreen({ r }: { r: ReportView }) {
         <h2 className="flex items-center gap-2 text-[13px] font-medium"><Sparkles className="size-4 text-muted-foreground" aria-hidden /> Interpretation</h2>
         {r.interpretation ? (
           <>
-            <p className="text-[11px] text-muted-foreground">Written by the assistant from the saved snapshot. It&apos;s a reading of the numbers above, not a measurement.</p>
-            <p className="text-[13px] whitespace-pre-wrap">{r.interpretation}</p>
+            <p className="text-[11px] text-muted-foreground">
+              Written by {modelLabel(r.interpretationModel)}{r.interpretedAt ? ` on ${new Date(r.interpretedAt).toLocaleString(r.locale, { dateStyle: "medium", timeStyle: "short" })}` : ""} from the saved snapshot. It&apos;s a reading of the numbers, not a measurement, and can be wrong.
+            </p>
+            <Markdown text={r.interpretation} />
           </>
         ) : (
           <p className="text-[13px] text-muted-foreground">
-            Everything above is counted straight from what you logged. Written observations come with the assistant (phase 6, after you approve it). They&apos;ll appear here, labelled, and kept apart from the numbers.
+            Everything above is counted straight from what you logged. {r.savedAt
+              ? "The assistant can write a short reading of the saved snapshot. It appears here, labelled, apart from the numbers."
+              : "Save a snapshot first; the assistant can then write a short reading of it here, kept apart from the numbers."}
           </p>
+        )}
+        {!r.demo && r.savedAt && (
+          <div className="print:hidden">
+            <Button size="sm" variant="outline" disabled={pending} onClick={() => run(() => interpretReport({ period: r.period, start: r.start }))}>
+              <Sparkles /> {r.interpretation ? "Rewrite" : "Write a reading"}
+            </Button>
+          </div>
         )}
       </Card>
     </div>

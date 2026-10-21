@@ -40,11 +40,13 @@ Postgres on Supabase. Everything is in versioned SQL under [`supabase/migrations
 
 **0011 health and reports** — `profiles.measurement_system` (metric/imperial); `body_measurements` unit-per-metric and plausible-range checks plus a unique reading per (user, metric, moment, source); unique set numbers per exercise in a workout; `sleep_logs_user_date_idx`; `reports.measured` must be a JSON object and a report covers at most 366 days.
 
+**0012 assistant** — `ai_settings` gains `model` (Haiku/Sonnet/Opus 5.5) and `monthly_budget_usd` (0–1000), and `allowed_modules` may only name known modules (health, finance and journal have their own switches); `ai_messages` cache token counts; `ai_tool_calls.result_record_id` and `tool_use_id`; `ai_briefings` (one per person per day, `facts` an object, source `ai_suggested`); `ai_usage` per call (purpose chat/briefing/report, non-negative tokens); `reports.interpretation_model` and `interpreted_at`, set together with the interpretation.
+
 Trigger helpers never call functions in schema `private`: app roles have no `usage` on it, so any such call from a trigger fails for signed-in users.
 
 Calendar convention: timed events store real instants plus the zone they were created in, and repeats keep the local wall-clock time in that zone. All-day events are floating dates stored as UTC midnight of their first and last day (both inclusive), so `starts_at::date` is the date wherever the viewer is.
 
-## Verified by `supabase/tests/rls_isolation.sql`, `productivity.sql`, `goals_life.sql`, `finance.sql` and `health.sql`
+## Verified by `supabase/tests/rls_isolation.sql`, `productivity.sql`, `goals_life.sql`, `finance.sql`, `health.sql` and `assistant.sql`
 
 - Every `public` table has RLS enabled and forced.
 - Sign-up creates a profile.
@@ -63,6 +65,8 @@ Calendar convention: timed events store real instants plus the zone they were cr
 - Accounts, balances, transactions, categories, budgets, bills and rates are invisible to and unchangeable by another user, including through `create_transfer()` and `record_recurring_payment()`.
 - Body measurements need the right unit and a plausible value, and can't be recorded twice for the same moment; a manual night is logged once per date and must end after it starts, within a day; set numbers are unique per exercise; a check-in needs a rating; saved report facts are an object and span at most a year.
 - Check-ins, water, workouts and sets, measurements, sleep and saved reports are invisible to and unchangeable by another user, who also can't attach sets to someone else's workout.
+- The assistant is off with nothing shared by default; unknown models, modules or negative budgets are refused; a suggestion that needs confirmation can't be stored as done; one briefing a day; a journal entry can't be private and readable by the assistant at once.
+- Assistant settings, conversations, suggestions, usage and briefings are invisible to and unchangeable by another user, who can't decide someone else's suggestion; deleting a conversation removes its messages and suggestions.
 
 ## Backups, export, deletion
 

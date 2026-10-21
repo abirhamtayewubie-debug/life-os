@@ -1,11 +1,15 @@
 import { Check, Lock, X } from "lucide-react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { PageHeader } from "@/components/shell/page-header";
+import { AiSettingsForm } from "@/features/settings/ai-settings-form";
 import { AppearancePicker } from "@/features/settings/appearance";
 import { ModuleToggles } from "@/features/settings/module-toggles";
 import { PreferencesForm } from "@/features/settings/preferences-form";
 import { SampleDataControls } from "@/features/settings/sample-data-controls";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
+import { DEFAULT_AI_SETTINGS, MODELS, type AiSettings } from "@/features/assistant/models";
+import { loadAiSettings, monthSpend } from "@/server/ai/account";
+import { aiConfigured } from "@/server/ai/client";
 import { getHiddenModules } from "@/server/modules";
 import { getViewer } from "@/server/viewer";
 
@@ -13,7 +17,7 @@ export const metadata = { title: "Settings" };
 
 function Section({ id, title, description, children }: { id: string; title: string; description?: string; children: React.ReactNode }) {
   return (
-    <Card id={id} className="scroll-mt-20">
+    <Card id={id} className="min-w-0 scroll-mt-20">
       <CardHeader className="pb-4">
         <div>
           <CardTitle className="text-sm">{title}</CardTitle>
@@ -39,15 +43,22 @@ export default async function SettingsPage() {
   const hidden = await getHiddenModules();
   let hasSample = false;
   let weekStartsOn = 1;
+  let ai: AiSettings = DEFAULT_AI_SETTINGS;
+  let spendUsd: number | null = null;
   if (viewer.mode === "live") {
     const supabase = await createSupabaseServerClient();
-    const [{ count }, { data: p }] = await Promise.all([
+    const [{ count }, { data: p }, settings, spend] = await Promise.all([
       supabase.from("tasks").select("id", { count: "exact", head: true }).eq("source", "sample"),
       supabase.from("profiles").select("week_starts_on").eq("id", viewer.userId).maybeSingle(),
+      loadAiSettings(supabase),
+      monthSpend(supabase, viewer.profile.timezone, new Date()),
     ]);
     hasSample = (count ?? 0) > 0;
     weekStartsOn = p?.week_starts_on ?? 1;
+    ai = settings;
+    spendUsd = spend.usd;
   }
+  const configured = aiConfigured();
   const demo = viewer.mode === "demo";
 
   return (
@@ -64,6 +75,10 @@ export default async function SettingsPage() {
         <Section id="modules" title="Modules" description="Hide modules you don't use. Their data is kept, and you can bring them back any time.">
           {demo ? <p className="text-sm text-muted-foreground">Module visibility is saved to your account once a database is connected.</p> : <ModuleToggles hidden={hidden} />}
         </Section>
+        <Section id="assistant" title="AI assistant" description="Off until you switch it on. You choose the model, what it may read and how much it may spend.">
+          {demo ? <p className="text-sm text-muted-foreground">The assistant needs a connected database and an Anthropic API key. Nothing is sent anywhere in demo mode.</p>
+            : <AiSettingsForm settings={ai} configured={configured} spendUsd={spendUsd} />}
+        </Section>
         <Section id="data" title="Your data" description="Sample data is always labelled and can be removed in one step.">
           <SampleDataControls hasSample={hasSample} demo={demo} />
           <p className="mt-4 text-xs text-muted-foreground">Full export (JSON and CSV) and account deletion are planned for phase 8, with per-module CSV export arriving as each module ships.</p>
@@ -73,7 +88,9 @@ export default async function SettingsPage() {
             <Fact ok={!demo}>Every record is isolated to your account by database row-level security, not just app code.</Fact>
             <Fact ok>No API keys or service credentials are ever sent to your browser.</Fact>
             <Fact ok>Journal entries are private by default. <Lock className="inline size-3" aria-hidden /></Fact>
-            <Fact ok>AI features are off. Nothing is sent to an AI provider (arrives in phase 6, opt-in per module).</Fact>
+            {ai.enabled && configured
+              ? <Fact ok>The assistant ({MODELS[ai.model].label}) is on. It reads only the areas you shared, only when you ask, and every change it suggests waits for your confirmation.</Fact>
+              : <Fact ok>The assistant is off. Nothing is sent to an AI provider.</Fact>}
             <Fact ok>Sensitive actions are written to an audit log you can&apos;t accidentally edit.</Fact>
             <Fact ok={false}>Push and email notifications are not set up yet (phase 7).</Fact>
             <Fact ok={false}>No external services are connected (phase 7, each with explicit consent).</Fact>

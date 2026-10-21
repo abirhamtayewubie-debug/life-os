@@ -246,9 +246,9 @@ export function generateSampleSet(now: Date, tz: string, baseCurrency = "ETB", i
 
   // Journal, notes, reviews -------------------------------------------------------
   const journal_entries = [
-    { id: id(), entry_date: addDays(today, -1), kind: "gratitude", title: "Three good things", body: "Sample entry.", is_private: true, source: S },
-    { id: id(), entry_date: addDays(today, -2), kind: "reflection", title: "What made the site visit go well", body: "Sample entry.", is_private: true, source: S },
-    { id: id(), entry_date: addDays(today, -4), kind: "journal", title: null, body: "Sample entry.", is_private: true, source: S },
+    { id: id(), entry_date: addDays(today, -1), kind: "gratitude", title: "Three good things", body: "Sample entry.", is_private: true, ai_access_allowed: false, source: S },
+    { id: id(), entry_date: addDays(today, -2), kind: "reflection", title: "What made the site visit go well", body: "Sample entry.", is_private: true, ai_access_allowed: false, source: S },
+    { id: id(), entry_date: addDays(today, -4), kind: "journal", title: null, body: "Sample entry.", is_private: true, ai_access_allowed: false, source: S },
   ];
   const nFeedback = { id: id(), title: "Café rebrand — client feedback round 1", kind: "meeting", folder: "Clients", url: null as string | null, pinned: true, project_id: pBrand.id as string | null, goal_id: null as string | null, body: "Sample note. They liked direction B. Next: refine the palette, see [[Brand colour principles]].", updated_at: at(-1, "12:10"), source: S };
   const nColours = { id: id(), title: "Brand colour principles", kind: "reference", folder: "Design", url: null as string | null, pinned: false, project_id: null as string | null, goal_id: null as string | null, body: "Sample note. Start from two neutrals and one accent. Check contrast before presenting.", updated_at: at(-6, "09:00"), source: S };

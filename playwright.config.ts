@@ -2,7 +2,9 @@ import { defineConfig } from "@playwright/test";
 
 /**
  * End-to-end tests run against a live app connected to a local Supabase stack:
- *   npx supabase start && npm run build && PORT=3200 npm start
+ *   npx supabase start && npm run build &&
+ *   ANTHROPIC_API_KEY=e2e-mock ANTHROPIC_BASE_URL=http://127.0.0.1:3299 PORT=3200 npm start
+ * (the assistant spec starts a scripted stand-in for Anthropic on port 3299; nothing is billed)
  *   E2E_BASE_URL=http://localhost:3200 npm run test:e2e
  */
 export default defineConfig({

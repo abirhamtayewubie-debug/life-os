@@ -20,7 +20,9 @@ export async function saveReportSnapshot(input: z.input<typeof schema>): Promise
   if (!ctx) return DEMO_RESULT;
   const r = await getReport({ period: parsed.data.period, date: parsed.data.date });
   const { error } = await ctx.supabase.from("reports").upsert(
-    { user_id: ctx.viewer.userId, period: r.period, period_start: r.start, period_end: r.end, measured: r.current, generated_at: new Date().toISOString() },
+    { user_id: ctx.viewer.userId, period: r.period, period_start: r.start, period_end: r.end, measured: r.current, generated_at: new Date().toISOString(),
+      // New numbers make an earlier write-up stale, so it is cleared.
+      interpretation: null, interpretation_model: null, interpreted_at: null },
     { onConflict: "user_id,period,period_start" },
   );
   if (error) return { ok: false, error: "Couldn't save the snapshot." };
