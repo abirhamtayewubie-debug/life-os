@@ -40,7 +40,7 @@ export function RelationshipsScreen({ ws, startNew = false }: { ws: Relationship
 
   return (
     <div className="grid grid-cols-[minmax(0,1fr)] gap-5 lg:grid-cols-[minmax(0,1fr)_20rem]">
-      <div className="grid min-w-0 content-start gap-4">
+      <div className="grid min-w-0 grid-cols-[minmax(0,1fr)] content-start gap-4">
         <div className="flex items-center gap-2">
           <p className="text-[13px] text-muted-foreground">{ws.people.length} {ws.people.length === 1 ? "person" : "people"}</p>
           <Button size="sm" className="ml-auto" onClick={() => setEditingPerson("new")}><Plus /> Add person</Button>

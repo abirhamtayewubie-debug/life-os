@@ -285,9 +285,9 @@ function TimePanel({ ws, now, week }: { ws: WorkWorkspace; now: Date; week: Map<
   const weekTotal = [...week.values()].reduce((a, b) => a + b, 0);
 
   return (
-    <div className="grid gap-4 lg:grid-cols-[minmax(0,1fr)_20rem]">
-      <div className="grid content-start gap-4">
-        <Card className="grid gap-3 p-4">
+    <div className="grid grid-cols-[minmax(0,1fr)] gap-4 lg:grid-cols-[minmax(0,1fr)_20rem]">
+      <div className="grid min-w-0 grid-cols-[minmax(0,1fr)] content-start gap-4">
+        <Card className="grid grid-cols-[minmax(0,1fr)] gap-3 p-4">
           <h3 className="flex items-center gap-1.5 text-[13px] font-medium"><Clock className="size-3.5 text-muted-foreground" /> Timer</h3>
           {running ? (
             <div className="flex flex-wrap items-center gap-3">
@@ -298,7 +298,7 @@ function TimePanel({ ws, now, week }: { ws: WorkWorkspace; now: Date; week: Map<
             </div>
           ) : live.length ? (
             <form className="flex flex-wrap gap-2" onSubmit={(e) => { e.preventDefault(); run(() => startTimer(project, null, note), { onSuccess: () => setNote("") }); }}>
-              <NativeSelect aria-label="Project to time" className="w-auto max-w-60" value={project} onChange={(e) => setProject(e.target.value)}>
+              <NativeSelect aria-label="Project to time" className="w-full sm:w-auto sm:max-w-60" value={project} onChange={(e) => setProject(e.target.value)}>
                 {live.map((p) => <option key={p.id} value={p.id}>{p.name}</option>)}
               </NativeSelect>
               <Input className="min-w-40 flex-1" value={note} maxLength={1000} onChange={(e) => setNote(e.target.value)} placeholder="What are you working on?" aria-label="Timer note" />
@@ -322,7 +322,7 @@ function TimePanel({ ws, now, week }: { ws: WorkWorkspace; now: Date; week: Map<
                   <span className="min-w-0 flex-1 truncate">{name(t.project_id)}{t.note ? <span className="text-muted-foreground"> · {t.note}</span> : null}</span>
                   {t.source === "sample" && <Badge variant="sample">Sample</Badge>}
                   <span className="tabular shrink-0">{formatDuration(entryMinutes(t, now))}</span>
-                  <Button variant="ghost" size="icon-sm" className="size-7 opacity-0 group-hover:opacity-100 focus-visible:opacity-100" aria-label="Delete entry" onClick={() => run(() => deleteTimeEntry(t.id))}><Trash2 /></Button>
+                  <Button variant="ghost" size="icon-sm" className="size-7 pointer-fine:opacity-0 pointer-fine:group-hover:opacity-100 focus-visible:opacity-100" aria-label="Delete entry" onClick={() => run(() => deleteTimeEntry(t.id))}><Trash2 /></Button>
                 </li>
               ))}
             </ul>

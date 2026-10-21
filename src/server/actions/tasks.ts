@@ -27,6 +27,7 @@ const taskSchema = z
     recurrenceRule: z.string().trim().max(200).optional().or(z.literal("")),
     estimateMinutes: z.coerce.number().int().min(1).max(10080).optional().or(z.literal("").transform(() => undefined)),
     projectId: uuid.optional().or(z.literal("")),
+    goalId: uuid.optional().or(z.literal("")),
     parentTaskId: uuid.optional().or(z.literal("")),
     tags: z.array(z.string().trim().min(1).max(40)).max(10).default([]),
   })
@@ -55,6 +56,7 @@ function toRow(v: z.output<typeof taskSchema>, tz: string) {
     recurrence_tz: v.recurrenceRule ? tz : null,
     estimate_minutes: v.estimateMinutes ?? null,
     project_id: v.projectId || null,
+    goal_id: v.goalId || null,
     parent_task_id: v.parentTaskId || null,
   };
 }

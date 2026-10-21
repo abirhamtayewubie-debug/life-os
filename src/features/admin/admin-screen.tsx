@@ -39,7 +39,7 @@ export function AdminScreen({ ws, startNew = false }: { ws: AdminWorkspace; star
 
   return (
     <div className="grid grid-cols-[minmax(0,1fr)] gap-5 lg:grid-cols-[minmax(0,1fr)_20rem]">
-      <div className="grid min-w-0 content-start gap-4">
+      <div className="grid min-w-0 grid-cols-[minmax(0,1fr)] content-start gap-4">
         <div className="flex flex-wrap items-center gap-2">
           <p className="text-[13px] text-muted-foreground">{attention.length ? `${attention.length} need${attention.length === 1 ? "s" : ""} attention` : "Nothing due soon"}</p>
           <div className="ml-auto flex gap-2">
@@ -138,7 +138,7 @@ function Row({ item, ws, onEdit }: { item: AdminItem; ws: AdminWorkspace; onEdit
         <ProvenanceBadge source={item.source} />
         {(item.kind === "renewal" || item.kind === "chore") && (item.completed_at
           ? <Button size="xs" variant="ghost" disabled={pending} onClick={() => run(() => reopenAdminItem(item.id))}><RotateCcw /> Reopen</Button>
-          : <Button size="xs" variant="outline" disabled={pending} onClick={() => run(() => markAdminDone(item.id))}>{repeats ? <><RefreshCw /> Renewed</> : <><CheckCircle2 /> Done</>}</Button>)}
+          : <Button size="xs" variant="outline" disabled={pending} onClick={() => run(() => markAdminDone(item.id))}>{repeats ? <><RefreshCw /> Renewed</> : item.kind === "renewal" ? <><CheckCircle2 /> Renewed</> : <><CheckCircle2 /> Done</>}</Button>)}
         <Button variant="ghost" size="icon-sm" aria-label={`Edit ${item.title}`} onClick={onEdit}><Pencil /></Button>
         <ConfirmDelete size="icon-sm" title={`Delete “${item.title}”?`} description="It will be removed permanently." disabled={pending} onConfirm={() => run(() => deleteAdminItem(item.id))} label={`Delete ${item.title}`} />
       </Card>

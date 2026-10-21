@@ -41,7 +41,7 @@ export function ReflectionScreen({ ws, startNew = false }: { ws: ReflectionWorks
 
   return (
     <div className="grid grid-cols-[minmax(0,1fr)] gap-5 lg:grid-cols-[minmax(0,1fr)_18rem]">
-      <div className="grid min-w-0 content-start gap-4">
+      <div className="grid min-w-0 grid-cols-[minmax(0,1fr)] content-start gap-4">
         <div className="flex flex-wrap items-center gap-2">
           <Form action="/reflection" className="relative min-w-0 flex-1 sm:max-w-xs">
             <Search className="pointer-events-none absolute top-1/2 left-2.5 size-3.5 -translate-y-1/2 text-muted-foreground" />
@@ -106,7 +106,7 @@ export function ReflectionScreen({ ws, startNew = false }: { ws: ReflectionWorks
         )}
       </div>
 
-      <aside className="grid min-w-0 content-start gap-4">
+      <aside className="grid min-w-0 grid-cols-[minmax(0,1fr)] content-start gap-4">
         <Card>
           <CardHeader><CardTitle>Writing rhythm</CardTitle></CardHeader>
           <CardContent className="grid grid-cols-2 gap-3">

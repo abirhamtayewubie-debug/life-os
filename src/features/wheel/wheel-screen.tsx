@@ -182,10 +182,10 @@ export function WheelScreen({ ws, startNew = false }: { ws: WheelWorkspace; star
           <ul className="divide-y divide-border rounded-lg border border-border bg-surface">
             {ws.assessments.map((a) => (
               <li key={a.id} className="flex items-center gap-3 px-3 py-2 text-[13px]">
-                <span className="tabular w-28 shrink-0">{formatShortDate(a.assessed_on, ws.locale)}</span>
+                <span className="tabular shrink-0 sm:w-28">{formatShortDate(a.assessed_on, ws.locale)}</span>
                 <span className="min-w-0 flex-1 truncate text-muted-foreground">{a.note ?? `${a.ratings.length} areas rated`}</span>
                 <ProvenanceBadge source={a.source} />
-                <Button variant="ghost" size="sm" onClick={() => setEditing(a)}><Pencil /> Edit</Button>
+                <Button variant="ghost" size="icon-sm" onClick={() => setEditing(a)} aria-label={`Edit check-in of ${formatShortDate(a.assessed_on, ws.locale)}`}><Pencil /></Button>
               </li>
             ))}
           </ul>

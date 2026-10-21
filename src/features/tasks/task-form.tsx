@@ -16,7 +16,7 @@ import { AREAS, PRIORITY_LABEL, type Priority, type TaskRecord } from "./types";
 type Errors = Record<string, string[] | undefined>;
 
 function initial(task: TaskRecord | null, tz: string, defaults: Partial<TaskInput>): TaskInput {
-  if (!task) return { title: "", notes: "", priority: 3, area: "personal", status: "todo", dueDate: "", dueTime: "", isTopPriority: false, recurrenceRule: "", projectId: "", parentTaskId: "", tags: [], ...defaults };
+  if (!task) return { title: "", notes: "", priority: 3, area: "personal", status: "todo", dueDate: "", dueTime: "", isTopPriority: false, recurrenceRule: "", projectId: "", goalId: "", parentTaskId: "", tags: [], ...defaults };
   const timed = task.due_at ? new Date(task.due_at) : null;
   return {
     title: task.title,
@@ -30,6 +30,7 @@ function initial(task: TaskRecord | null, tz: string, defaults: Partial<TaskInpu
     recurrenceRule: task.recurrence_rule ?? "",
     estimateMinutes: task.estimate_minutes ?? undefined,
     projectId: task.project_id ?? "",
+    goalId: task.goal_id ?? "",
     parentTaskId: task.parent_task_id ?? "",
     tags: task.tags.map((t) => t.name),
   };
@@ -46,11 +47,12 @@ const REPEATS: { v: RepeatPreset; label: string }[] = [
 ];
 
 export function TaskForm({
-  task, tz, projects, defaults = {}, onDone, onCancel,
+  task, tz, projects, goals = [], defaults = {}, onDone, onCancel,
 }: {
   task: TaskRecord | null;
   tz: string;
   projects: { id: string; name: string }[];
+  goals?: { id: string; title: string }[];
   defaults?: Partial<TaskInput>;
   onDone: (id?: string) => void;
   onCancel: () => void;
@@ -166,6 +168,15 @@ export function TaskForm({
             {projects.map((p) => <option key={p.id} value={p.id}>{p.name}</option>)}
           </NativeSelect>
         </div>
+        {goals.length > 0 && (
+          <div className="grid gap-1.5 sm:order-last sm:col-span-3">
+            <Label htmlFor="task-goal">Goal <span className="font-normal text-muted-foreground">(optional)</span></Label>
+            <NativeSelect id="task-goal" value={v.goalId ?? ""} onChange={(e) => set("goalId", e.target.value)}>
+              <option value="">None</option>
+              {goals.map((g) => <option key={g.id} value={g.id}>{g.title}</option>)}
+            </NativeSelect>
+          </div>
+        )}
         <div className="grid gap-1.5">
           <Label htmlFor="task-estimate">Estimate (min)</Label>
           <Input id="task-estimate" type="number" min={1} max={10080} inputMode="numeric" value={(v.estimateMinutes as number | undefined) ?? ""} onChange={(e) => set("estimateMinutes", e.target.value ? Number(e.target.value) : undefined)} />

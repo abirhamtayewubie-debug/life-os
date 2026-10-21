@@ -51,7 +51,7 @@ export function KnowledgeScreen({ ws, openId = null, startNew = false }: { ws: K
 
   return (
     <div className="grid grid-cols-[minmax(0,1fr)] gap-4 lg:grid-cols-[20rem_minmax(0,1fr)]">
-      <div className={cn("grid min-w-0 content-start gap-3", note && "hidden lg:grid")}>
+      <div className={cn("grid min-w-0 grid-cols-[minmax(0,1fr)] content-start gap-3", note && "hidden lg:grid")}>
         <div className="flex gap-2">
           <Form action="/knowledge" className="relative min-w-0 flex-1">
             <Search className="pointer-events-none absolute top-1/2 left-2.5 size-3.5 -translate-y-1/2 text-muted-foreground" />

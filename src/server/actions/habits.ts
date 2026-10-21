@@ -17,6 +17,7 @@ const habitSchema = z
     scheduleDays: z.array(z.number().int().min(0).max(6)).max(7).default([0, 1, 2, 3, 4, 5, 6]),
     targetPerPeriod: z.coerce.number().int().min(1, "At least once").max(50),
     timeOfDay: z.enum(["morning", "afternoon", "evening", "anytime"]).default("anytime"),
+    goalId: z.uuid().optional().or(z.literal("")),
   })
   .superRefine((v, ctx) => {
     if (v.cadence === "daily" && v.scheduleDays.length === 0) ctx.addIssue({ code: "custom", path: ["scheduleDays"], message: "Pick at least one day" });
@@ -43,6 +44,7 @@ function toRow(v: z.output<typeof habitSchema>) {
     schedule_days: v.cadence === "daily" ? [...new Set(v.scheduleDays)].sort() : [0, 1, 2, 3, 4, 5, 6],
     target_per_period: v.targetPerPeriod,
     time_of_day: v.timeOfDay,
+    goal_id: v.goalId || null,
   };
 }
 

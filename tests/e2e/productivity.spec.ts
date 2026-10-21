@@ -16,7 +16,7 @@ const dlg = (page: Page) => page.getByRole("dialog");
 
 async function search(page: Page, q: string) {
   await page.keyboard.press("Control+k");
-  const input = page.getByPlaceholder("Search tasks, events, habits and actions…");
+  const input = page.getByPlaceholder("Search tasks, events, goals, notes, people and actions…");
   await input.fill(q);
   return page.getByRole("dialog");
 }

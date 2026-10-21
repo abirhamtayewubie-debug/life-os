@@ -45,7 +45,7 @@ export function MilestoneList({
                 </button>
                 <span className={cn("min-w-0 flex-1 truncate", m.completed_at && "text-muted-foreground line-through")}>{m.title}</span>
                 {m.due_date && <span className={cn("tabular shrink-0 text-[11px] text-muted-foreground", late && "text-destructive")}>{formatShortDate(m.due_date, locale)}</span>}
-                <Button variant="ghost" size="icon-sm" className="size-6 opacity-0 group-hover:opacity-100 focus-visible:opacity-100" aria-label={`Remove milestone ${m.title}`} onClick={() => run(() => deleteMilestone(m.id), { quiet: true })}><X /></Button>
+                <Button variant="ghost" size="icon-sm" className="size-6 pointer-fine:opacity-0 pointer-fine:group-hover:opacity-100 focus-visible:opacity-100" aria-label={`Remove milestone ${m.title}`} onClick={() => run(() => deleteMilestone(m.id), { quiet: true })}><X /></Button>
               </li>
             );
           })}
