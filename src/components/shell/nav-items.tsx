@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { MODULES, MODULE_GROUP_LABELS, type ModuleGroup } from "@/lib/modules";
+import { BUILT_THROUGH_PHASE, MODULES, MODULE_GROUP_LABELS, type ModuleGroup } from "@/lib/modules";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { cn } from "@/lib/utils";
 
@@ -51,7 +51,7 @@ export function NavItems({
                 >
                   <m.icon className={cn("size-4 shrink-0 text-muted-foreground group-hover:text-foreground", active && "text-brand")} aria-hidden />
                   {collapsed ? <span className="sr-only">{m.label}</span> : <span className="truncate">{m.label}</span>}
-                  {!collapsed && m.phase > 1 && (
+                  {!collapsed && m.phase > BUILT_THROUGH_PHASE && (
                     <span className="ml-auto text-[10px] text-subtle-foreground tabular" title={`Arrives in phase ${m.phase}`}>
                       P{m.phase}
                     </span>

@@ -13,7 +13,7 @@ export default async function TasksPage({ searchParams }: PageProps<"/tasks">) {
   return (
     <div className="animate-rise">
       <PageHeader title="Tasks & Reminders" description="Plan the work, decide what matters today, and let reminders carry the rest." />
-      <TasksScreen ws={ws} filters={parseFilters(sp)} nowIso={now.toISOString()} openId={open} />
+      <TasksScreen key={open ?? "list"} ws={ws} filters={parseFilters(sp)} nowIso={now.toISOString()} openId={open} startNew={sp.new === "1"} />
     </div>
   );
 }

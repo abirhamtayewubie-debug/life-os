@@ -1,4 +1,5 @@
 import "server-only";
+import { expandEvents } from "@/lib/calendar";
 import { addDays, localDateKey, zonedTimeToUtc } from "@/lib/dates";
 import { generateSampleSet, sampleToRaw } from "@/lib/sample-data";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
@@ -61,7 +62,9 @@ async function loadLifeData(viewer: Extract<Viewer, { mode: "live" }>, now: Date
     supabase.from("tasks").select(taskCols).is("archived_at", null).in("status", ["todo", "in_progress", "waiting"]).limit(1000),
     supabase.from("tasks").select(taskCols).is("archived_at", null).eq("status", "done").gte("completed_at", zonedTimeToUtc(addDays(today, -7), "00:00", tz).toISOString()).limit(500),
     supabase.from("projects").select("id, name, status, area, due_date, source").eq("status", "active").is("archived_at", null),
-    supabase.from("calendar_events").select("id, title, kind, starts_at, ends_at, all_day, location, source").is("archived_at", null).lt("starts_at", windowEnd).gt("ends_at", windowStart).order("starts_at").limit(300),
+    // Single events in the window, plus every repeating series that has started; expanded below.
+    supabase.from("calendar_events").select("id, title, kind, starts_at, ends_at, all_day, location, timezone, recurrence_rule, source").is("archived_at", null)
+      .or(`recurrence_rule.not.is.null,and(starts_at.lt.${windowEnd},ends_at.gt.${windowStart})`).lt("starts_at", windowEnd).order("starts_at").limit(500),
     supabase.from("reminders").select("id, title, remind_at, status, snoozed_until, source").in("status", ["scheduled", "snoozed"]).lt("remind_at", windowEnd).limit(200),
     supabase.from("habits").select("id, name, cadence, schedule_days, target_per_period, time_of_day, paused_at, created_at, source").is("archived_at", null),
     supabase.from("habit_logs").select("habit_id, log_date, count").gte("log_date", addDays(today, -45)),
@@ -98,7 +101,8 @@ async function loadLifeData(viewer: Extract<Viewer, { mode: "live" }>, now: Date
 
   return {
     tasks: [...taskMap.values()],
-    events: must(events, "events") as RawLifeData["events"],
+    events: expandEvents(must(events, "events") as (RawLifeData["events"][number] & { timezone: string; recurrence_rule: string | null })[], addDays(today, -1), addDays(today, 8), tz)
+      .map(({ eventId: _e, occurrenceDate: _o, recurring: _r, series_starts_at: _s, series_ends_at: _x, timezone: _t, recurrence_rule: _rr, ...ev }) => ev),
     reminders: must(reminders, "reminders") as RawLifeData["reminders"],
     habits: must(habits, "habits") as RawLifeData["habits"],
     habitLogs: must(habitLogs, "habit logs") as RawLifeData["habitLogs"],

@@ -36,12 +36,12 @@ const EMPTY: Record<TaskView, { title: string; body: string }> = {
   done: { title: "Nothing completed in the last 90 days", body: "Completed tasks are kept here so you can look back." },
 };
 
-export function TasksScreen({ ws, filters, nowIso, openId }: { ws: TaskWorkspace; filters: TaskFilters; nowIso: string; openId?: string }) {
+export function TasksScreen({ ws, filters, nowIso, openId, startNew = false }: { ws: TaskWorkspace; filters: TaskFilters; nowIso: string; openId?: string; startNew?: boolean }) {
   const router = useRouter();
   const pathname = usePathname();
   const now = useMemo(() => new Date(nowIso), [nowIso]);
   const [q, setQ] = useState(filters.q ?? "");
-  const [creating, setCreating] = useState(false);
+  const [creating, setCreating] = useState(startNew);
   const [openTaskId, setOpenTaskId] = useState<string | null>(openId ?? null);
   const [savingView, setSavingView] = useState(false);
   const [viewName, setViewName] = useState("");

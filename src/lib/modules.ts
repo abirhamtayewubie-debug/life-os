@@ -95,3 +95,6 @@ export function getModule(key: string): ModuleDef {
   if (!m) throw new Error(`Unknown module: ${key}`);
   return m;
 }
+
+/** Modules with phase <= this are built; later ones show a placeholder. */
+export const BUILT_THROUGH_PHASE = 2;
