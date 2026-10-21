@@ -9,7 +9,7 @@
     "lint": "eslint",
     "typecheck": "tsc --noEmit",
     "test": "vitest run",
-    "test:db": "psql \"postgresql://postgres:postgres@127.0.0.1:54322/postgres\" -v ON_ERROR_STOP=1 -q -f supabase/tests/rls_isolation.sql -f supabase/tests/productivity.sql",
+    "test:db": "psql \"postgresql://postgres:postgres@127.0.0.1:54322/postgres\" -v ON_ERROR_STOP=1 -q -f supabase/tests/rls_isolation.sql -f supabase/tests/productivity.sql -f supabase/tests/goals_life.sql",
     "test:e2e": "playwright test",
     "db:start": "supabase start",
     "db:reset": "supabase db reset --local",

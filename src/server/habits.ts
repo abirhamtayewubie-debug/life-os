@@ -15,17 +15,19 @@ export async function getHabitWorkspace(now = new Date()): Promise<HabitWorkspac
   if (viewer.mode === "demo") {
     const s = generateSampleSet(now, timezone, viewer.profile.baseCurrency);
     return {
-      habits: s.habits.map((h) => ({ ...h, description: null, archived_at: null })) as HabitRecord[],
+      habits: s.habits.map((h) => ({ ...h, goal_id: h.goal_id ?? null, description: null, archived_at: null })) as HabitRecord[],
+      goals: s.goals.map(({ id, title }) => ({ id, title })),
       logs: s.habit_logs.map(({ habit_id, log_date, count }) => ({ habit_id, log_date, count })),
       logsFrom, today, timezone, locale, demo: true,
     };
   }
 
   const supabase = await createSupabaseServerClient();
-  const [habits, logs] = await Promise.all([
-    supabase.from("habits").select("id, name, description, cadence, schedule_days, target_per_period, time_of_day, paused_at, archived_at, created_at, source").order("created_at"),
+  const [habits, logs, goals] = await Promise.all([
+    supabase.from("habits").select("id, name, description, cadence, schedule_days, target_per_period, time_of_day, paused_at, archived_at, created_at, goal_id, source").order("created_at"),
     supabase.from("habit_logs").select("habit_id, log_date, count").gte("log_date", logsFrom).limit(20000),
+    supabase.from("goals").select("id, title").in("status", ["active", "paused"]).order("title"),
   ]);
-  for (const r of [habits, logs]) if (r.error) throw new Error(`Could not load habits: ${r.error.message}`);
-  return { habits: (habits.data ?? []) as HabitRecord[], logs: logs.data ?? [], logsFrom, today, timezone, locale, demo: false };
+  for (const r of [habits, logs, goals]) if (r.error) throw new Error(`Could not load habits: ${r.error.message}`);
+  return { habits: (habits.data ?? []) as HabitRecord[], goals: goals.data ?? [], logs: logs.data ?? [], logsFrom, today, timezone, locale, demo: false };
 }

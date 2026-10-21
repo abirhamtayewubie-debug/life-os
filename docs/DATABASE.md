@@ -32,9 +32,15 @@ Postgres on Supabase. Everything is in versioned SQL under [`supabase/migrations
 
 **0007 daily productivity** — `tasks.series_id` with a unique index allowing one open occurrence per series, RRULE shape checks, `saved_views` (per module, name unique ignoring case), `pg_trgm` title indexes on tasks, events and habits, triggers rejecting dependency cycles and subtask loops.
 
+**0008 goals and life** — goal nesting trigger (strictly broader parent, no loops), `time_entries` (one running timer per user), `interactions` (+ trigger syncing `people.last_contacted_on`), `admin_items` (renewal/job need a date; documents and records don't), `personal_values`, `journal_entries.search` full-text index, `learning_items.notes`, one Wheel check-in per day.
+
+**0009 record link cleanup** — trigger removing `record_links` rows (both directions) when a linked note, goal, project, task, person or journal entry is deleted.
+
+Trigger helpers never call functions in schema `private`: app roles have no `usage` on it, so any such call from a trigger fails for signed-in users.
+
 Calendar convention: timed events store real instants plus the zone they were created in, and repeats keep the local wall-clock time in that zone. All-day events are floating dates stored as UTC midnight of their first and last day (both inclusive), so `starts_at::date` is the date wherever the viewer is.
 
-## Verified by `supabase/tests/rls_isolation.sql` and `productivity.sql`
+## Verified by `supabase/tests/rls_isolation.sql`, `productivity.sql` and `goals_life.sql`
 
 - Every `public` table has RLS enabled and forced.
 - Sign-up creates a profile.
@@ -47,6 +53,8 @@ Calendar convention: timed events store real instants plus the zone they were cr
 - Dependency cycles and subtask loops are refused; a repeating series has one open occurrence; malformed repeat rules are refused.
 - An in-app reminder delivery is recorded once per occurrence.
 - Saved views, dependencies, events, habits and deliveries are invisible to and unchangeable by another user.
+- Goals nest only under broader goals; one running timer per person; last contact follows the newest interaction; undated renewals are refused; deleting a note removes its links.
+- Goals, milestones, time entries, people, interactions, admin items, notes, journal entries, values, learning items and skills are invisible to and unchangeable by another user, who also can't attach rows to them.
 
 ## Backups, export, deletion
 

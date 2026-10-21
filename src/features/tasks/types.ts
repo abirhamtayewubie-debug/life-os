@@ -44,6 +44,7 @@ export type TaskWorkspace = {
   tasks: TaskRecord[];
   reminders: ReminderRecord[];
   projects: { id: string; name: string }[];
+  goals: { id: string; title: string }[];
   tags: { id: string; name: string }[];
   savedViews: { id: string; name: string; filters: TaskFilters }[];
   timezone: string;

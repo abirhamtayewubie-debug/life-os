@@ -97,7 +97,7 @@ export function TasksScreen({ ws, filters, nowIso, openId, startNew = false }: {
             <button onClick={() => go(sv.filters)} className="flex h-8 flex-1 cursor-pointer items-center gap-2 rounded-md px-2.5 text-[13px] text-muted-foreground hover:bg-muted hover:text-foreground">
               <Bookmark className="size-4" /> {sv.name}
             </button>
-            <Button variant="ghost" size="icon-sm" className="size-7 opacity-0 group-hover:opacity-100 focus-visible:opacity-100" aria-label={`Delete view ${sv.name}`} onClick={() => run(() => deleteTaskView(sv.id))}>
+            <Button variant="ghost" size="icon-sm" className="size-7 pointer-fine:opacity-0 pointer-fine:group-hover:opacity-100 focus-visible:opacity-100" aria-label={`Delete view ${sv.name}`} onClick={() => run(() => deleteTaskView(sv.id))}>
               <Trash2 className="size-3.5" />
             </Button>
           </div>
@@ -212,6 +212,7 @@ export function TasksScreen({ ws, filters, nowIso, openId, startNew = false }: {
             task={null}
             tz={ws.timezone}
             projects={ws.projects}
+            goals={ws.goals}
             defaults={{ dueDate: filters.view === "today" ? today : "", isTopPriority: false, area: (filters.area as never) ?? "personal", projectId: filters.project ?? "" }}
             onDone={() => setCreating(false)}
             onCancel={() => setCreating(false)}
@@ -222,7 +223,7 @@ export function TasksScreen({ ws, filters, nowIso, openId, startNew = false }: {
       <Dialog open={!!openTask} onOpenChange={(o) => !o && setOpenTaskId(null)}>
         <DialogContent className="max-w-xl">
           <DialogHeader><DialogTitle>Edit task</DialogTitle><DialogDescription className="sr-only">Edit details, subtasks, dependencies and reminders.</DialogDescription></DialogHeader>
-          {openTask && <TaskDetail key={openTask.id + openTask.updated_at} task={openTask} all={ws.tasks} reminders={ws.reminders} projects={ws.projects} tz={ws.timezone} locale={ws.locale} onClose={() => setOpenTaskId(null)} />}
+          {openTask && <TaskDetail key={openTask.id + openTask.updated_at} task={openTask} all={ws.tasks} reminders={ws.reminders} projects={ws.projects} goals={ws.goals} tz={ws.timezone} locale={ws.locale} onClose={() => setOpenTaskId(null)} />}
         </DialogContent>
       </Dialog>
 

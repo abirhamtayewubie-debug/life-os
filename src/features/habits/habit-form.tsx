@@ -12,7 +12,7 @@ import { DAY_SHORT, TIME_OF_DAY_LABEL, type HabitRecord } from "./types";
 type Errors = Record<string, string[] | undefined>;
 const WEEK_ORDER = [1, 2, 3, 4, 5, 6, 0];
 
-export function HabitForm({ habit, onDone, onCancel }: { habit: HabitRecord | null; onDone: () => void; onCancel: () => void }) {
+export function HabitForm({ habit, goals = [], onDone, onCancel }: { habit: HabitRecord | null; goals?: { id: string; title: string }[]; onDone: () => void; onCancel: () => void }) {
   const [v, setV] = useState<HabitInput>(() =>
     habit
       ? {
@@ -22,8 +22,9 @@ export function HabitForm({ habit, onDone, onCancel }: { habit: HabitRecord | nu
           scheduleDays: habit.schedule_days,
           targetPerPeriod: habit.target_per_period,
           timeOfDay: habit.time_of_day ?? "anytime",
+          goalId: habit.goal_id ?? "",
         }
-      : { name: "", description: "", cadence: "daily", scheduleDays: [0, 1, 2, 3, 4, 5, 6], targetPerPeriod: 1, timeOfDay: "anytime" },
+      : { name: "", description: "", cadence: "daily", scheduleDays: [0, 1, 2, 3, 4, 5, 6], targetPerPeriod: 1, timeOfDay: "anytime", goalId: "" },
   );
   const [errors, setErrors] = useState<Errors>({});
   const { pending, run } = useServerAction();
@@ -115,6 +116,16 @@ export function HabitForm({ habit, onDone, onCancel }: { habit: HabitRecord | nu
           </NativeSelect>
         </div>
       </div>
+
+      {goals.length > 0 && (
+        <div className="grid gap-1.5">
+          <Label htmlFor="habit-goal">Goal <span className="font-normal text-muted-foreground">(optional)</span></Label>
+          <NativeSelect id="habit-goal" value={v.goalId ?? ""} onChange={(e) => set("goalId", e.target.value)}>
+            <option value="">None</option>
+            {goals.map((g) => <option key={g.id} value={g.id}>{g.title}</option>)}
+          </NativeSelect>
+        </div>
+      )}
 
       <div className="grid gap-1.5">
         <Label htmlFor="habit-notes">Why it matters <span className="font-normal text-muted-foreground">(optional)</span></Label>

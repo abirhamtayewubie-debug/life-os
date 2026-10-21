@@ -28,12 +28,13 @@ function Section({ title, icon: Icon, children }: { title: string; icon: React.C
 }
 
 export function TaskDetail({
-  task, all, reminders, projects, tz, locale, onClose,
+  task, all, reminders, projects, goals, tz, locale, onClose,
 }: {
   task: TaskRecord;
   all: TaskRecord[];
   reminders: ReminderRecord[];
   projects: { id: string; name: string }[];
+  goals: { id: string; title: string }[];
   tz: string;
   locale: string;
   onClose: () => void;
@@ -54,7 +55,7 @@ export function TaskDetail({
 
   return (
     <div className="grid gap-6">
-      <TaskForm task={task} tz={tz} projects={projects} onDone={onClose} onCancel={onClose} />
+      <TaskForm task={task} tz={tz} projects={projects} goals={goals} onDone={onClose} onCancel={onClose} />
       <Separator />
 
       <Section title={`Subtasks${subtasks.length ? ` · ${subtasks.filter((s) => s.status === "done").length}/${subtasks.length}` : ""}`} icon={Plus}>

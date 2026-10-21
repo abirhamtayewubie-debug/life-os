@@ -130,7 +130,7 @@ export function HabitsScreen({ ws, startNew = false }: { ws: HabitWorkspace; sta
             <DialogTitle>{editing === "new" ? "New habit" : "Edit habit"}</DialogTitle>
             <DialogDescription className="sr-only">Habit details</DialogDescription>
           </DialogHeader>
-          {editing && <HabitForm habit={editing === "new" ? null : editing} onDone={() => setEditing(null)} onCancel={() => setEditing(null)} />}
+          {editing && <HabitForm habit={editing === "new" ? null : editing} goals={ws.goals} onDone={() => setEditing(null)} onCancel={() => setEditing(null)} />}
         </DialogContent>
       </Dialog>
 

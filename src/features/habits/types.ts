@@ -3,10 +3,12 @@ import type { RawHabit, RawHabitLog } from "@/features/dashboard/types";
 export type HabitRecord = RawHabit & {
   description: string | null;
   archived_at: string | null;
+  goal_id: string | null;
 };
 
 export type HabitWorkspace = {
   habits: HabitRecord[];
+  goals: { id: string; title: string }[];
   logs: RawHabitLog[];
   /** First date covered by `logs`. */
   logsFrom: string;
