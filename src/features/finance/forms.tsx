@@ -6,7 +6,7 @@ import { Field } from "@/components/ui/field";
 import { Input, NativeSelect, Textarea } from "@/components/ui/input";
 import { minorUnits } from "@/lib/money";
 import {
-  createTransfer, saveAccount, saveBudget, saveCategory, saveRate, saveRecurring, saveSavingsGoal, saveTransaction,
+  createTransfer, recordRecurringPayment, saveAccount, saveBudget, saveCategory, saveRate, saveRecurring, saveSavingsGoal, saveTransaction,
   type AccountInput, type BudgetInput, type RateInput, type RecurringInput, type SavingsInput, type TransactionInput, type TransferInput,
 } from "@/server/actions/finance";
 import type { ActionResult } from "@/server/actions/result";
@@ -44,6 +44,9 @@ function Actions({ pending, label, onCancel }: { pending: boolean; label: string
   );
 }
 
+/** Drops trailing zeros after a decimal point ("9000.0000" → "9000", "1.50" → "1.5"); whole numbers stay as they are. */
+const trimZeros = (n: string) => (n.includes(".") ? n.replace(/\.?0+$/, "") : n);
+
 const step = (currency: string) => (minorUnits(currency) ? `0.${"0".repeat(minorUnits(currency) - 1)}1` : "1");
 
 function CategoryOptions({ categories, kind }: { categories: Category[]; kind: "income" | "expense" }) {
@@ -69,7 +72,7 @@ export function AccountForm({ account, onDone, onCancel }: { account: Account | 
   const ws = useFinance();
   const owed = (a: Account) => a.opening_balance.replace(/^-/, "");
   const { v, set, err, pending, submit } = useForm<AccountInput>(() => account
-    ? { name: account.name, kind: account.kind, currency: account.currency, institution: account.institution ?? "", openingBalance: LIABILITY_KINDS.includes(account.kind) ? owed(account) : account.opening_balance, openingDate: account.opening_date, interestRate: account.interest_rate ?? "", includeInNetWorth: account.include_in_net_worth }
+    ? { name: account.name, kind: account.kind, currency: account.currency, institution: account.institution ?? "", openingBalance: trimZeros(LIABILITY_KINDS.includes(account.kind) ? owed(account) : account.opening_balance), openingDate: account.opening_date, interestRate: trimZeros(account.interest_rate ?? ""), includeInNetWorth: account.include_in_net_worth }
     : { name: "", kind: "checking", currency: ws.baseCurrency, institution: "", openingBalance: "", openingDate: ws.today, interestRate: "", includeInNetWorth: true });
   const liability = LIABILITY_KINDS.includes(v.kind as AccountKind);
   return (
@@ -121,7 +124,7 @@ export function TransactionForm({ tx, defaults, onDone, onCancel }: { tx: Transa
   const ws = useFinance();
   const open = ws.accounts.filter((a) => !a.archived_at);
   const { v, set, err, pending, submit } = useForm<TransactionInput>(() => tx
-    ? { accountId: tx.account_id, kind: tx.kind === "transfer" ? "adjustment" : tx.kind, amount: tx.kind === "adjustment" ? tx.amount : tx.amount.replace(/^-/, ""), date: tx.occurred_on, categoryId: tx.category_id ?? "", projectId: tx.project_id ?? "", description: tx.description ?? "", payee: tx.payee ?? "", notes: tx.notes ?? "", pending: tx.is_pending }
+    ? { accountId: tx.account_id, kind: tx.kind === "transfer" ? "adjustment" : tx.kind, amount: trimZeros(tx.kind === "adjustment" ? tx.amount : tx.amount.replace(/^-/, "")), date: tx.occurred_on, categoryId: tx.category_id ?? "", projectId: tx.project_id ?? "", description: tx.description ?? "", payee: tx.payee ?? "", notes: tx.notes ?? "", pending: tx.is_pending }
     : { accountId: open[0]?.id ?? "", kind: "expense", amount: "", date: ws.today, categoryId: "", projectId: "", description: "", payee: "", notes: "", pending: false, ...defaults });
   const acct = ws.accounts.find((a) => a.id === v.accountId);
   return (
@@ -265,7 +268,7 @@ export function BudgetForm({ budget, onDone, onCancel }: { budget: Budget | null
   const ordered = tops.flatMap((t) => [t, ...expense.filter((c) => c.parent_id === t.id)]);
   const { v, set, err, pending, submit } = useForm<BudgetInput>(() => ({
     name: budget?.name ?? "Monthly spending", period: budget?.period ?? "monthly", currency: budget?.currency ?? ws.baseCurrency,
-    lines: ordered.map((c) => ({ categoryId: c.id, amount: budget?.lines.find((l) => l.category_id === c.id)?.amount.replace(/\.?0+$/, "") ?? "" })),
+    lines: ordered.map((c) => ({ categoryId: c.id, amount: trimZeros(budget?.lines.find((l) => l.category_id === c.id)?.amount ?? "") })),
   }));
   const setLine = (i: number, amount: string) => set("lines", v.lines.map((l, j) => (j === i ? { ...l, amount } : l)));
   return (
@@ -317,7 +320,7 @@ export function RecurringForm({ item, onDone, onCancel }: { item: Recurring | nu
   const ws = useFinance();
   const open = ws.accounts.filter((a) => !a.archived_at);
   const { v, set, err, pending, submit } = useForm<RecurringInput>(() => item
-    ? { accountId: item.account_id, categoryId: item.category_id ?? "", description: item.description, amount: item.amount.replace(/^-/, ""), kind: recKind(item), everyN: item.every_n, unit: item.unit, nextDueOn: item.next_due_on, endsOn: item.ends_on ?? "", remindDaysBefore: item.remind_days_before, autopay: item.autopay }
+    ? { accountId: item.account_id, categoryId: item.category_id ?? "", description: item.description, amount: trimZeros(item.amount.replace(/^-/, "")), kind: recKind(item), everyN: item.every_n, unit: item.unit, nextDueOn: item.next_due_on, endsOn: item.ends_on ?? "", remindDaysBefore: item.remind_days_before, autopay: item.autopay }
     : { accountId: open[0]?.id ?? "", categoryId: "", description: "", amount: "", kind: "bill", everyN: 1, unit: "month", nextDueOn: ws.today, endsOn: "", remindDaysBefore: 2, autopay: false });
   const n = Number(v.everyN) || 1;
   return (
@@ -385,7 +388,7 @@ export function RecurringForm({ item, onDone, onCancel }: { item: Recurring | nu
 export function RateForm({ rate, onDone, onCancel }: { rate: StoredRate | null; onDone: () => void; onCancel: () => void }) {
   const ws = useFinance();
   const other = ws.currencies.find((c) => c !== ws.baseCurrency) ?? "USD";
-  const { v, set, err, pending, submit } = useForm<RateInput>(() => rate ? { base: rate.base, quote: rate.quote, rate: rate.rate.replace(/\.?0+$/, ""), asOf: rate.as_of } : { base: other, quote: ws.baseCurrency, rate: "", asOf: ws.today });
+  const { v, set, err, pending, submit } = useForm<RateInput>(() => rate ? { base: rate.base, quote: rate.quote, rate: trimZeros(rate.rate), asOf: rate.as_of } : { base: other, quote: ws.baseCurrency, rate: "", asOf: ws.today });
   return (
     <form noValidate className="grid gap-4" onSubmit={submit((x) => saveRate(rate?.id ?? null, x), onDone)}>
       <div className="grid grid-cols-[auto_1fr_auto_1fr] items-end gap-2 text-[13px]">
@@ -417,7 +420,7 @@ export function RateForm({ rate, onDone, onCancel }: { rate: StoredRate | null; 
 export function SavingsForm({ goal, onDone, onCancel }: { goal: SavingsGoal | null; onDone: () => void; onCancel: () => void }) {
   const ws = useFinance();
   const { v, set, err, pending, submit } = useForm<SavingsInput>(() => goal
-    ? { name: goal.name, target: goal.target_amount.replace(/\.?0+$/, ""), currency: goal.currency, saved: goal.saved_amount.replace(/\.?0+$/, ""), targetDate: goal.target_date ?? "", accountId: goal.account_id ?? "", goalId: goal.goal_id ?? "" }
+    ? { name: goal.name, target: trimZeros(goal.target_amount), currency: goal.currency, saved: trimZeros(goal.saved_amount), targetDate: goal.target_date ?? "", accountId: goal.account_id ?? "", goalId: goal.goal_id ?? "" }
     : { name: "", target: "", currency: ws.baseCurrency, saved: "", targetDate: "", accountId: "", goalId: "" });
   const accounts = ws.accounts.filter((a) => !a.archived_at && a.currency === v.currency && !LIABILITY_KINDS.includes(a.kind));
   return (
@@ -458,6 +461,31 @@ export function SavingsForm({ goal, onDone, onCancel }: { goal: SavingsGoal | nu
         </Field>
       )}
       <Actions pending={pending} label={goal ? "Save" : "Add savings goal"} onCancel={onCancel} />
+    </form>
+  );
+}
+
+/* ------------------------------------------------------------------------ */
+
+export function PaymentForm({ item, onDone, onCancel }: { item: Recurring; onDone: () => void; onCancel: () => void }) {
+  const ws = useFinance();
+  const income = !item.amount.startsWith("-");
+  const { v, set, err, pending, submit } = useForm(() => ({ date: item.next_due_on < ws.today ? item.next_due_on : ws.today, amount: trimZeros(item.amount.replace(/^-/, "")) }));
+  const acct = ws.accounts.find((a) => a.id === item.account_id);
+  return (
+    <form noValidate className="grid gap-4" onSubmit={submit((x) => recordRecurringPayment({ id: item.id, ...x }), onDone)}>
+      <div className="grid gap-4 sm:grid-cols-2">
+        <Field id="pay-amount" label={`${income ? "Received" : "Paid"} (${item.currency})`} error={err("amount")} hint="Change it if this time was different.">
+          <Input id="pay-amount" autoFocus inputMode="decimal" value={v.amount} onChange={(e) => set("amount", e.target.value)} aria-invalid={!!err("amount")} />
+        </Field>
+        <Field id="pay-date" label="On" error={err("date")}>
+          <Input id="pay-date" type="date" max={ws.today} value={v.date} onChange={(e) => set("date", e.target.value)} aria-invalid={!!err("date")} />
+        </Field>
+      </div>
+      <p className="text-[12px] text-muted-foreground">
+        This adds a transaction{acct ? ` to ${acct.name}` : ""} and moves the next date on by {item.every_n} {UNIT_LABEL[item.unit][item.every_n === 1 ? 0 : 1]}.
+      </p>
+      <Actions pending={pending} label={income ? "Record income" : "Record payment"} onCancel={onCancel} />
     </form>
   );
 }

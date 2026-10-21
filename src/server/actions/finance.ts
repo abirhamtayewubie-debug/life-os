@@ -540,7 +540,7 @@ const importSchema = z.object({
     description: z.string().max(300),
     payee: z.string().max(200).nullable(),
     external_id: z.string().min(1).max(200),
-  })).min(1, "Nothing to import").max(1000),
+  })).min(1, "Nothing to import").max(250),
 });
 
 export type ImportInput = z.input<typeof importSchema>;

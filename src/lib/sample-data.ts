@@ -168,7 +168,7 @@ export function generateSampleSet(now: Date, tz: string, baseCurrency = "ETB", i
     id: id(), name, kind, currency, opening_balance: opening, opening_date: addDays(today, -90), source: S,
   });
   const aBank = acct("CBE Current", "checking", "ETB", "48250.00");
-  const aCash = acct("Cash wallet", "cash", "ETB", "3200.00");
+  const aCash = acct("Cash wallet", "cash", "ETB", "9200.00");
   const aSave = acct("Emergency savings", "savings", "ETB", "76500.00");
   const aUsd = acct("USD Payoneer", "checking", "USD", "1240.00");
   const financial_accounts = [aBank, aCash, aSave, aUsd];

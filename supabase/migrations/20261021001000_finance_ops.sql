@@ -113,7 +113,8 @@ begin
   if uid is null then raise exception 'not authenticated' using errcode = '42501'; end if;
   select * into r from public.recurring_transactions where id = p_recurring_id and archived_at is null for update;
   if not found then raise exception 'Bill not found' using errcode = '23503'; end if;
-  amt := coalesce(p_amount, r.amount);
+  -- A custom amount keeps the item's direction: a bill stays money out.
+  amt := sign(r.amount) * abs(coalesce(p_amount, r.amount));
   if amt = 0 then raise exception 'Amount can''t be zero' using errcode = '23514'; end if;
 
   insert into public.transactions (user_id, account_id, category_id, recurring_id, kind, amount, currency, occurred_on, description, source)

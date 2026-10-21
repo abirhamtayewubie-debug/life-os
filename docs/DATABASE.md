@@ -36,11 +36,13 @@ Postgres on Supabase. Everything is in versioned SQL under [`supabase/migrations
 
 **0009 record link cleanup** — trigger removing `record_links` rows (both directions) when a linked note, goal, project, task, person or journal entry is deleted.
 
+**0010 finance operations** — functions `create_transfer()` (both legs in one transaction) and `record_recurring_payment()` (adds the payment, advances or closes the schedule), both `security invoker` so RLS applies; triggers deleting a transfer's other leg, guarding transfer legs against edits that would unbalance them, and checking category nesting, transaction category kind and budget line kind; bills/subscriptions must be negative; `exchange_rates_lookup_idx`, `budgets_user_idx`.
+
 Trigger helpers never call functions in schema `private`: app roles have no `usage` on it, so any such call from a trigger fails for signed-in users.
 
 Calendar convention: timed events store real instants plus the zone they were created in, and repeats keep the local wall-clock time in that zone. All-day events are floating dates stored as UTC midnight of their first and last day (both inclusive), so `starts_at::date` is the date wherever the viewer is.
 
-## Verified by `supabase/tests/rls_isolation.sql`, `productivity.sql` and `goals_life.sql`
+## Verified by `supabase/tests/rls_isolation.sql`, `productivity.sql`, `goals_life.sql` and `finance.sql`
 
 - Every `public` table has RLS enabled and forced.
 - Sign-up creates a profile.
@@ -55,6 +57,8 @@ Calendar convention: timed events store real instants plus the zone they were cr
 - Saved views, dependencies, events, habits and deliveries are invisible to and unchangeable by another user.
 - Goals nest only under broader goals; one running timer per person; last contact follows the newest interaction; undated renewals are refused; deleting a note removes its links.
 - Goals, milestones, time entries, people, interactions, admin items, notes, journal entries, values, learning items and skills are invisible to and unchangeable by another user, who also can't attach rows to them.
+- Transfers are written and deleted as a pair and can't be unbalanced by edits; categories nest one level under the same kind; budget limits are for spending categories; bills are money out and a recorded payment advances the schedule; one rate per currency pair per day; an imported row can't be imported twice into the same account.
+- Accounts, balances, transactions, categories, budgets, bills and rates are invisible to and unchangeable by another user, including through `create_transfer()` and `record_recurring_payment()`.
 
 ## Backups, export, deletion
 

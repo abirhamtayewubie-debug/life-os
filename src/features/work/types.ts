@@ -1,3 +1,4 @@
+import type { Rate } from "@/features/finance/ledger";
 import type { DataSource } from "@/features/dashboard/types";
 import type { MilestoneRecord } from "@/features/goals/types";
 
@@ -45,6 +46,9 @@ export type WorkWorkspace = {
   milestones: MilestoneRecord[];
   time: TimeEntry[];
   goals: { id: string; title: string }[];
+  /** Posted expenses linked to a project, for spending against its budget. */
+  spending: { project_id: string; amount: string; currency: string; occurred_on: string }[];
+  rates: Rate[];
   currencies: string[];
   baseCurrency: string;
   today: string;

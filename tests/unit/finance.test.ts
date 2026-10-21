@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { buildImport, parseAmount, parseCsv, parseDate, toCsv } from "@/features/finance/csv";
 import {
-  budgetStatus, convertMoney, findRate, monthlyEquivalent, monthlyReport, netWorth, nextDue, payoffMonths, periodBounds, savingsProgress, shiftMonth,
+  budgetStatus, convertMoney, findRate, monthlyEquivalent, monthlyReport, netWorth, nextDue, payoffMonths, periodBounds, savingsProgress, shiftMonth, spendIn,
   type Category, type LedgerTx, type Rate,
 } from "@/features/finance/ledger";
 
@@ -158,5 +158,20 @@ describe("csv", () => {
   });
   it("neutralises spreadsheet formulas on export but keeps negative numbers", () => {
     expect(toCsv([["=HYPERLINK(1)", "-12.50", "a,b"]])).toBe("'=HYPERLINK(1),-12.50,\"a,b\"\r\n");
+  });
+});
+
+describe("project spending", () => {
+  it("converts each expense with the rate for its date and lists what it can't convert", () => {
+    const r = spendIn("ETB", [
+      { amount: "-1000.00", currency: "ETB", occurred_on: "2026-10-02" },
+      { amount: "-10.00", currency: "USD", occurred_on: "2026-10-02" },
+      { amount: "-10.00", currency: "USD", occurred_on: "2026-10-16" },
+      { amount: "-5.00", currency: "EUR", occurred_on: "2026-10-16" },
+    ], rates);
+    expect(r.spent).toEqual({ amount: "3455.00", currency: "ETB" });
+    expect(r.unconverted).toEqual([{ amount: "5.00", currency: "EUR" }]);
+    expect(r.oldestRate).toBe("2026-10-01");
+    expect(r.count).toBe(4);
   });
 });

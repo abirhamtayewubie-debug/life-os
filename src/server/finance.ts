@@ -30,6 +30,63 @@ function matches(t: Transaction, f: TxFilters) {
   return true;
 }
 
+type Client = Awaited<ReturnType<typeof createSupabaseServerClient>>;
+
+function filteredQuery(supabase: Client, filters: TxFilters) {
+  const { start, end } = monthBounds(`${filters.month}-01`);
+  let q = supabase.from("transactions").select(TX_COLUMNS).gte("occurred_on", start).lte("occurred_on", end);
+  if (filters.account) q = q.eq("account_id", filters.account);
+  if (filters.category === "none") q = q.is("category_id", null).neq("kind", "transfer");
+  else if (filters.category) q = q.eq("category_id", filters.category);
+  if (filters.q) {
+    const p = `%${filters.q.replace(/[\\%_,()]/g, (c) => `\\${c}`)}%`;
+    q = q.or(`description.ilike.${p},payee.ilike.${p},notes.ilike.${p}`);
+  }
+  return q;
+}
+
+export type ExportRow = { date: string; account: string; kind: string; amount: string; currency: string; category: string; description: string; payee: string; notes: string; pending: boolean; source: string };
+
+/** Every transaction matching the Transactions tab's filters, for CSV export. */
+export async function getFinanceExport(sp: Record<string, string | string[] | undefined>, now = new Date()): Promise<{ month: string; rows: ExportRow[] }> {
+  const viewer = await getViewer();
+  const filters = readFilters(sp, localDateKey(now, viewer.profile.timezone));
+  let txs: Transaction[];
+  let accounts: { id: string; name: string }[];
+  let categories: { id: string; name: string; parent_id: string | null }[];
+  if (viewer.mode === "demo") {
+    const s = generateSampleSet(now, viewer.profile.timezone, viewer.profile.baseCurrency);
+    txs = (s.transactions.map((t) => ({ payee: null, notes: null, is_pending: false, transfer_group_id: null, ...t })) as Transaction[]).filter((t) => matches(t, filters));
+    accounts = s.financial_accounts;
+    categories = s.transaction_categories;
+  } else {
+    const supabase = await createSupabaseServerClient();
+    const [list, a, c] = await Promise.all([
+      filteredQuery(supabase, filters).order("occurred_on").order("created_at").limit(20000),
+      supabase.from("financial_accounts").select("id, name"),
+      supabase.from("transaction_categories").select("id, name, parent_id"),
+    ]);
+    if (list.error || a.error || c.error) throw new Error("Could not load transactions for export");
+    txs = list.data as Transaction[];
+    accounts = a.data;
+    categories = c.data;
+  }
+  const acc = new Map(accounts.map((a) => [a.id, a.name]));
+  const cat = new Map(categories.map((c) => [c.id, c]));
+  const catName = (id: string | null) => {
+    const c = id ? cat.get(id) : undefined;
+    if (!c) return "";
+    const parent = c.parent_id ? cat.get(c.parent_id) : undefined;
+    return parent ? `${parent.name} > ${c.name}` : c.name;
+  };
+  return {
+    month: filters.month,
+    rows: txs
+      .sort((x, y) => x.occurred_on.localeCompare(y.occurred_on))
+      .map((t) => ({ date: t.occurred_on, account: acc.get(t.account_id) ?? "", kind: t.kind, amount: t.amount, currency: t.currency, category: catName(t.category_id), description: t.description ?? "", payee: t.payee ?? "", notes: t.notes ?? "", pending: t.is_pending, source: t.source })),
+  };
+}
+
 export async function getFinanceWorkspace(sp: Record<string, string | string[] | undefined>, now = new Date()): Promise<FinanceWorkspace> {
   const viewer = await getViewer();
   const { timezone, locale, baseCurrency } = viewer.profile;
@@ -67,15 +124,7 @@ export async function getFinanceWorkspace(sp: Record<string, string | string[] |
   }
 
   const supabase = await createSupabaseServerClient();
-  const { start, end } = monthBounds(`${filters.month}-01`);
-  let listQ = supabase.from("transactions").select(TX_COLUMNS).gte("occurred_on", start).lte("occurred_on", end);
-  if (filters.account) listQ = listQ.eq("account_id", filters.account);
-  if (filters.category === "none") listQ = listQ.is("category_id", null).neq("kind", "transfer");
-  else if (filters.category) listQ = listQ.eq("category_id", filters.category);
-  if (filters.q) {
-    const p = `%${filters.q.replace(/[\\%_,()]/g, (c) => `\\${c}`)}%`;
-    listQ = listQ.or(`description.ilike.${p},payee.ilike.${p},notes.ilike.${p}`);
-  }
+  const listQ = filteredQuery(supabase, filters);
 
   const [accounts, balances, categories, list, recent, recurring, budgets, rates, savings, projects, goals, currencies, profile] = await Promise.all([
     supabase.from("financial_accounts").select("id, name, kind, currency, institution, opening_balance::text, opening_date, is_liability, interest_rate::text, include_in_net_worth, source, archived_at").order("name"),

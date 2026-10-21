@@ -1,9 +1,10 @@
 "use client";
 
 import { createContext, useContext } from "react";
+import { formatShortDate } from "@/lib/dates";
 import { formatMoney, type Money } from "@/lib/money";
 import { cn } from "@/lib/utils";
-import type { FinanceWorkspace } from "./types";
+import type { Account, Budget, Category, FinanceWorkspace, Recurring, SavingsGoal, StoredRate, Transaction } from "./types";
 
 export const FinanceContext = createContext<FinanceWorkspace | null>(null);
 export function useFinance(): FinanceWorkspace {
@@ -40,3 +41,45 @@ export const TABS = [
   { v: "setup", label: "Accounts & setup" },
 ] as const;
 export type FinanceTab = (typeof TABS)[number]["v"];
+
+export type Editor =
+  | { k: "account"; x: Account | null }
+  | { k: "tx"; x: Transaction | null }
+  | { k: "transfer" }
+  | { k: "category"; x: Category | null }
+  | { k: "budget"; x: Budget | null }
+  | { k: "recurring"; x: Recurring | null }
+  | { k: "pay"; x: Recurring }
+  | { k: "rate"; x: StoredRate | null }
+  | { k: "savings"; x: SavingsGoal | null }
+  | { k: "import" };
+
+type Nav = { open: (e: Editor) => void; go: (params: Record<string, string | null>) => void };
+export const NavContext = createContext<Nav | null>(null);
+export function useNav(): Nav {
+  const n = useContext(NavContext);
+  if (!n) throw new Error("useNav outside FinanceScreen");
+  return n;
+}
+
+
+/** What a savings goal has: the linked account's balance (never below zero), or the amount typed in. */
+export function savedFor(goal: SavingsGoal, accounts: Account[]): Money {
+  const a = goal.account_id ? accounts.find((x) => x.id === goal.account_id) : undefined;
+  if (a && a.currency === goal.currency) return { amount: a.balance.startsWith("-") ? "0" : a.balance, currency: a.currency };
+  return { amount: goal.saved_amount, currency: goal.currency };
+}
+
+export function SectionTitle({ children, action }: { children: React.ReactNode; action?: React.ReactNode }) {
+  return (
+    <div className="flex items-center gap-2">
+      <h2 className="text-[13px] font-medium tracking-tight">{children}</h2>
+      {action && <div className="ml-auto flex items-center gap-1">{action}</div>}
+    </div>
+  );
+}
+
+/** "Oct 23", with the year added when it isn't this year. */
+export function dateLabel(dateKey: string, today: string, locale: string) {
+  return `${formatShortDate(dateKey, locale)}${dateKey.slice(0, 4) !== today.slice(0, 4) ? `, ${dateKey.slice(0, 4)}` : ""}`;
+}

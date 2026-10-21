@@ -392,3 +392,31 @@ export function payoffMonths(owed: Money, aprPct: number, payment: Money): { mon
   }
   return null;
 }
+
+/* ------------------------------------------------------------------------ */
+/* Project spending                                                          */
+/* ------------------------------------------------------------------------ */
+
+export type SpendTotal = { spent: Money; unconverted: Money[]; oldestRate: string | null; count: number };
+
+/**
+ * Spending (given as positive or negative amounts) added up in one currency,
+ * each item converted with the rate for its own date. Items with no rate are
+ * returned per currency instead of being guessed.
+ */
+export function spendIn(currency: string, items: { amount: string; currency: string; occurred_on: string }[], rates: Rate[]): SpendTotal {
+  let spent = zero(currency);
+  const missing = new Map<string, Money>();
+  let oldestRate: string | null = null;
+  for (const it of items) {
+    const m = absMoney({ amount: it.amount, currency: it.currency });
+    const c = convertMoney(m, currency, rates, it.occurred_on);
+    if (!c) {
+      missing.set(it.currency, add(missing.get(it.currency) ?? zero(it.currency), m));
+      continue;
+    }
+    if (c.asOf && (!oldestRate || c.asOf < oldestRate)) oldestRate = c.asOf;
+    spent = add(spent, c.money);
+  }
+  return { spent, unconverted: [...missing.values()], oldestRate, count: items.length };
+}

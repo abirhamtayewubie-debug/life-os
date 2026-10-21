@@ -71,7 +71,7 @@ export function ProjectForm({ project, ws, onDone, onCancel }: { project: Projec
         </Field>
       </div>
       <div className="grid gap-4 sm:grid-cols-[1fr_8rem]">
-        <Field id="project-budget" label="Budget" optional error={err("budgetAmount")} hint="Recorded here only. Spending against it connects when Finance arrives in phase 4.">
+        <Field id="project-budget" label="Budget" optional error={err("budgetAmount")} hint="Spending you tag with this project in Finance counts against it.">
           <Input id="project-budget" inputMode="decimal" value={v.budgetAmount} onChange={(e) => set("budgetAmount", e.target.value)} aria-invalid={!!err("budgetAmount")} />
         </Field>
         <Field id="project-currency" label="Currency" error={err("budgetCurrency")}>
