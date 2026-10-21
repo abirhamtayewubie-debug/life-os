@@ -89,6 +89,7 @@ export async function loadSampleData(): Promise<ActionResult<{ rows: number }>> 
     ["sleep_logs", withUser(s.sleep_logs.map(({ duration_minutes: _d, ...r }) => r))],
     ["journal_entries", withUser(s.journal_entries)],
     ["notes", withUser(s.notes.map(({ updated_at: _u, ...r }) => r))],
+    ["record_links", withUser(s.note_links)],
     ["daily_reviews", withUser(s.daily_reviews)],
     ["people", withUser(s.people)],
     ["interactions", withUser(s.interactions)],

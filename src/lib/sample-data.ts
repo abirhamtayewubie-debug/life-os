@@ -234,10 +234,14 @@ export function generateSampleSet(now: Date, tz: string, baseCurrency = "ETB", i
     { id: id(), entry_date: addDays(today, -2), kind: "reflection", title: "What made the site visit go well", body: "Sample entry.", is_private: true, source: S },
     { id: id(), entry_date: addDays(today, -4), kind: "journal", title: null, body: "Sample entry.", is_private: true, source: S },
   ];
-  const notes = [
-    { id: id(), title: "Café rebrand — client feedback round 1", kind: "meeting", body: "Sample note.", updated_at: at(-1, "12:10"), source: S },
-    { id: id(), title: "Decision: timber vs. aluminium window frames", kind: "decision", body: "Sample note.", updated_at: at(-3, "18:00"), source: S },
-    { id: id(), title: "Presentation phrases to practise", kind: "learning", body: "Sample note.", updated_at: at(-5, "20:30"), source: S },
+  const nFeedback = { id: id(), title: "Café rebrand — client feedback round 1", kind: "meeting", folder: "Clients", url: null as string | null, pinned: true, project_id: pBrand.id as string | null, goal_id: null as string | null, body: "Sample note. They liked direction B. Next: refine the palette, see [[Brand colour principles]].", updated_at: at(-1, "12:10"), source: S };
+  const nColours = { id: id(), title: "Brand colour principles", kind: "reference", folder: "Design", url: null as string | null, pinned: false, project_id: null as string | null, goal_id: null as string | null, body: "Sample note. Start from two neutrals and one accent. Check contrast before presenting.", updated_at: at(-6, "09:00"), source: S };
+  const nWindows = { id: id(), title: "Decision: timber vs. aluminium window frames", kind: "decision", folder: "Construction", url: null as string | null, pinned: false, project_id: null as string | null, goal_id: null as string | null, body: "Sample note. Chose aluminium for the rental unit: lower upkeep.", updated_at: at(-3, "18:00"), source: S };
+  const nPhrases = { id: id(), title: "Presentation phrases to practise", kind: "learning", folder: "English", url: null as string | null, pinned: false, project_id: null as string | null, goal_id: gEnglish.id as string | null, body: "Sample note. Openers and transitions. Use these when presenting [[Café rebrand — client feedback round 1]].", updated_at: at(-5, "20:30"), source: S };
+  const notes = [nFeedback, nColours, nWindows, nPhrases];
+  const note_links = [
+    { id: id(), from_type: "note" as const, from_id: nFeedback.id, to_type: "note" as const, to_id: nColours.id },
+    { id: id(), from_type: "note" as const, from_id: nPhrases.id, to_type: "note" as const, to_id: nFeedback.id },
   ];
   const daily_reviews = [
     { id: id(), review_date: addDays(today, -1), kind: "evening" as const, achievements: "Typography exploration done; good run.", unfinished: "Internet bill", tomorrow_priorities: ["Logo concepts", "Send site photos", "Pay internet bill"], mood: 4, energy: 3, notes: null as string | null, source: S },
@@ -313,7 +317,7 @@ export function generateSampleSet(now: Date, tz: string, baseCurrency = "ETB", i
   return {
     wheel_categories, wheel_assessments, wheel_ratings, goals, projects, tasks, calendar_events, reminders,
     habits, habit_logs, financial_accounts, transaction_categories, transactions, budgets: [budget], budget_lines,
-    wellness_logs, sleep_logs, journal_entries, notes, daily_reviews,
+    wellness_logs, sleep_logs, journal_entries, notes, note_links, daily_reviews,
     milestones, time_entries, people, interactions, important_dates, learning_items, skills, admin_items, personal_values,
   };
 }
