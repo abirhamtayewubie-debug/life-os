@@ -15,13 +15,18 @@ export function ConfirmDelete({
   confirmLabel?: string;
   onConfirm: () => void;
   disabled?: boolean;
-  size?: "sm" | "xs";
+  /** "icon-sm" shows only the bin icon, with `label` as its accessible name. */
+  size?: "sm" | "xs" | "icon-sm";
   label?: string;
 }) {
   return (
     <AlertDialog>
       <AlertDialogTrigger asChild>
-        <Button type="button" variant="ghost" size={size} disabled={disabled} className="text-destructive hover:text-destructive"><Trash2 /> {label}</Button>
+        {size === "icon-sm" ? (
+          <Button type="button" variant="ghost" size="icon-sm" disabled={disabled} aria-label={label} className="size-6 text-muted-foreground hover:text-destructive"><Trash2 /></Button>
+        ) : (
+          <Button type="button" variant="ghost" size={size} disabled={disabled} className="text-destructive hover:text-destructive"><Trash2 /> {label}</Button>
+        )}
       </AlertDialogTrigger>
       <AlertDialogContent>
         <AlertDialogTitle>{title}</AlertDialogTitle>
