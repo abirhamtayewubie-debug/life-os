@@ -52,7 +52,7 @@ const accountSchema = z.object({
   /** For a card or loan this is the amount owed, entered as a positive number. */
   openingBalance: signedAmountText.or(z.literal("")).default(""),
   openingDate: dateKey,
-  interestRate: z.union([z.coerce.number().min(0, "Use 0 to 100").max(100, "Use 0 to 100"), z.literal("")]).optional().transform((v) => (v === "" || v === undefined ? null : v)),
+  interestRate: z.union([z.literal(""), z.coerce.number().min(0, "Use 0 to 100").max(100, "Use 0 to 100")]).optional().transform((v) => (v === "" || v === undefined ? null : v)),
   includeInNetWorth: z.boolean().default(true),
 });
 

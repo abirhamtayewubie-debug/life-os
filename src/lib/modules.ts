@@ -97,4 +97,4 @@ export function getModule(key: string): ModuleDef {
 }
 
 /** Modules with phase <= this are built; later ones show a placeholder. */
-export const BUILT_THROUGH_PHASE = 4;
+export const BUILT_THROUGH_PHASE = 5;

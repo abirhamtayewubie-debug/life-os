@@ -11,7 +11,7 @@ import type { ViewerProfile } from "@/features/dashboard/types";
 const ZONES = ["Africa/Addis_Ababa", "Africa/Nairobi", "America/Toronto", "America/Vancouver", "America/New_York", "America/Los_Angeles", "Europe/London", "Europe/Berlin", "Asia/Dubai", "UTC"];
 
 export function PreferencesForm({ profile, weekStartsOn }: { profile: ViewerProfile; weekStartsOn: number }) {
-  const [v, setV] = useState({ displayName: profile.displayName ?? "", timezone: profile.timezone, baseCurrency: profile.baseCurrency, locale: profile.locale, weekStartsOn });
+  const [v, setV] = useState({ displayName: profile.displayName ?? "", timezone: profile.timezone, baseCurrency: profile.baseCurrency, locale: profile.locale, weekStartsOn, measurementSystem: profile.measurementSystem });
   const [errors, setErrors] = useState<Record<string, string[] | undefined>>({});
   const { pending, run } = useServerAction();
   const zones = ZONES.includes(v.timezone) ? ZONES : [v.timezone, ...ZONES];
@@ -65,6 +65,13 @@ export function PreferencesForm({ profile, weekStartsOn }: { profile: ViewerProf
           <option value={1}>Monday</option>
           <option value={0}>Sunday</option>
           <option value={6}>Saturday</option>
+        </NativeSelect>
+      </div>
+      <div className="grid gap-1.5">
+        <Label htmlFor="measurementSystem">Units</Label>
+        <NativeSelect id="measurementSystem" value={v.measurementSystem} onChange={set("measurementSystem")}>
+          <option value="metric">Metric (kg, cm)</option>
+          <option value="imperial">Imperial (lb, in)</option>
         </NativeSelect>
       </div>
       <div className="sm:col-span-2">

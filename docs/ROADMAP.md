@@ -7,8 +7,8 @@ Each phase ships working software and must meet the Definition of Done (persists
 | 1 Foundation | Architecture, schema + RLS, design system, navigation, auth, Command Center with labelled sample data | **Done** (this log) |
 | 2 Daily productivity | Tasks (subtasks, deps, tags, saved views), reminders with snooze, calendar day/week/month/agenda + time blocking + conflicts, habits CRUD, ⌘K record search, RRULE recurrence, time-zone tests | **Done** (merged, PR #1) |
 | 3 Goals & life | Goals hierarchy + milestones, projects (Kanban/timeline), journal, knowledge base (search, backlinks, files), learning, relationships, home admin, Wheel of Life assessments | **Done** (merged, PR #2; file attachments wait for Storage) |
-| 4 Finance | Accounts, transactions, transfers, budgets, bills/subscriptions, savings & debt, exchange rates, CSV import/export, monthly report | **Done** (PR for review) |
-| 5 Health & analytics | Workouts, measurements, sleep, wellness, reports (daily → annual) with measured vs interpreted split | |
+| 4 Finance | Accounts, transactions, transfers, budgets, bills/subscriptions, savings & debt, exchange rates, CSV import/export, monthly report | **Done** (merged, PR #3) |
+| 5 Health & analytics | Workouts, measurements, sleep, wellness, reports (daily → annual) with measured vs interpreted split | **Done** (PR for review) |
 | 6 AI assistant | Server-side Anthropic integration, permissioned read tools, confirm-before-write proposals, briefings and weekly reports | Needs approval (paid API) |
 | 7 Integrations & notifications | Google/Outlook calendar (OAuth), web push, email, health imports, dispatcher with retries | Needs approval per service |
 | 8 Quality & launch | Accessibility & security review, export/deletion, monitoring, backups, deployment docs | |
@@ -37,6 +37,28 @@ Each phase ships working software and must meet the Definition of Done (persists
 - Tests: 55 unit tests (adds recurrence, calendar expansion/DST/conflicts/layout, task filters, habit stats), `supabase/tests/productivity.sql` (cycles, series uniqueness, rule checks, view names, delivery idempotency, cross-user isolation for the new tables), and a Playwright flow covering tasks → reminder alert → repeating task → events + overlap → time block → habits → search → second user sees none of it.
 - Known limits: no drag-and-drop on the calendar yet (use the event form), no per-occurrence edits of repeating events, reminders are in-app only, no external calendar sync (phase 7).
 
+
+## Phase 5 log
+
+- Migration `0011_health_reports`: a metric/imperial preference on the profile; each body metric accepts only its own units (weight kg/lb, lengths cm/in, heart rate bpm, blood pressure mmHg) and a plausible range, so a slip like 820 kg is refused instead of charted; one reading per metric per moment; set numbers unique per exercise in a workout; saved reports must store their facts as an object and cover at most a year.
+- Health & Fitness (`/health`) has four tabs:
+  - Today: check-ins (mood, energy, stress on 1–5, at least one), water with quick-add buttons, and the last seven days at a glance with last night's sleep.
+  - Workouts: activity, date, start, minutes, effort (1–10), an optional goal, and sets (exercise, reps, weight, distance); this week's totals and an 8-week minutes chart.
+  - Body: weight, waist, hip, chest, body fat and resting heart rate, each with a chart and all readings; blood pressure is saved as a pair and listed without categories.
+  - Mood & energy: 7/30/90-day lines with gaps for days not logged, and daily water.
+- Sleep & Recovery (`/sleep`): log a night by bed and wake time (bedtimes after midnight are handled), how rested you feel and times woken; averages, typical bed/wake time and spread, and a chart with a 7-hour guideline line. One manual night per date.
+- Values are stored as typed and converted only for display, using the Units setting in Settings.
+- Reports (`/reports`): day, week, month, quarter or year, stepping back through earlier periods. Tasks (on time, late, undated), daily-habit consistency, focus time by project, workouts, sleep, check-in averages, water, money per currency (never added across currencies), days journaled (by date only; text is never read), people contacted, milestones, goals reached and learning finished. A period still running is compared with the same number of days of the previous one, and a coverage line says how many days have anything logged. Save a snapshot to keep the numbers as they were; the interpretation area stays empty until the assistant (phase 6) and is labelled apart from the facts. Print gives a clean page.
+- ⌘K has "Mood & energy check-in", "Log a workout" and "Log sleep". Sample data adds weeks of check-ins and sleep, workouts with sets, weekly weights, heart rate and waist readings, and water, all marked Sample.
+- Fixed (found while testing): a blank optional number in some forms was saved as 0 instead of empty.
+- Tests:
+  - 101 unit tests. New ones cover unit conversion and ranges, sleep across midnight and its averages, workouts and volume, measurement series, report periods and labels, report counts (late vs on-time tasks, habits created or paused mid-period, money per currency, pending transactions left out) and honest empty reports.
+  - `supabase/tests/health.sql`: units and ranges, duplicate readings, sleep and set rules, check-ins without a rating, report shape and length, and another person seeing or changing none of it.
+  - A Playwright flow: a check-in (and the error without a rating), water, a workout with sets, a refused 820 kg, a saved weight, a night across midnight, the duplicate-night message, and a daily report with a saved snapshot.
+- Known limits:
+  - Everything is entered by hand; device and app imports arrive with integrations (phase 7).
+  - Nothing is rated as healthy or unhealthy, and there is no medical advice; the 7-hour line is a general guideline only.
+  - Reports count weekly and monthly habits only through their check-ins; the consistency rate uses daily habits.
 
 ## Phase 4 log
 

@@ -1,7 +1,6 @@
 "use client";
 
-import { useState } from "react";
-import { Button } from "@/components/ui/button";
+import { FormActions, useActionForm } from "@/components/data/action-form";
 import { Field } from "@/components/ui/field";
 import { Input, NativeSelect, Textarea } from "@/components/ui/input";
 import { minorUnits } from "@/lib/money";
@@ -9,40 +8,8 @@ import {
   createTransfer, recordRecurringPayment, saveAccount, saveBudget, saveCategory, saveRate, saveRecurring, saveSavingsGoal, saveTransaction,
   type AccountInput, type BudgetInput, type RateInput, type RecurringInput, type SavingsInput, type TransactionInput, type TransferInput,
 } from "@/server/actions/finance";
-import type { ActionResult } from "@/server/actions/result";
-import { useServerAction } from "@/features/dashboard/use-server-action";
 import { useFinance } from "./shared";
 import { ACCOUNT_KIND_LABEL, LIABILITY_KINDS, UNIT_LABEL, type Account, type AccountKind, type Budget, type Category, type Recurring, type SavingsGoal, type StoredRate, type Transaction, type Unit } from "./types";
-
-type Errors = Record<string, string[] | undefined>;
-
-/** Shared submit plumbing: field errors from the server land next to their inputs. */
-function useForm<T extends object>(initial: () => T) {
-  const [v, setV] = useState<T>(initial);
-  const [errors, setErrors] = useState<Errors>({});
-  const { pending, run } = useServerAction();
-  const set = <K extends keyof T>(k: K, val: T[K]) => setV((s) => ({ ...s, [k]: val }));
-  const err = (k: string) => errors[k]?.[0];
-  const submit = <R,>(fn: (v: T) => Promise<ActionResult<R>>, onDone: (r: Extract<ActionResult<R>, { ok: true }>) => void) => (e: React.FormEvent) => {
-    e.preventDefault();
-    setErrors({});
-    run(async () => {
-      const r = await fn(v);
-      if (!r.ok && r.fieldErrors) setErrors(r.fieldErrors);
-      return r;
-    }, { onSuccess: onDone });
-  };
-  return { v, set, err, pending, submit };
-}
-
-function Actions({ pending, label, onCancel }: { pending: boolean; label: string; onCancel: () => void }) {
-  return (
-    <div className="flex flex-col-reverse gap-2 sm:flex-row sm:justify-end">
-      <Button type="button" variant="outline" onClick={onCancel}>Cancel</Button>
-      <Button type="submit" disabled={pending}>{pending ? "Saving…" : label}</Button>
-    </div>
-  );
-}
 
 /** Drops trailing zeros after a decimal point ("9000.0000" → "9000", "1.50" → "1.5"); whole numbers stay as they are. */
 const trimZeros = (n: string) => (n.includes(".") ? n.replace(/\.?0+$/, "") : n);
@@ -71,7 +38,7 @@ function AccountOptions({ accounts }: { accounts: Account[] }) {
 export function AccountForm({ account, onDone, onCancel }: { account: Account | null; onDone: () => void; onCancel: () => void }) {
   const ws = useFinance();
   const owed = (a: Account) => a.opening_balance.replace(/^-/, "");
-  const { v, set, err, pending, submit } = useForm<AccountInput>(() => account
+  const { v, set, err, pending, submit } = useActionForm<AccountInput>(() => account
     ? { name: account.name, kind: account.kind, currency: account.currency, institution: account.institution ?? "", openingBalance: trimZeros(LIABILITY_KINDS.includes(account.kind) ? owed(account) : account.opening_balance), openingDate: account.opening_date, interestRate: trimZeros(account.interest_rate ?? ""), includeInNetWorth: account.include_in_net_worth }
     : { name: "", kind: "checking", currency: ws.baseCurrency, institution: "", openingBalance: "", openingDate: ws.today, interestRate: "", includeInNetWorth: true });
   const liability = LIABILITY_KINDS.includes(v.kind as AccountKind);
@@ -113,7 +80,7 @@ export function AccountForm({ account, onDone, onCancel }: { account: Account | 
       <label className="flex items-center gap-2 text-[13px]">
         <input type="checkbox" checked={!!v.includeInNetWorth} onChange={(e) => set("includeInNetWorth", e.target.checked)} className="size-4 accent-[var(--color-brand)]" /> Count it in net worth
       </label>
-      <Actions pending={pending} label={account ? "Save changes" : "Add account"} onCancel={onCancel} />
+      <FormActions pending={pending} label={account ? "Save changes" : "Add account"} onCancel={onCancel} />
     </form>
   );
 }
@@ -123,7 +90,7 @@ export function AccountForm({ account, onDone, onCancel }: { account: Account | 
 export function TransactionForm({ tx, defaults, onDone, onCancel }: { tx: Transaction | null; defaults?: Partial<TransactionInput>; onDone: () => void; onCancel: () => void }) {
   const ws = useFinance();
   const open = ws.accounts.filter((a) => !a.archived_at);
-  const { v, set, err, pending, submit } = useForm<TransactionInput>(() => tx
+  const { v, set, err, pending, submit } = useActionForm<TransactionInput>(() => tx
     ? { accountId: tx.account_id, kind: tx.kind === "transfer" ? "adjustment" : tx.kind, amount: trimZeros(tx.kind === "adjustment" ? tx.amount : tx.amount.replace(/^-/, "")), date: tx.occurred_on, categoryId: tx.category_id ?? "", projectId: tx.project_id ?? "", description: tx.description ?? "", payee: tx.payee ?? "", notes: tx.notes ?? "", pending: tx.is_pending }
     : { accountId: open[0]?.id ?? "", kind: "expense", amount: "", date: ws.today, categoryId: "", projectId: "", description: "", payee: "", notes: "", pending: false, ...defaults });
   const acct = ws.accounts.find((a) => a.id === v.accountId);
@@ -180,7 +147,7 @@ export function TransactionForm({ tx, defaults, onDone, onCancel }: { tx: Transa
       <label className="flex items-center gap-2 text-[13px]">
         <input type="checkbox" checked={!!v.pending} onChange={(e) => set("pending", e.target.checked)} className="size-4 accent-[var(--color-brand)]" /> Pending (not in the balance yet)
       </label>
-      <Actions pending={pending} label={tx ? "Save changes" : "Add transaction"} onCancel={onCancel} />
+      <FormActions pending={pending} label={tx ? "Save changes" : "Add transaction"} onCancel={onCancel} />
     </form>
   );
 }
@@ -190,7 +157,7 @@ export function TransactionForm({ tx, defaults, onDone, onCancel }: { tx: Transa
 export function TransferForm({ onDone, onCancel }: { onDone: () => void; onCancel: () => void }) {
   const ws = useFinance();
   const open = ws.accounts.filter((a) => !a.archived_at);
-  const { v, set, err, pending, submit } = useForm<TransferInput>(() => ({ fromAccountId: open[0]?.id ?? "", toAccountId: open[1]?.id ?? "", fromAmount: "", toAmount: "", date: ws.today, description: "" }));
+  const { v, set, err, pending, submit } = useActionForm<TransferInput>(() => ({ fromAccountId: open[0]?.id ?? "", toAccountId: open[1]?.id ?? "", fromAmount: "", toAmount: "", date: ws.today, description: "" }));
   const from = ws.accounts.find((a) => a.id === v.fromAccountId);
   const to = ws.accounts.find((a) => a.id === v.toAccountId);
   const cross = from && to && from.currency !== to.currency;
@@ -221,7 +188,7 @@ export function TransferForm({ onDone, onCancel }: { onDone: () => void; onCance
         <Input id="tr-desc" value={v.description ?? ""} maxLength={300} placeholder={to && LIABILITY_KINDS.includes(to.kind) ? "Loan or card payment" : "Move to savings"} onChange={(e) => set("description", e.target.value)} />
       </Field>
       <p className="text-[12px] text-muted-foreground">A transfer moves money between your own accounts. It isn&apos;t income or spending, so it stays out of budgets and reports. Paying a card or loan from your bank is a transfer too.</p>
-      <Actions pending={pending} label="Record transfer" onCancel={onCancel} />
+      <FormActions pending={pending} label="Record transfer" onCancel={onCancel} />
     </form>
   );
 }
@@ -230,7 +197,7 @@ export function TransferForm({ onDone, onCancel }: { onDone: () => void; onCance
 
 export function CategoryForm({ category, onDone, onCancel }: { category: Category | null; onDone: () => void; onCancel: () => void }) {
   const ws = useFinance();
-  const { v, set, err, pending, submit } = useForm(() => ({ name: category?.name ?? "", kind: category?.kind ?? ("expense" as "income" | "expense"), parentId: category?.parent_id ?? "" }));
+  const { v, set, err, pending, submit } = useActionForm(() => ({ name: category?.name ?? "", kind: category?.kind ?? ("expense" as "income" | "expense"), parentId: category?.parent_id ?? "" }));
   const parents = ws.categories.filter((c) => c.kind === v.kind && !c.parent_id && c.id !== category?.id && !c.archived_at);
   const hasChildren = !!category && ws.categories.some((c) => c.parent_id === category.id);
   return (
@@ -254,7 +221,7 @@ export function CategoryForm({ category, onDone, onCancel }: { category: Categor
           </NativeSelect>
         </Field>
       )}
-      <Actions pending={pending} label={category ? "Save" : "Add category"} onCancel={onCancel} />
+      <FormActions pending={pending} label={category ? "Save" : "Add category"} onCancel={onCancel} />
     </form>
   );
 }
@@ -266,7 +233,7 @@ export function BudgetForm({ budget, onDone, onCancel }: { budget: Budget | null
   const expense = ws.categories.filter((c) => c.kind === "expense" && !c.archived_at);
   const tops = expense.filter((c) => !c.parent_id).sort((a, b) => a.name.localeCompare(b.name));
   const ordered = tops.flatMap((t) => [t, ...expense.filter((c) => c.parent_id === t.id)]);
-  const { v, set, err, pending, submit } = useForm<BudgetInput>(() => ({
+  const { v, set, err, pending, submit } = useActionForm<BudgetInput>(() => ({
     name: budget?.name ?? "Monthly spending", period: budget?.period ?? "monthly", currency: budget?.currency ?? ws.baseCurrency,
     lines: ordered.map((c) => ({ categoryId: c.id, amount: trimZeros(budget?.lines.find((l) => l.category_id === c.id)?.amount ?? "") })),
   }));
@@ -306,7 +273,7 @@ export function BudgetForm({ budget, onDone, onCancel }: { budget: Budget | null
           <p className="text-[11px] text-muted-foreground">Spending in other currencies counts only when you&apos;ve entered a rate for it; anything without a rate is listed separately, never guessed.</p>
         </fieldset>
       )}
-      <Actions pending={pending} label={budget ? "Save budget" : "Create budget"} onCancel={onCancel} />
+      <FormActions pending={pending} label={budget ? "Save budget" : "Create budget"} onCancel={onCancel} />
     </form>
   );
 }
@@ -319,7 +286,7 @@ const recKind = (r: Recurring): RecKind => (r.is_bill ? "bill" : r.is_subscripti
 export function RecurringForm({ item, onDone, onCancel }: { item: Recurring | null; onDone: () => void; onCancel: () => void }) {
   const ws = useFinance();
   const open = ws.accounts.filter((a) => !a.archived_at);
-  const { v, set, err, pending, submit } = useForm<RecurringInput>(() => item
+  const { v, set, err, pending, submit } = useActionForm<RecurringInput>(() => item
     ? { accountId: item.account_id, categoryId: item.category_id ?? "", description: item.description, amount: trimZeros(item.amount.replace(/^-/, "")), kind: recKind(item), everyN: item.every_n, unit: item.unit, nextDueOn: item.next_due_on, endsOn: item.ends_on ?? "", remindDaysBefore: item.remind_days_before, autopay: item.autopay }
     : { accountId: open[0]?.id ?? "", categoryId: "", description: "", amount: "", kind: "bill", everyN: 1, unit: "month", nextDueOn: ws.today, endsOn: "", remindDaysBefore: 2, autopay: false });
   const n = Number(v.everyN) || 1;
@@ -378,7 +345,7 @@ export function RecurringForm({ item, onDone, onCancel }: { item: Recurring | nu
           <input type="checkbox" checked={!!v.autopay} onChange={(e) => set("autopay", e.target.checked)} className="size-4 accent-[var(--color-brand)]" /> Paid automatically by my bank (a note for you; Life OS never moves money)
         </label>
       )}
-      <Actions pending={pending} label={item ? "Save changes" : "Add"} onCancel={onCancel} />
+      <FormActions pending={pending} label={item ? "Save changes" : "Add"} onCancel={onCancel} />
     </form>
   );
 }
@@ -388,7 +355,7 @@ export function RecurringForm({ item, onDone, onCancel }: { item: Recurring | nu
 export function RateForm({ rate, onDone, onCancel }: { rate: StoredRate | null; onDone: () => void; onCancel: () => void }) {
   const ws = useFinance();
   const other = ws.currencies.find((c) => c !== ws.baseCurrency) ?? "USD";
-  const { v, set, err, pending, submit } = useForm<RateInput>(() => rate ? { base: rate.base, quote: rate.quote, rate: trimZeros(rate.rate), asOf: rate.as_of } : { base: other, quote: ws.baseCurrency, rate: "", asOf: ws.today });
+  const { v, set, err, pending, submit } = useActionForm<RateInput>(() => rate ? { base: rate.base, quote: rate.quote, rate: trimZeros(rate.rate), asOf: rate.as_of } : { base: other, quote: ws.baseCurrency, rate: "", asOf: ws.today });
   return (
     <form noValidate className="grid gap-4" onSubmit={submit((x) => saveRate(rate?.id ?? null, x), onDone)}>
       <div className="grid grid-cols-[auto_1fr_auto_1fr] items-end gap-2 text-[13px]">
@@ -410,7 +377,7 @@ export function RateForm({ rate, onDone, onCancel }: { rate: StoredRate | null; 
         </Field>
       </div>
       <p className="text-[12px] text-muted-foreground">Use the rate you actually got or the one you trust (bank, parallel market). Totals use the newest rate on or before each date and always show which date.</p>
-      <Actions pending={pending} label={rate ? "Save rate" : "Add rate"} onCancel={onCancel} />
+      <FormActions pending={pending} label={rate ? "Save rate" : "Add rate"} onCancel={onCancel} />
     </form>
   );
 }
@@ -419,7 +386,7 @@ export function RateForm({ rate, onDone, onCancel }: { rate: StoredRate | null; 
 
 export function SavingsForm({ goal, onDone, onCancel }: { goal: SavingsGoal | null; onDone: () => void; onCancel: () => void }) {
   const ws = useFinance();
-  const { v, set, err, pending, submit } = useForm<SavingsInput>(() => goal
+  const { v, set, err, pending, submit } = useActionForm<SavingsInput>(() => goal
     ? { name: goal.name, target: trimZeros(goal.target_amount), currency: goal.currency, saved: trimZeros(goal.saved_amount), targetDate: goal.target_date ?? "", accountId: goal.account_id ?? "", goalId: goal.goal_id ?? "" }
     : { name: "", target: "", currency: ws.baseCurrency, saved: "", targetDate: "", accountId: "", goalId: "" });
   const accounts = ws.accounts.filter((a) => !a.archived_at && a.currency === v.currency && !LIABILITY_KINDS.includes(a.kind));
@@ -460,7 +427,7 @@ export function SavingsForm({ goal, onDone, onCancel }: { goal: SavingsGoal | nu
           </NativeSelect>
         </Field>
       )}
-      <Actions pending={pending} label={goal ? "Save" : "Add savings goal"} onCancel={onCancel} />
+      <FormActions pending={pending} label={goal ? "Save" : "Add savings goal"} onCancel={onCancel} />
     </form>
   );
 }
@@ -470,7 +437,7 @@ export function SavingsForm({ goal, onDone, onCancel }: { goal: SavingsGoal | nu
 export function PaymentForm({ item, onDone, onCancel }: { item: Recurring; onDone: () => void; onCancel: () => void }) {
   const ws = useFinance();
   const income = !item.amount.startsWith("-");
-  const { v, set, err, pending, submit } = useForm(() => ({ date: item.next_due_on < ws.today ? item.next_due_on : ws.today, amount: trimZeros(item.amount.replace(/^-/, "")) }));
+  const { v, set, err, pending, submit } = useActionForm(() => ({ date: item.next_due_on < ws.today ? item.next_due_on : ws.today, amount: trimZeros(item.amount.replace(/^-/, "")) }));
   const acct = ws.accounts.find((a) => a.id === item.account_id);
   return (
     <form noValidate className="grid gap-4" onSubmit={submit((x) => recordRecurringPayment({ id: item.id, ...x }), onDone)}>
@@ -485,7 +452,7 @@ export function PaymentForm({ item, onDone, onCancel }: { item: Recurring; onDon
       <p className="text-[12px] text-muted-foreground">
         This adds a transaction{acct ? ` to ${acct.name}` : ""} and moves the next date on by {item.every_n} {UNIT_LABEL[item.unit][item.every_n === 1 ? 0 : 1]}.
       </p>
-      <Actions pending={pending} label={income ? "Record income" : "Record payment"} onCancel={onCancel} />
+      <FormActions pending={pending} label={income ? "Record income" : "Record payment"} onCancel={onCancel} />
     </form>
   );
 }

@@ -14,6 +14,7 @@ export const DEMO_PROFILE: ViewerProfile = {
   timezone: process.env.DEMO_TIMEZONE ?? "Africa/Addis_Ababa",
   locale: "en-US",
   baseCurrency: "ETB",
+  measurementSystem: "metric",
 };
 
 /**
@@ -29,7 +30,7 @@ export const getViewer = cache(async (): Promise<Viewer> => {
 
   const { data: p } = await supabase
     .from("profiles")
-    .select("display_name, timezone, locale, base_currency")
+    .select("display_name, timezone, locale, base_currency, measurement_system")
     .eq("id", auth.user.id)
     .maybeSingle();
 
@@ -42,6 +43,7 @@ export const getViewer = cache(async (): Promise<Viewer> => {
       timezone: p?.timezone ?? "UTC",
       locale: p?.locale ?? "en-US",
       baseCurrency: p?.base_currency ?? "USD",
+      measurementSystem: p?.measurement_system === "imperial" ? "imperial" : "metric",
     },
   };
 });

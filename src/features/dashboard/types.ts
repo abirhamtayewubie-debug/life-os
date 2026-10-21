@@ -171,4 +171,5 @@ export type ViewerProfile = {
   timezone: string;
   locale: string;
   baseCurrency: string;
+  measurementSystem: "metric" | "imperial";
 };

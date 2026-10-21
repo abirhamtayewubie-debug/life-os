@@ -38,11 +38,13 @@ Postgres on Supabase. Everything is in versioned SQL under [`supabase/migrations
 
 **0010 finance operations** — functions `create_transfer()` (both legs in one transaction) and `record_recurring_payment()` (adds the payment, advances or closes the schedule), both `security invoker` so RLS applies; triggers deleting a transfer's other leg, guarding transfer legs against edits that would unbalance them, and checking category nesting, transaction category kind and budget line kind; bills/subscriptions must be negative; `exchange_rates_lookup_idx`, `budgets_user_idx`.
 
+**0011 health and reports** — `profiles.measurement_system` (metric/imperial); `body_measurements` unit-per-metric and plausible-range checks plus a unique reading per (user, metric, moment, source); unique set numbers per exercise in a workout; `sleep_logs_user_date_idx`; `reports.measured` must be a JSON object and a report covers at most 366 days.
+
 Trigger helpers never call functions in schema `private`: app roles have no `usage` on it, so any such call from a trigger fails for signed-in users.
 
 Calendar convention: timed events store real instants plus the zone they were created in, and repeats keep the local wall-clock time in that zone. All-day events are floating dates stored as UTC midnight of their first and last day (both inclusive), so `starts_at::date` is the date wherever the viewer is.
 
-## Verified by `supabase/tests/rls_isolation.sql`, `productivity.sql`, `goals_life.sql` and `finance.sql`
+## Verified by `supabase/tests/rls_isolation.sql`, `productivity.sql`, `goals_life.sql`, `finance.sql` and `health.sql`
 
 - Every `public` table has RLS enabled and forced.
 - Sign-up creates a profile.
@@ -59,6 +61,8 @@ Calendar convention: timed events store real instants plus the zone they were cr
 - Goals, milestones, time entries, people, interactions, admin items, notes, journal entries, values, learning items and skills are invisible to and unchangeable by another user, who also can't attach rows to them.
 - Transfers are written and deleted as a pair and can't be unbalanced by edits; categories nest one level under the same kind; budget limits are for spending categories; bills are money out and a recorded payment advances the schedule; one rate per currency pair per day; an imported row can't be imported twice into the same account.
 - Accounts, balances, transactions, categories, budgets, bills and rates are invisible to and unchangeable by another user, including through `create_transfer()` and `record_recurring_payment()`.
+- Body measurements need the right unit and a plausible value, and can't be recorded twice for the same moment; a manual night is logged once per date and must end after it starts, within a day; set numbers are unique per exercise; a check-in needs a rating; saved report facts are an object and span at most a year.
+- Check-ins, water, workouts and sets, measurements, sleep and saved reports are invisible to and unchangeable by another user, who also can't attach sets to someone else's workout.
 
 ## Backups, export, deletion
 
