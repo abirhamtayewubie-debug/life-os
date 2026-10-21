@@ -6,8 +6,8 @@ Each phase ships working software and must meet the Definition of Done (persists
 |---|---|---|
 | 1 Foundation | Architecture, schema + RLS, design system, navigation, auth, Command Center with labelled sample data | **Done** (this log) |
 | 2 Daily productivity | Tasks (subtasks, deps, tags, saved views), reminders with snooze, calendar day/week/month/agenda + time blocking + conflicts, habits CRUD, ⌘K record search, RRULE recurrence, time-zone tests | **Done** (merged, PR #1) |
-| 3 Goals & life | Goals hierarchy + milestones, projects (Kanban/timeline), journal, knowledge base (search, backlinks, files), learning, relationships, home admin, Wheel of Life assessments | **Done** (PR for review; file attachments wait for Storage) |
-| 4 Finance | Accounts, transactions, transfers, budgets, bills/subscriptions, savings & debt, exchange rates, CSV import/export, monthly report | |
+| 3 Goals & life | Goals hierarchy + milestones, projects (Kanban/timeline), journal, knowledge base (search, backlinks, files), learning, relationships, home admin, Wheel of Life assessments | **Done** (merged, PR #2; file attachments wait for Storage) |
+| 4 Finance | Accounts, transactions, transfers, budgets, bills/subscriptions, savings & debt, exchange rates, CSV import/export, monthly report | **Done** (PR for review) |
 | 5 Health & analytics | Workouts, measurements, sleep, wellness, reports (daily → annual) with measured vs interpreted split | |
 | 6 AI assistant | Server-side Anthropic integration, permissioned read tools, confirm-before-write proposals, briefings and weekly reports | Needs approval (paid API) |
 | 7 Integrations & notifications | Google/Outlook calendar (OAuth), web push, email, health imports, dispatcher with retries | Needs approval per service |
@@ -38,6 +38,32 @@ Each phase ships working software and must meet the Definition of Done (persists
 - Known limits: no drag-and-drop on the calendar yet (use the event form), no per-occurrence edits of repeating events, reminders are in-app only, no external calendar sync (phase 7).
 
 
+## Phase 4 log
+
+- Migration `0010_finance_ops`: `create_transfer()` writes both legs of a transfer in one step (different accounts, positive amounts, equal amounts unless the currencies differ, where you enter what arrived); deleting either leg deletes the other; a leg can't be re-pointed at another account or turned into income or spending. `record_recurring_payment()` adds the payment (keeping a bill's direction even with a custom amount) and moves the due date on, closing the item once it passes its end date. Triggers keep sub-categories under a top-level category of the same kind, transactions in a category of the right kind, and budget limits on spending categories only. Bills and subscriptions must be money out.
+- Finance (`/finance`) has seven tabs:
+  - Overview: net worth in your base currency, accounts with balances, this month's income and spending per currency, budgets and the next two weeks of bills.
+  - Transactions: month, account, category and search filters; add, edit and delete with confirmation; transfers; CSV import and export.
+  - Budgets: weekly or monthly limits per spending category, with pace and over-limit flags.
+  - Bills: due states, record a payment, skip a date, and a monthly-equivalent total labelled as an estimate.
+  - Savings & debt: savings goals, optionally tracked from an account's balance and linked to a goal; cards and loans with a payoff estimate.
+  - Monthly report: income, spending, what was kept, and categories compared with the previous month.
+  - Accounts & setup: open, close and delete accounts; categories, with an optional starter set; exchange rates.
+- Money is never added across currencies without a rate you entered. Each conversion uses the newest rate on or before that transaction's date and shows the rate date. Anything that can't be converted is listed separately and never guessed. Amounts are exact decimals (minor units), and an amount with more decimals than its currency allows (0.001 ETB) is refused.
+- Liabilities (cards, loans) are stored as negative balances, so they subtract from net worth on their own. Paying one is a transfer, so it isn't counted as spending twice.
+- CSV import runs in your browser. You choose the columns, the date format and the decimal mark, and can flip the signs. A preview shows each row and any line that can't be read (bad date, future date, too many decimals). Rows are saved in chunks with an external id, so importing the same file twice adds nothing. Imported rows are marked `imported`. Export downloads the current filter as a spreadsheet-safe CSV (formula cells are neutralised).
+- Work & Projects: a project's budget now shows the spending tagged with that project, converted with your rates, with any unconverted currencies listed apart.
+- ⌘K has a "New transaction" action. Sample data adds a dated USD→ETB rate, three bills/subscriptions and an emergency-fund goal, all marked Sample.
+- Tests:
+  - 88 unit tests. New ones cover rates (direct, inverse and dated), conversion and rounding, net worth with missing rates, budget periods and pace, the monthly report, schedules incl. month ends, savings, payoff estimates, CSV parsing and amounts, import validation and dedupe, and project spending.
+  - `supabase/tests/finance.sql`: transfers, guards, category and budget rules, bill payments, duplicate rates and imports, and another person seeing or changing none of it, including through the functions.
+  - A Playwright flow: accounts, a precision error, an expense, a transfer, net worth before and after adding a rate, a budget, paying a bill, the report, importing twice, export, and deleting a transfer.
+- Known limits:
+  - Rates are entered by hand; nothing is fetched online.
+  - Bill reminders show in the app only (notifications arrive in phase 7).
+  - A monthly bill due on the 31st moves to the 28th/30th after a short month and stays there; edit the date if that matters.
+  - The payoff estimate assumes a fixed rate and no new borrowing.
+
 ## Phase 3 log
 
 - Migration `0008_goals_and_life`: a trigger keeps goals nested strictly broader → narrower and refuses loops (and refuses re-levelling a goal above its own sub-goals); `time_entries` with at most one running timer per person; `interactions` with a trigger that keeps `people.last_contacted_on` in step; `admin_items` (renewals, documents, one-off jobs, records); `personal_values`; journal full-text search; one Wheel check-in per day.
@@ -55,4 +81,4 @@ Each phase ships working software and must meet the Definition of Done (persists
 - Fixed (found by the new database tests): the goal-nesting trigger called a helper in the `private` schema that signed-in users can't reach, so setting a parent goal would have failed. The check is now self-contained.
 - Fixed: hover-only buttons (sub-goal, remove milestone, delete time entry, delete saved view) were invisible on touch screens; they now show unless the device has a mouse.
 - Tests: 73 unit tests (adds goal tree and parents, metric percentages, time totals, Wheel comparison, journal streaks, wikilinks and tags, next occurrence incl. 29 Feb, keep-in-touch, renewals and month arithmetic), `supabase/tests/goals_life.sql`, and two Playwright flows (goals → projects board → Wheel; journal search → linked notes and backlinks → learning validation → relationships → renewals → a second user sees none of it).
-- Known limits: no file attachments; dates and renewals are highlighted in the app only (no notifications until phase 7); project budgets aren't compared with spending until phase 4.
+- Known limits: no file attachments; dates and renewals are highlighted in the app only (no notifications until phase 7); project budgets aren't compared with spending until phase 4 (now done).

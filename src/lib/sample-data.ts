@@ -168,7 +168,7 @@ export function generateSampleSet(now: Date, tz: string, baseCurrency = "ETB", i
     id: id(), name, kind, currency, opening_balance: opening, opening_date: addDays(today, -90), source: S,
   });
   const aBank = acct("CBE Current", "checking", "ETB", "48250.00");
-  const aCash = acct("Cash wallet", "cash", "ETB", "3200.00");
+  const aCash = acct("Cash wallet", "cash", "ETB", "9200.00");
   const aSave = acct("Emergency savings", "savings", "ETB", "76500.00");
   const aUsd = acct("USD Payoneer", "checking", "USD", "1240.00");
   const financial_accounts = [aBank, aCash, aSave, aUsd];
@@ -209,6 +209,22 @@ export function generateSampleSet(now: Date, tz: string, baseCurrency = "ETB", i
     { id: id(), budget_id: budget.id, category_id: cTransport.id, amount: "2500.00" },
     { id: id(), budget_id: budget.id, category_id: cUtilities.id, amount: "2000.00" },
     { id: id(), budget_id: budget.id, category_id: cHome.id, amount: "4000.00" },
+  ];
+
+  const exchange_rates = [
+    { id: id(), base: "USD", quote: "ETB", rate: "125.5", as_of: addDays(today, -3), source: S },
+  ];
+  const rec = (account: { id: string; currency: string }, category: { id: string } | null, description: string, amount: string, dueIn: number, unit: "week" | "month" | "year", kind: { is_bill?: boolean; is_subscription?: boolean }) => ({
+    id: id(), account_id: account.id, category_id: category?.id ?? null, currency: account.currency, description, amount, every_n: 1, unit,
+    next_due_on: addDays(today, dueIn), is_bill: !!kind.is_bill, is_subscription: !!kind.is_subscription, remind_days_before: 3, autopay: false, source: S,
+  });
+  const recurring_transactions = [
+    rec(aBank, cUtilities, "Internet (Ethio Telecom)", "-1200.00", 2, "month", { is_bill: true }),
+    rec(aBank, cHome, "Rent", "-15000.00", 11, "month", { is_bill: true }),
+    rec(aUsd, null, "Design software", "-22.99", 6, "month", { is_subscription: true }),
+  ];
+  const savings_goals = [
+    { id: id(), goal_id: gSave.id as string | null, account_id: aSave.id as string | null, name: "Emergency fund", target_amount: "180000.00", currency: "ETB", saved_amount: "0", target_date: addDays(today, 200) as string | null, source: S },
   ];
 
   // Wellness & sleep -------------------------------------------------------------
@@ -316,7 +332,7 @@ export function generateSampleSet(now: Date, tz: string, baseCurrency = "ETB", i
 
   return {
     wheel_categories, wheel_assessments, wheel_ratings, goals, projects, tasks, calendar_events, reminders,
-    habits, habit_logs, financial_accounts, transaction_categories, transactions, budgets: [budget], budget_lines,
+    habits, habit_logs, financial_accounts, transaction_categories, transactions, budgets: [budget], budget_lines, exchange_rates, recurring_transactions, savings_goals,
     wellness_logs, sleep_logs, journal_entries, notes, note_links, daily_reviews,
     milestones, time_entries, people, interactions, important_dates, learning_items, skills, admin_items, personal_values,
   };

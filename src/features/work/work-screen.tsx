@@ -14,13 +14,14 @@ import { Field } from "@/components/ui/field";
 import { Input, NativeSelect } from "@/components/ui/input";
 import { Progress } from "@/components/ui/progress";
 import { addDays, diffDays, formatShortDate, formatTime, localDateKey } from "@/lib/dates";
-import { formatMoney } from "@/lib/money";
+import { formatMoney, percentOf } from "@/lib/money";
 import { cn } from "@/lib/utils";
 import { deleteProject, deleteTimeEntry, logTime, startTimer, stopTimer } from "@/server/actions/work";
 import { useServerAction } from "@/features/dashboard/use-server-action";
 import { MilestoneList } from "@/features/goals/milestone-list";
 import { ProjectBoard } from "./project-board";
 import { ProjectForm } from "./project-form";
+import { spendIn } from "@/features/finance/ledger";
 import { entryMinutes, formatDuration, projectProgress, timelineWindow, weekTotals } from "./stats";
 import { PROJECT_STATUS_LABEL, type ProjectRecord, type WorkWorkspace } from "./types";
 
@@ -152,7 +153,7 @@ function ProjectGrid({ projects, ws, week, onOpen }: { projects: ProjectRecord[]
                 {goal && <span className="truncate">Goal: {goal.title}</span>}
                 <span className="flex gap-3">
                   {(week.get(p.id) ?? 0) > 0 && <span className="flex items-center gap-1"><Clock className="size-3" aria-hidden /> {formatDuration(week.get(p.id)!)} this week</span>}
-                  {p.budget_amount && p.budget_currency && <span>Budget {formatMoney({ amount: p.budget_amount, currency: p.budget_currency }, ws.locale)}</span>}
+                  {p.budget_amount && p.budget_currency && <span>{budgetLine(p, ws)}</span>}
                 </span>
               </span>
             </button>
@@ -183,6 +184,7 @@ function ProjectDetail({ p, ws, week, onEdit, onBoard, onClose }: { p: ProjectRe
         <div><dt className="text-[11px] text-muted-foreground">This week</dt><dd className="tabular">{formatDuration(week.get(p.id) ?? 0)}</dd></div>
         <div><dt className="text-[11px] text-muted-foreground">Last 60 days</dt><dd className="tabular">{formatDuration(total)}</dd></div>
       </dl>
+      <ProjectBudget p={p} ws={ws} />
       <section className="grid gap-2">
         <h3 className="text-[13px] font-medium">Milestones</h3>
         <MilestoneList milestones={ws.milestones.filter((m) => m.project_id === p.id)} parent={{ projectId: p.id }} today={ws.today} locale={ws.locale} />
@@ -382,5 +384,49 @@ function TimePanel({ ws, now, week }: { ws: WorkWorkspace; now: Date; week: Map<
         )}
       </div>
     </div>
+  );
+}
+
+function projectSpend(p: ProjectRecord, ws: WorkWorkspace) {
+  const items = ws.spending.filter((t) => t.project_id === p.id);
+  return p.budget_currency ? spendIn(p.budget_currency, items, ws.rates) : null;
+}
+
+function budgetLine(p: ProjectRecord, ws: WorkWorkspace) {
+  const s = projectSpend(p, ws);
+  const budget = formatMoney({ amount: p.budget_amount!, currency: p.budget_currency! }, ws.locale);
+  return s && s.count ? `${formatMoney(s.spent, ws.locale)} of ${budget} spent` : `Budget ${budget}`;
+}
+
+/** Spending tagged with the project in Finance, against its budget. Other currencies use the person's own rates, or are listed apart. */
+function ProjectBudget({ p, ws }: { p: ProjectRecord; ws: WorkWorkspace }) {
+  const items = ws.spending.filter((t) => t.project_id === p.id);
+  if (!p.budget_amount || !p.budget_currency) {
+    if (!items.length) return null;
+    return (
+      <section className="grid gap-1 text-[13px]">
+        <h3 className="font-medium">Spending</h3>
+        <p className="text-[12px] text-muted-foreground">{items.length} expense{items.length === 1 ? "" : "s"} tagged in Finance. Add a budget to the project to track it.</p>
+      </section>
+    );
+  }
+  const limit = { amount: p.budget_amount, currency: p.budget_currency };
+  const s = spendIn(p.budget_currency, items, ws.rates);
+  const pct = percentOf(s.spent, limit);
+  return (
+    <section className="grid gap-1.5">
+      <div className="flex flex-wrap items-baseline gap-2 text-[13px]">
+        <h3 className="font-medium">Budget</h3>
+        <span className="ml-auto text-[12px] text-muted-foreground">
+          <span className="tabular text-foreground">{formatMoney(s.spent, ws.locale)}</span> of <span className="tabular">{formatMoney(limit, ws.locale)}</span> spent
+        </span>
+      </div>
+      <Progress value={pct} aria-label={`${Math.round(pct)}% of the budget spent`} indicatorClassName={pct >= 100 ? "bg-destructive" : undefined} />
+      <p className="text-[11px] text-muted-foreground">
+        {items.length ? `From ${items.length} expense${items.length === 1 ? "" : "s"} tagged with this project in Finance.` : "Tag expenses with this project in Finance to track spending here."}
+        {s.oldestRate && ` Converted with your rate from ${s.oldestRate}.`}
+        {s.unconverted.length > 0 && ` Not counted, no rate to ${p.budget_currency} yet: ${s.unconverted.map((m) => formatMoney(m, ws.locale)).join(", ")}.`}
+      </p>
+    </section>
   );
 }

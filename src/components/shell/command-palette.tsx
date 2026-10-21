@@ -4,7 +4,7 @@ import { useEffect, useRef, useState } from "react";
 import { usePathname, useRouter } from "next/navigation";
 import { Command } from "cmdk";
 import { useTheme } from "next-themes";
-import { BookHeart, Briefcase, CalendarDays, CalendarPlus, FilePlus, FileText, LayoutGrid, ListChecks, ListPlus, Monitor, Moon, Orbit, Repeat, Search, Sun, Sunset, Target, UserPlus, Users } from "lucide-react";
+import { BookHeart, Briefcase, CalendarDays, CalendarPlus, FilePlus, FileText, LayoutGrid, ListChecks, ListPlus, Monitor, Moon, Orbit, Repeat, Search, Sun, Sunset, Target, UserPlus, Users, Wallet } from "lucide-react";
 import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
 import { Kbd } from "@/components/ui/kbd";
 import { BUILT_THROUGH_PHASE, MODULES } from "@/lib/modules";
@@ -23,6 +23,7 @@ export const APP_EVENTS = {
   newJournal: "lifeos:new-journal",
   newAssessment: "lifeos:new-assessment",
   newPerson: "lifeos:new-person",
+  newTransaction: "lifeos:new-transaction",
 } as const;
 
 const HIT_ICON = { task: ListChecks, event: CalendarDays, habit: Repeat, goal: Target, project: Briefcase, note: FileText, person: Users } as const;
@@ -127,6 +128,7 @@ export function CommandPalette({ hidden }: { hidden: string[] }) {
               <Command.Item className={item} onSelect={() => goAndFire("/reflection", APP_EVENTS.newJournal)}><BookHeart /> New journal entry</Command.Item>
               <Command.Item className={item} onSelect={() => goAndFire("/wheel", APP_EVENTS.newAssessment)}><Orbit /> Wheel of Life check-in</Command.Item>
               <Command.Item className={item} onSelect={() => goAndFire("/relationships", APP_EVENTS.newPerson)}><UserPlus /> Add a person</Command.Item>
+              <Command.Item className={item} onSelect={() => goAndFire("/finance", APP_EVENTS.newTransaction)}><Wallet /> New transaction</Command.Item>
               <Command.Item className={item} onSelect={() => run(() => { router.push("/"); setTimeout(() => window.dispatchEvent(new Event(APP_EVENTS.eveningReview)), 150); })}>
                 <Sunset /> Start evening review
               </Command.Item>
