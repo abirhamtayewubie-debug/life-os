@@ -66,7 +66,10 @@ export function TasksScreen({ ws, filters, nowIso, openId, startNew = false }: {
   const openTask = openTaskId ? ws.tasks.find((t) => t.id === openTaskId) ?? null : null;
   const today = localDateKey(now, ws.timezone);
   const dueReminders = ws.reminders.filter((r) => new Date(r.snoozed_until ?? r.remind_at) <= now);
-  const laterReminders = ws.reminders.filter((r) => new Date(r.snoozed_until ?? r.remind_at) > now).slice(0, 8);
+  const laterReminders = ws.reminders
+    .filter((r) => new Date(r.snoozed_until ?? r.remind_at) > now)
+    .sort((a, b) => (a.snoozed_until ?? a.remind_at).localeCompare(b.snoozed_until ?? b.remind_at))
+    .slice(0, 8);
   const hasExtraFilters = Boolean(filters.q || filters.priority || filters.area || filters.tag || filters.project);
 
   return (

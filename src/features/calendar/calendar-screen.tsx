@@ -38,6 +38,10 @@ function fmtDay(key: string, locale: string, opts: Intl.DateTimeFormatOptions) {
   return new Intl.DateTimeFormat(locale, { timeZone: "UTC", ...opts }).format(new Date(`${key}T12:00:00Z`));
 }
 
+function hourLabel(h: number, locale: string) {
+  return new Intl.DateTimeFormat(locale, { hour: "numeric", timeZone: "UTC" }).format(new Date(Date.UTC(2026, 0, 1, h)));
+}
+
 function title(d: CalendarData) {
   if (d.view === "day") return fmtDay(d.date, d.locale, { weekday: "long", month: "long", day: "numeric", year: "numeric" });
   if (d.view === "month") return fmtDay(d.date, d.locale, { month: "long", year: "numeric" });
@@ -112,7 +116,7 @@ export function CalendarScreen({ data, nowIso, startNew = false }: { data: Calen
   };
 
   return (
-    <div className="grid gap-4">
+    <div className="grid grid-cols-[minmax(0,1fr)] gap-4">
       {blockTask && (
         <div className="flex flex-wrap items-center gap-3 rounded-lg border border-brand/40 bg-accent/50 px-4 py-3 text-[13px]">
           <CircleDot className="size-4 text-brand" aria-hidden />
@@ -237,93 +241,95 @@ function TimeGrid({
   const gridCols = { gridTemplateColumns: `3.5rem repeat(${cols.length}, minmax(0, 1fr))` };
 
   return (
-    <div className="overflow-hidden rounded-xl border border-border bg-surface shadow-[var(--shadow-card)]">
-      <div className="grid border-b border-border" style={gridCols}>
-        <div />
-        {cols.map((k) => (
-          <Link key={k} href={dayHref(k)} className={cn("border-l border-border px-2 py-2 text-center text-[12px] text-muted-foreground hover:bg-muted", k === data.today && "text-brand")}>
-            <span className="block">{fmtDay(k, data.locale, { weekday: "short" })}</span>
-            <span className={cn("tabular text-[17px] font-medium text-foreground", k === data.today && "text-brand")}>{Number(k.slice(8))}</span>
-          </Link>
-        ))}
-      </div>
-      {hasTop && (
+    <div className="overflow-x-auto rounded-xl border border-border bg-surface shadow-[var(--shadow-card)]">
+      <div className={cn(data.view === "week" && "min-w-[44rem]")}>
         <div className="grid border-b border-border" style={gridCols}>
-          <div className="px-1 py-1.5 text-right text-[10px] text-subtle-foreground">all day</div>
-          {cols.map((k, i) => (
-            <div key={k} className="grid min-w-0 content-start gap-0.5 border-l border-border p-1">
-              {allDay[i].map((o) => <EventChip key={o.id} o={o} conflict={false} tz={tz} locale={data.locale} onClick={() => onEvent(o)} />)}
-              {(tasksByDay.get(k) ?? []).slice(0, data.view === "day" ? 20 : 3).map((t) => <TaskChip key={t.id} t={t} />)}
-              {data.view === "week" && (tasksByDay.get(k)?.length ?? 0) > 3 && (
-                <Link href={dayHref(k)} className="px-1.5 text-[11px] text-muted-foreground hover:text-foreground">+{tasksByDay.get(k)!.length - 3} tasks</Link>
-              )}
-            </div>
+          <div />
+          {cols.map((k) => (
+            <Link key={k} href={dayHref(k)} className={cn("border-l border-border px-2 py-2 text-center text-[12px] text-muted-foreground hover:bg-muted", k === data.today && "text-brand")}>
+              <span className="block">{fmtDay(k, data.locale, { weekday: "short" })}</span>
+              <span className={cn("tabular text-[17px] font-medium text-foreground", k === data.today && "text-brand")}>{Number(k.slice(8))}</span>
+            </Link>
           ))}
         </div>
-      )}
-      <div ref={scroller} className="max-h-[min(70vh,44rem)] overflow-y-auto">
-        <div className="relative grid" style={{ ...gridCols, height: 24 * HOUR_PX }}>
-          <div className="relative">
-            {Array.from({ length: 23 }, (_, h) => (
-              <span key={h} className="tabular absolute right-2 -translate-y-1/2 text-[10px] text-subtle-foreground" style={{ top: (h + 1) * HOUR_PX }}>
-                {String(h + 1).padStart(2, "0")}:00
-              </span>
-            ))}
-          </div>
-          {cols.map((k) => {
-            const timed = onDay(data.occurrences, k, tz).filter((o) => !o.all_day);
-            const layout = layoutDay(timed, k, tz);
-            return (
-              <div key={k} className="relative border-l border-border" aria-label={fmtDay(k, data.locale, { weekday: "long", month: "long", day: "numeric" })}>
-                {Array.from({ length: 48 }, (_, s) => (
-                  <button
-                    key={s}
-                    aria-label={`New event ${fmtDay(k, data.locale, { weekday: "short", day: "numeric" })} ${String(Math.floor(s / 2)).padStart(2, "0")}:${s % 2 ? "30" : "00"}`}
-                    tabIndex={-1}
-                    onClick={() => onSlot(k, `${String(Math.floor(s / 2)).padStart(2, "0")}:${s % 2 ? "30" : "00"}`)}
-                    className={cn("absolute inset-x-0 cursor-pointer hover:bg-muted/70", s % 2 === 0 && s > 0 && "border-t border-border/70")}
-                    style={{ top: (s * HOUR_PX) / 2, height: HOUR_PX / 2 }}
-                  />
-                ))}
-                {timed.map((o) => {
-                  const l = layout.get(o.id);
-                  if (!l) return null;
-                  const conflict = conflicts.has(o.id);
-                  const height = ((l.bottom - l.top) / 60) * HOUR_PX;
-                  return (
-                    <button
-                      key={o.id}
-                      onClick={() => onEvent(o)}
-                      style={{ ...eventStyle(o.kind), top: (l.top / 60) * HOUR_PX + 1, height: height - 2, left: `calc(${(l.col / l.cols) * 100}% + 2px)`, width: `calc(${100 / l.cols}% - 4px)` }}
-                      className={cn(
-                        "absolute cursor-pointer overflow-hidden rounded-md border-l-[3px] border-[var(--ev)] bg-[color-mix(in_oklch,var(--ev)_14%,var(--surface))] px-1.5 py-0.5 text-left text-[12px] leading-4 hover:bg-[color-mix(in_oklch,var(--ev)_22%,var(--surface))]",
-                        o.kind === "time_block" && "border-dashed",
-                        o.source === "sample" && "outline-1 outline-dashed outline-warning/60",
-                        conflict && "ring-1 ring-warning",
-                      )}
-                    >
-                      <span className="flex items-center gap-1 font-medium">
-                        {conflict && <TriangleAlert className="size-3 shrink-0 text-warning" aria-label="Overlaps another event" />}
-                        <span className="truncate">{o.title}</span>
-                        {o.recurring && <Repeat className="size-3 shrink-0 text-muted-foreground" aria-label="Repeats" />}
-                      </span>
-                      {height > 30 && (
-                        <span className="tabular block truncate text-[11px] text-muted-foreground">
-                          {formatTime(o.starts_at, tz, data.locale)}–{formatTime(o.ends_at, tz, data.locale)}
-                          {o.location ? ` · ${o.location}` : ""}
-                        </span>
-                      )}
-                    </button>
-                  );
-                })}
-                {k === nowKey && (
-                  <div className="pointer-events-none absolute inset-x-0 z-10 h-px bg-destructive" style={{ top: (nowMin / 60) * HOUR_PX }} aria-hidden>
-                    <span className="absolute -top-1 -left-1 size-2 rounded-full bg-destructive" />
-                  </div>
+        {hasTop && (
+          <div className="grid border-b border-border" style={gridCols}>
+            <div className="px-1 py-1.5 text-right text-[10px] text-subtle-foreground">all day</div>
+            {cols.map((k, i) => (
+              <div key={k} className="grid min-w-0 content-start gap-0.5 border-l border-border p-1">
+                {allDay[i].map((o) => <EventChip key={o.id} o={o} conflict={false} tz={tz} locale={data.locale} onClick={() => onEvent(o)} />)}
+                {(tasksByDay.get(k) ?? []).slice(0, data.view === "day" ? 20 : 3).map((t) => <TaskChip key={t.id} t={t} />)}
+                {data.view === "week" && (tasksByDay.get(k)?.length ?? 0) > 3 && (
+                  <Link href={dayHref(k)} className="px-1.5 text-[11px] text-muted-foreground hover:text-foreground">+{tasksByDay.get(k)!.length - 3} tasks</Link>
                 )}
               </div>
-            );
-          })}
+            ))}
+          </div>
+        )}
+        <div ref={scroller} className="max-h-[min(70vh,44rem)] overflow-y-auto">
+          <div className="relative grid" style={{ ...gridCols, height: 24 * HOUR_PX }}>
+            <div className="relative">
+              {Array.from({ length: 23 }, (_, h) => (
+                <span key={h} className="tabular absolute right-2 -translate-y-1/2 text-[10px] text-subtle-foreground" style={{ top: (h + 1) * HOUR_PX }}>
+                  {hourLabel(h + 1, data.locale)}
+                </span>
+              ))}
+            </div>
+            {cols.map((k) => {
+              const timed = onDay(data.occurrences, k, tz).filter((o) => !o.all_day);
+              const layout = layoutDay(timed, k, tz);
+              return (
+                <div key={k} className="relative border-l border-border" aria-label={fmtDay(k, data.locale, { weekday: "long", month: "long", day: "numeric" })}>
+                  {Array.from({ length: 48 }, (_, s) => (
+                    <button
+                      key={s}
+                      aria-label={`New event ${fmtDay(k, data.locale, { weekday: "short", day: "numeric" })} ${String(Math.floor(s / 2)).padStart(2, "0")}:${s % 2 ? "30" : "00"}`}
+                      tabIndex={-1}
+                      onClick={() => onSlot(k, `${String(Math.floor(s / 2)).padStart(2, "0")}:${s % 2 ? "30" : "00"}`)}
+                      className={cn("absolute inset-x-0 cursor-pointer hover:bg-muted/70", s % 2 === 0 && s > 0 && "border-t border-border/70")}
+                      style={{ top: (s * HOUR_PX) / 2, height: HOUR_PX / 2 }}
+                    />
+                  ))}
+                  {timed.map((o) => {
+                    const l = layout.get(o.id);
+                    if (!l) return null;
+                    const conflict = conflicts.has(o.id);
+                    const height = ((l.bottom - l.top) / 60) * HOUR_PX;
+                    return (
+                      <button
+                        key={o.id}
+                        onClick={() => onEvent(o)}
+                        style={{ ...eventStyle(o.kind), top: (l.top / 60) * HOUR_PX + 1, height: height - 2, left: `calc(${(l.col / l.cols) * 100}% + 2px)`, width: `calc(${100 / l.cols}% - 4px)` }}
+                        className={cn(
+                          "absolute cursor-pointer overflow-hidden rounded-md border-l-[3px] border-[var(--ev)] bg-[color-mix(in_oklch,var(--ev)_14%,var(--surface))] px-1.5 py-0.5 text-left text-[12px] leading-4 hover:bg-[color-mix(in_oklch,var(--ev)_22%,var(--surface))]",
+                          o.kind === "time_block" && "border-dashed",
+                          o.source === "sample" && "outline-1 outline-dashed outline-warning/60",
+                          conflict && "ring-1 ring-warning",
+                        )}
+                      >
+                        <span className="flex items-center gap-1 font-medium">
+                          {conflict && <TriangleAlert className="size-3 shrink-0 text-warning" aria-label="Overlaps another event" />}
+                          <span className="truncate">{o.title}</span>
+                          {o.recurring && <Repeat className="size-3 shrink-0 text-muted-foreground" aria-label="Repeats" />}
+                        </span>
+                        {height > 30 && (
+                          <span className="tabular block truncate text-[11px] text-muted-foreground">
+                            {formatTime(o.starts_at, tz, data.locale)}–{formatTime(o.ends_at, tz, data.locale)}
+                            {o.location ? ` · ${o.location}` : ""}
+                          </span>
+                        )}
+                      </button>
+                    );
+                  })}
+                  {k === nowKey && (
+                    <div className="pointer-events-none absolute inset-x-0 z-10 h-px bg-destructive" style={{ top: (nowMin / 60) * HOUR_PX }} aria-hidden>
+                      <span className="absolute -top-1 -left-1 size-2 rounded-full bg-destructive" />
+                    </div>
+                  )}
+                </div>
+              );
+            })}
+          </div>
         </div>
       </div>
     </div>
@@ -380,9 +386,9 @@ function Agenda({
     );
   }
   return (
-    <div className="grid gap-5">
+    <div className="grid grid-cols-[minmax(0,1fr)] gap-5">
       {days.map((k) => (
-        <section key={k} aria-label={fmtDay(k, data.locale, { weekday: "long", month: "long", day: "numeric" })} className="grid gap-1.5 sm:grid-cols-[9rem_1fr]">
+        <section key={k} aria-label={fmtDay(k, data.locale, { weekday: "long", month: "long", day: "numeric" })} className="grid grid-cols-[minmax(0,1fr)] gap-1.5 sm:grid-cols-[9rem_minmax(0,1fr)]">
           <Link href={dayHref(k)} className={cn("text-[13px] font-medium hover:underline", k === data.today && "text-brand")}>
             {k === data.today ? "Today" : fmtDay(k, data.locale, { weekday: "short", month: "short", day: "numeric" })}
           </Link>
@@ -391,7 +397,7 @@ function Agenda({
               <li key={o.id}>
                 <button onClick={() => onEvent(o)} style={eventStyle(o.kind)} className="flex w-full cursor-pointer items-center gap-3 px-3 py-2 text-left text-[13px] hover:bg-muted/60">
                   <span className="h-8 w-1 shrink-0 rounded-full bg-[var(--ev)]" aria-hidden />
-                  <span className="tabular w-24 shrink-0 text-[12px] text-muted-foreground">
+                  <span className="tabular w-20 shrink-0 text-[12px] text-muted-foreground sm:w-24">
                     {o.all_day ? "All day" : `${formatTime(o.starts_at, tz, data.locale)}–${formatTime(o.ends_at, tz, data.locale)}`}
                   </span>
                   <span className="min-w-0 flex-1">
@@ -401,7 +407,7 @@ function Agenda({
                     </span>
                     {o.location && <span className="flex items-center gap-1 truncate text-[12px] text-muted-foreground"><MapPin className="size-3" aria-hidden /> {o.location}</span>}
                   </span>
-                  {conflicts.has(o.id) && <Badge variant="warning"><TriangleAlert /> Overlaps</Badge>}
+                  {conflicts.has(o.id) && <Badge variant="warning" title="Overlaps another event"><TriangleAlert aria-label="Overlaps another event" /><span className="hidden sm:inline" aria-hidden>Overlaps</span></Badge>}
                   {o.source === "sample" && <Badge variant="sample">Sample</Badge>}
                   <span className="hidden text-[11px] text-subtle-foreground sm:inline">{KIND_LABEL[o.kind]}</span>
                 </button>
@@ -409,11 +415,11 @@ function Agenda({
             ))}
             {(tasksByDay.get(k) ?? []).map((t) => (
               <li key={t.id} className="px-3 py-2 text-[13px]">
-                <Link href={`/tasks?view=all&open=${t.id}`} className="flex items-center gap-3 text-muted-foreground hover:text-foreground">
+                <Link href={`/tasks?view=all&open=${t.id}`} className="flex min-w-0 items-center gap-3 text-muted-foreground hover:text-foreground">
                   <span className="h-8 w-1 shrink-0" aria-hidden />
-                  <span className="w-24 shrink-0 text-[12px]">{t.due_at ? formatTime(t.due_at, tz, data.locale) : "Task due"}</span>
+                  <span className="w-20 shrink-0 text-[12px] sm:w-24">{t.due_at ? formatTime(t.due_at, tz, data.locale) : "Task due"}</span>
                   <span className="size-3 shrink-0 rounded-[3px] border border-current" aria-hidden />
-                  <span className="truncate">{t.title}</span>
+                  <span className="min-w-0 truncate">{t.title}</span>
                 </Link>
               </li>
             ))}

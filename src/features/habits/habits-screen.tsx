@@ -71,7 +71,7 @@ export function HabitsScreen({ ws, startNew = false }: { ws: HabitWorkspace; sta
   );
 
   return (
-    <div className="grid gap-6">
+    <div className="grid grid-cols-[minmax(0,1fr)] gap-6">
       <div className="flex flex-wrap items-center gap-3">
         {dueToday.length > 0 ? (
           <p className="text-[13px] text-muted-foreground">
@@ -190,7 +190,7 @@ function HabitCard({
         </DropdownMenu>
       </div>
 
-      <div className="flex items-end justify-between gap-3">
+      <div className="flex flex-wrap items-end justify-between gap-3">
         <ol className="flex gap-1.5" aria-label="Last 7 days">
           {s.last7.map((d) => {
             const c = countOn(d.date);

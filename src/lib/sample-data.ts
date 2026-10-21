@@ -23,7 +23,8 @@ function rng(seed: number) {
 }
 
 /** Deterministic UUID-shaped ids so demo renders are stable across requests. */
-function idFactory(seed: number) {
+function idFactory(seed: number | "random") {
+  if (seed === "random") return () => crypto.randomUUID();
   const r = rng(seed);
   return () => {
     const hex = Array.from({ length: 32 }, () => Math.floor(r() * 16).toString(16)).join("");
@@ -33,8 +34,13 @@ function idFactory(seed: number) {
 
 export type SampleSet = ReturnType<typeof generateSampleSet>;
 
-export function generateSampleSet(now: Date, tz: string, baseCurrency = "ETB") {
-  const id = idFactory(42);
+/**
+ * `ids` is a fixed seed in demo mode, so ids are the same on every request.
+ * Stored sample rows use "random": ids are global primary keys, so two
+ * accounts loading samples must never get the same ones.
+ */
+export function generateSampleSet(now: Date, tz: string, baseCurrency = "ETB", ids: number | "random" = 42) {
+  const id = idFactory(ids);
   const rand = rng(7);
   const today = localDateKey(now, tz);
   const at = (dayOffset: number, time: string) => zonedTimeToUtc(addDays(today, dayOffset), time, tz).toISOString();

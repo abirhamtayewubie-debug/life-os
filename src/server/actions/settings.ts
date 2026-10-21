@@ -60,7 +60,7 @@ export async function loadSampleData(): Promise<ActionResult<{ rows: number }>> 
   const { count } = await supabase.from("tasks").select("id", { count: "exact", head: true }).eq("source", "sample");
   if (count) return { ok: false, error: "Sample data is already loaded. Remove it first to reload." };
 
-  const s = generateSampleSet(new Date(), viewer.profile.timezone, viewer.profile.baseCurrency);
+  const s = generateSampleSet(new Date(), viewer.profile.timezone, viewer.profile.baseCurrency, "random");
   const uid = viewer.userId;
   const withUser = <T extends object>(rows: T[]) => rows.map((r) => ({ ...r, user_id: uid }));
 

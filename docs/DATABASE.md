@@ -30,7 +30,11 @@ Postgres on Supabase. Everything is in versioned SQL under [`supabase/migrations
 
 **0006 AI, integrations, reports** — `ai_settings` (off by default, per-module opt-in), `ai_conversations`, `ai_messages`, `ai_tool_calls` (status incl. `pending_confirmation`), `integrations` (status, scopes, last sync, last error), `integration_credentials` (RLS on, **no** user policies, revoked from `anon`/`authenticated`), `reports` (stored measured facts kept apart from AI interpretation), function `purge_sample_data()`.
 
-## Verified by `supabase/tests/rls_isolation.sql`
+**0007 daily productivity** — `tasks.series_id` with a unique index allowing one open occurrence per series, RRULE shape checks, `saved_views` (per module, name unique ignoring case), `pg_trgm` title indexes on tasks, events and habits, triggers rejecting dependency cycles and subtask loops.
+
+Calendar convention: timed events store real instants plus the zone they were created in, and repeats keep the local wall-clock time in that zone. All-day events are floating dates stored as UTC midnight of their first and last day (both inclusive), so `starts_at::date` is the date wherever the viewer is.
+
+## Verified by `supabase/tests/rls_isolation.sql` and `productivity.sql`
 
 - Every `public` table has RLS enabled and forced.
 - Sign-up creates a profile.
@@ -40,6 +44,9 @@ Postgres on Supabase. Everything is in versioned SQL under [`supabase/migrations
 - Audit events can't be altered; integration credentials are unreadable.
 - `purge_sample_data()` removes only the caller's `sample` rows.
 - `anon` sees nothing except the currency list.
+- Dependency cycles and subtask loops are refused; a repeating series has one open occurrence; malformed repeat rules are refused.
+- An in-app reminder delivery is recorded once per occurrence.
+- Saved views, dependencies, events, habits and deliveries are invisible to and unchangeable by another user.
 
 ## Backups, export, deletion
 

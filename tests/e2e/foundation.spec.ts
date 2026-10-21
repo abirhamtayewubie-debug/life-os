@@ -33,7 +33,7 @@ test("foundation flow: sign up, sample data, persisted changes, isolation, remov
   await expect(page.getByText("Your Command Center is empty")).toBeVisible();
 
   // Load sample data from Settings.
-  await page.goto("/settings#data");
+  await page.goto("/settings#data", { waitUntil: "networkidle" }); // click only once hydrated
   await page.getByRole("button", { name: "Load sample data" }).click();
   await expect(page.getByText(/Loaded \d+ sample records/)).toBeVisible();
 
@@ -82,7 +82,7 @@ test("foundation flow: sign up, sample data, persisted changes, isolation, remov
   await other.close();
 
   // Remove sample data; the account returns to empty.
-  await page.goto("/settings#data");
+  await page.goto("/settings#data", { waitUntil: "networkidle" }); // click only once hydrated
   await page.getByRole("button", { name: "Remove sample data" }).click();
   await page.getByRole("alertdialog").getByRole("button", { name: "Remove sample data" }).click();
   await expect(page.getByText(/Removed \d+ sample records/)).toBeVisible();
