@@ -24,10 +24,10 @@ import { LEVEL_LABEL, STATUS_LABEL, type GoalInputDefaults, type GoalRecord, typ
 
 type Filter = "active" | "all" | "done";
 
-export function GoalsScreen({ ws, startNew = false }: { ws: GoalWorkspace; startNew?: boolean }) {
+export function GoalsScreen({ ws, startNew = false, initialOpen = null }: { ws: GoalWorkspace; startNew?: boolean; initialOpen?: string | null }) {
   const [filter, setFilter] = useState<Filter>("active");
   const [editing, setEditing] = useState<{ goal: GoalRecord | null; defaults?: GoalInputDefaults } | null>(startNew ? { goal: null } : null);
-  const [openId, setOpenId] = useState<string | null>(null);
+  const [openId, setOpenId] = useState<string | null>(initialOpen);
 
   useEffect(() => {
     const onNew = () => setEditing({ goal: null });

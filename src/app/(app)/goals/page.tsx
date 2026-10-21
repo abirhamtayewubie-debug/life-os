@@ -10,7 +10,7 @@ export default async function GoalsPage({ searchParams }: PageProps<"/goals">) {
   return (
     <div className="animate-rise">
       <PageHeader title="Goals & Vision" description="From the life you want to what matters this quarter. Link projects, tasks and habits to see how they add up." />
-      <GoalsScreen ws={ws} startNew={sp.new === "1"} />
+      <GoalsScreen key={String(sp.open ?? "")} ws={ws} startNew={sp.new === "1"} initialOpen={typeof sp.open === "string" ? sp.open : null} />
     </div>
   );
 }

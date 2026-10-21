@@ -4,7 +4,7 @@ import { useEffect, useRef, useState } from "react";
 import { usePathname, useRouter } from "next/navigation";
 import { Command } from "cmdk";
 import { useTheme } from "next-themes";
-import { CalendarDays, CalendarPlus, LayoutGrid, ListChecks, ListPlus, Monitor, Moon, Repeat, Search, Sun, Sunset } from "lucide-react";
+import { BookHeart, Briefcase, CalendarDays, CalendarPlus, FilePlus, FileText, LayoutGrid, ListChecks, ListPlus, Monitor, Moon, Orbit, Repeat, Search, Sun, Sunset, Target, UserPlus, Users } from "lucide-react";
 import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
 import { Kbd } from "@/components/ui/kbd";
 import { BUILT_THROUGH_PHASE, MODULES } from "@/lib/modules";
@@ -17,9 +17,15 @@ export const APP_EVENTS = {
   newTask: "lifeos:new-task",
   newEvent: "lifeos:new-event",
   newHabit: "lifeos:new-habit",
+  newGoal: "lifeos:new-goal",
+  newProject: "lifeos:new-project",
+  newNote: "lifeos:new-note",
+  newJournal: "lifeos:new-journal",
+  newAssessment: "lifeos:new-assessment",
+  newPerson: "lifeos:new-person",
 } as const;
 
-const HIT_ICON = { task: ListChecks, event: CalendarDays, habit: Repeat } as const;
+const HIT_ICON = { task: ListChecks, event: CalendarDays, habit: Repeat, goal: Target, project: Briefcase, note: FileText, person: Users } as const;
 
 export function openCommandPalette() {
   window.dispatchEvent(new Event("lifeos:command"));
@@ -91,12 +97,12 @@ export function CommandPalette({ hidden }: { hidden: string[] }) {
         <Command loop className="flex flex-col">
           <div className="flex items-center gap-2 border-b border-border px-3.5">
             <Search className="size-4 text-muted-foreground" aria-hidden />
-            <Command.Input autoFocus value={query} onValueChange={setQuery} placeholder="Search tasks, events, habits and actions…" className="h-12 flex-1 bg-transparent text-sm outline-none placeholder:text-subtle-foreground" />
+            <Command.Input autoFocus value={query} onValueChange={setQuery} placeholder="Search tasks, events, goals, notes, people and actions…" className="h-12 flex-1 bg-transparent text-sm outline-none placeholder:text-subtle-foreground" />
             <Kbd>Esc</Kbd>
           </div>
           <Command.List className="max-h-[min(60vh,420px)] overflow-y-auto p-1.5">
             <Command.Empty className="px-3 py-8 text-center text-sm text-muted-foreground">
-              {searching ? "Searching…" : "No matches in tasks, events, habits or actions."}
+              {searching ? "Searching…" : "No matches in your records or actions."}
             </Command.Empty>
             {shownHits.length > 0 && (
               <Command.Group heading="Records" className={heading} forceMount>
@@ -115,6 +121,12 @@ export function CommandPalette({ hidden }: { hidden: string[] }) {
               <Command.Item className={item} onSelect={() => goAndFire("/tasks", APP_EVENTS.newTask)}><ListPlus /> New task</Command.Item>
               <Command.Item className={item} onSelect={() => goAndFire("/calendar", APP_EVENTS.newEvent)}><CalendarPlus /> New event</Command.Item>
               <Command.Item className={item} onSelect={() => goAndFire("/habits", APP_EVENTS.newHabit)}><Repeat /> New habit</Command.Item>
+              <Command.Item className={item} onSelect={() => goAndFire("/goals", APP_EVENTS.newGoal)}><Target /> New goal</Command.Item>
+              <Command.Item className={item} onSelect={() => goAndFire("/work", APP_EVENTS.newProject)}><Briefcase /> New project</Command.Item>
+              <Command.Item className={item} onSelect={() => goAndFire("/knowledge", APP_EVENTS.newNote)}><FilePlus /> New note</Command.Item>
+              <Command.Item className={item} onSelect={() => goAndFire("/reflection", APP_EVENTS.newJournal)}><BookHeart /> New journal entry</Command.Item>
+              <Command.Item className={item} onSelect={() => goAndFire("/wheel", APP_EVENTS.newAssessment)}><Orbit /> Wheel of Life check-in</Command.Item>
+              <Command.Item className={item} onSelect={() => goAndFire("/relationships", APP_EVENTS.newPerson)}><UserPlus /> Add a person</Command.Item>
               <Command.Item className={item} onSelect={() => run(() => { router.push("/"); setTimeout(() => window.dispatchEvent(new Event(APP_EVENTS.eveningReview)), 150); })}>
                 <Sunset /> Start evening review
               </Command.Item>
