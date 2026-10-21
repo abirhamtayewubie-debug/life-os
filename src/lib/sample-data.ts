@@ -243,10 +243,78 @@ export function generateSampleSet(now: Date, tz: string, baseCurrency = "ETB", i
     { id: id(), review_date: addDays(today, -1), kind: "evening" as const, achievements: "Typography exploration done; good run.", unfinished: "Internet bill", tomorrow_priorities: ["Logo concepts", "Send site photos", "Pay internet bill"], mood: 4, energy: 3, notes: null as string | null, source: S },
   ];
 
+  // Phase 3: milestones, time, people, learning, admin, values ------------------
+  const ms = (title: string, project: string | null, goal: string | null, due: number, doneDay: number | null, order: number) => ({
+    id: id(), project_id: project, goal_id: goal, title, due_date: addDays(today, due),
+    completed_at: doneDay === null ? null : at(doneDay, "17:00"), sort_order: order, source: S,
+  });
+  const milestones = [
+    ms("Moodboard approved", pBrand.id, null, -4, -4, 0),
+    ms("Logo concepts presented", pBrand.id, null, 0, null, 1),
+    ms("Brand guidelines delivered", pBrand.id, null, 5, null, 2),
+    ms("Site survey complete", pSite.id, null, -2, -2, 0),
+    ms("Draft report to engineer", pSite.id, null, 8, null, 1),
+    ms("First 5K under 30 min", null, gHealth.id, -20, -21, 0),
+    ms("8K long run", null, gHealth.id, 30, null, 1),
+    ms("3 months saved", null, gSave.id, 45, null, 0),
+  ];
+  const te = (project: string, day: number, start: string, minutes: number, note: string | null) => {
+    const s0 = at(day, start);
+    return { id: id(), project_id: project, task_id: null as string | null, started_at: s0, ended_at: new Date(new Date(s0).getTime() + minutes * 60000).toISOString(), note, source: S };
+  };
+  const time_entries = [
+    te(pBrand.id, -1, "09:00", 150, "Typography exploration"), te(pBrand.id, -2, "14:00", 90, "Moodboard revisions"),
+    te(pSite.id, -2, "10:00", 180, "Site survey"), te(pSite.id, -3, "15:00", 60, "Photo sorting"), te(pBrand.id, -4, "09:30", 120, null),
+  ];
+  const person = (name: string, relationship: string, birthdayOffset: number | null, every: number | null, notes: string | null) => ({
+    id: id(), name, relationship, birthday: birthdayOffset === null ? null : `1992-${addDays(today, birthdayOffset).slice(5)}`,
+    contact_every_days: every, notes, source: S,
+  });
+  const hana = person("Hana", "Friend", 18, 14, null);
+  const grandma = person("Grandmother", "Family", 52, 7, "Likes hearing about the kitchen project.");
+  const dawit = person("Dawit", "Mentor", null, 30, null);
+  const people = [hana, grandma, dawit];
+  const interactions = [
+    { id: id(), person_id: hana.id, occurred_on: addDays(today, -3), kind: "message" as const, note: null as string | null, source: S },
+    { id: id(), person_id: grandma.id, occurred_on: addDays(today, -9), kind: "call" as const, note: null, source: S },
+    { id: id(), person_id: dawit.id, occurred_on: addDays(today, -41), kind: "meal" as const, note: "Talked about pricing consulting work.", source: S },
+  ];
+  const important_dates = [
+    { id: id(), person_id: null as string | null, kind: "anniversary" as const, title: "Studio founding anniversary", date: `2020-${addDays(today, 26).slice(5)}`, recurs_yearly: true, remind_days_before: 7, source: S },
+  ];
+  const learning_items = [
+    { id: id(), goal_id: gEnglish.id, kind: "course" as const, title: "Business English: presentations", author: null as string | null, url: null as string | null, status: "in_progress" as const, progress_pct: 60, started_on: addDays(today, -40), finished_on: null as string | null, notes: null as string | null, source: S },
+    { id: id(), goal_id: null as string | null, kind: "book" as const, title: "Thinking with Type", author: "Ellen Lupton", url: null, status: "in_progress" as const, progress_pct: 35, started_on: addDays(today, -20), finished_on: null, notes: null, source: S },
+    { id: id(), goal_id: null as string | null, kind: "book" as const, title: "Building Construction Illustrated", author: "Francis D. K. Ching", url: null, status: "completed" as const, progress_pct: 100, started_on: addDays(today, -120), finished_on: addDays(today, -60), notes: null, source: S },
+    { id: id(), goal_id: gHealth.id, kind: "video" as const, title: "Running form basics", author: null, url: null, status: "planned" as const, progress_pct: null as number | null, started_on: null, finished_on: null, notes: null, source: S },
+  ];
+  const skills = [
+    { id: id(), name: "Public speaking (English)", area: "learning", level: 3, target_level: 4, notes: null as string | null, source: S },
+    { id: id(), name: "Brand identity design", area: "work", level: 4, target_level: 5, notes: null, source: S },
+    { id: id(), name: "Structural load calculations", area: "work", level: 2, target_level: 4, notes: null, source: S },
+  ];
+  const admin = (kind: "renewal" | "document" | "record", title: string, category: string, due: number | null, repeat: number | null, location: string | null) => ({
+    id: id(), kind, title, category, due_on: due === null ? null : addDays(today, due), repeat_months: repeat, remind_days_before: 14,
+    location, reference: null as string | null, notes: null as string | null, completed_at: null as string | null, source: S,
+  });
+  const admin_items = [
+    admin("renewal", "Vehicle insurance", "Vehicle", 9, 12, null),
+    admin("renewal", "Passport", "Identity", 210, null, "Home office, blue folder"),
+    admin("renewal", "Business licence", "Work", 48, 12, null),
+    admin("document", "Land title deed (copy)", "Home", null, null, "Home office, fire-safe box"),
+    admin("record", "Water heater serviced", "Home", -30, null, null),
+  ];
+  const personal_values = [
+    { id: id(), name: "Faith", description: "Start and end the day grounded.", sort_order: 0, source: S },
+    { id: id(), name: "Craft", description: "Do work I'm proud to sign.", sort_order: 1, source: S },
+    { id: id(), name: "Family", description: null as string | null, sort_order: 2, source: S },
+  ];
+
   return {
     wheel_categories, wheel_assessments, wheel_ratings, goals, projects, tasks, calendar_events, reminders,
     habits, habit_logs, financial_accounts, transaction_categories, transactions, budgets: [budget], budget_lines,
     wellness_logs, sleep_logs, journal_entries, notes, daily_reviews,
+    milestones, time_entries, people, interactions, important_dates, learning_items, skills, admin_items, personal_values,
   };
 }
 

@@ -73,7 +73,9 @@ export async function loadSampleData(): Promise<ActionResult<{ rows: number }>> 
     ["goals", withUser(s.goals.filter((g) => !g.parent_id))],
     ["goals", withUser(s.goals.filter((g) => g.parent_id))],
     ["projects", withUser(s.projects)],
+    ["milestones", withUser(s.milestones)],
     ["tasks", withUser(s.tasks)],
+    ["time_entries", withUser(s.time_entries)],
     ["calendar_events", withUser(s.calendar_events)],
     ["reminders", withUser(s.reminders)],
     ["habits", withUser(s.habits)],
@@ -88,6 +90,13 @@ export async function loadSampleData(): Promise<ActionResult<{ rows: number }>> 
     ["journal_entries", withUser(s.journal_entries)],
     ["notes", withUser(s.notes.map(({ updated_at: _u, ...r }) => r))],
     ["daily_reviews", withUser(s.daily_reviews)],
+    ["people", withUser(s.people)],
+    ["interactions", withUser(s.interactions)],
+    ["important_dates", withUser(s.important_dates)],
+    ["learning_items", withUser(s.learning_items)],
+    ["skills", withUser(s.skills)],
+    ["admin_items", withUser(s.admin_items)],
+    ["personal_values", withUser(s.personal_values)],
   ];
 
   let rows = 0;

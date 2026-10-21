@@ -86,6 +86,8 @@ async function syncTags(ctx: Ctx, taskId: string, names: string[]) {
 function refresh() {
   revalidatePath("/tasks");
   revalidatePath("/calendar");
+  revalidatePath("/work");
+  revalidatePath("/goals");
   revalidatePath("/");
 }
 
