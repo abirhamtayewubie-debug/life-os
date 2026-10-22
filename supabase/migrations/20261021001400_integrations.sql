@@ -36,7 +36,9 @@ create index reminder_deliveries_retry_idx on public.reminder_deliveries (next_a
 -- ---------------------------------------------------------------------------
 
 alter table public.workouts add column external_id text check (char_length(external_id) <= 300);
-create unique index workouts_external_key on public.workouts (user_id, external_id) where external_id is not null;
+-- Not partial, so imports can upsert on it; workouts typed in here have no
+-- external id, and NULLs never clash.
+create unique index workouts_external_key on public.workouts (user_id, external_id);
 
 -- ---------------------------------------------------------------------------
 -- Private calendar feed: a secret link a calendar app can subscribe to.

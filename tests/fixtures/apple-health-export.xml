@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE HealthData [
+<!ELEMENT HealthData (ExportDate,Me,(Record|Correlation|Workout|ActivitySummary|ClinicalRecord)*)>
+]>
+<HealthData locale="en_US">
+ <ExportDate value="2026-10-20 21:00:00 +0300"/>
+ <Me HKCharacteristicTypeIdentifierDateOfBirth="" HKCharacteristicTypeIdentifierBiologicalSex="HKBiologicalSexNotSet"/>
+ <Record type="HKQuantityTypeIdentifierBodyMass" sourceName="Health" sourceVersion="17.0" unit="kg" creationDate="2026-10-01 07:05:00 +0300" startDate="2026-10-01 07:00:00 +0300" endDate="2026-10-01 07:00:00 +0300" value="72.4"/>
+ <Record type="HKQuantityTypeIdentifierBodyMass" sourceName="Withings" unit="lb" creationDate="2026-10-08 07:05:00 +0300" startDate="2026-10-08 07:00:00 +0300" endDate="2026-10-08 07:00:00 +0300" value="159.2">
+  <MetadataEntry key="HKWasUserEntered" value="0"/>
+ </Record>
+ <Record type="HKQuantityTypeIdentifierBodyMass" sourceName="Health" unit="kg" startDate="2026-10-09 07:00:00 +0300" endDate="2026-10-09 07:00:00 +0300" value="724"/>
+ <Record type="HKQuantityTypeIdentifierBodyMass" sourceName="Health" unit="kg" startDate="2024-01-01 07:00:00 +0300" endDate="2024-01-01 07:00:00 +0300" value="80"/>
+ <Record type="HKQuantityTypeIdentifierBodyFatPercentage" sourceName="Withings" unit="%" startDate="2026-10-08 07:00:00 +0300" endDate="2026-10-08 07:00:00 +0300" value="0.213"/>
+ <Record type="HKQuantityTypeIdentifierRestingHeartRate" sourceName="Ab’s Apple Watch" unit="count/min" startDate="2026-10-10 00:01:00 +0300" endDate="2026-10-10 23:59:00 +0300" value="58"/>
+ <Record type="HKQuantityTypeIdentifierStepCount" sourceName="iPhone" unit="count" startDate="2026-10-10 08:00:00 +0300" endDate="2026-10-10 08:10:00 +0300" value="900"/>
+ <Record type="HKCategoryTypeIdentifierSleepAnalysis" sourceName="iPhone" startDate="2026-10-10 22:30:00 +0300" endDate="2026-10-11 06:45:00 +0300" value="HKCategoryValueSleepAnalysisInBed"/>
+ <Record type="HKCategoryTypeIdentifierSleepAnalysis" sourceName="Ab’s Apple Watch" startDate="2026-10-10 23:00:00 +0300" endDate="2026-10-11 02:00:00 +0300" value="HKCategoryValueSleepAnalysisAsleepCore"/>
+ <Record type="HKCategoryTypeIdentifierSleepAnalysis" sourceName="Ab’s Apple Watch" startDate="2026-10-11 02:00:00 +0300" endDate="2026-10-11 02:10:00 +0300" value="HKCategoryValueSleepAnalysisAwake"/>
+ <Record type="HKCategoryTypeIdentifierSleepAnalysis" sourceName="Ab’s Apple Watch" startDate="2026-10-11 02:10:00 +0300" endDate="2026-10-11 06:30:00 +0300" value="HKCategoryValueSleepAnalysisAsleepDeep"/>
+ <Record type="HKCategoryTypeIdentifierSleepAnalysis" sourceName="Ab’s Apple Watch" startDate="2026-10-11 14:00:00 +0300" endDate="2026-10-11 14:25:00 +0300" value="HKCategoryValueSleepAnalysisAsleepCore"/>
+ <Record type="HKCategoryTypeIdentifierSleepAnalysis" sourceName="iPhone" startDate="2026-10-11 23:15:00 +0300" endDate="2026-10-12 07:00:00 +0300" value="HKCategoryValueSleepAnalysisInBed"/>
+ <Workout workoutActivityType="HKWorkoutActivityTypeRunning" duration="31.5" durationUnit="min" sourceName="Ab’s Apple Watch" creationDate="2026-10-12 18:40:00 +0300" startDate="2026-10-12 18:05:00 +0300" endDate="2026-10-12 18:36:30 +0300">
+  <MetadataEntry key="HKIndoorWorkout" value="0"/>
+  <WorkoutStatistics type="HKQuantityTypeIdentifierActiveEnergyBurned" startDate="2026-10-12 18:05:00 +0300" endDate="2026-10-12 18:36:30 +0300" sum="312.4" unit="Cal"/>
+  <WorkoutStatistics type="HKQuantityTypeIdentifierDistanceWalkingRunning" startDate="2026-10-12 18:05:00 +0300" endDate="2026-10-12 18:36:30 +0300" sum="5.12" unit="km"/>
+ </Workout>
+ <Workout workoutActivityType="HKWorkoutActivityTypeTraditionalStrengthTraining" duration="45" durationUnit="min" totalEnergyBurned="210" totalEnergyBurnedUnit="Cal" sourceName="Health" startDate="2026-10-13 07:00:00 +0300" endDate="2026-10-13 07:45:00 +0300"/>
+ <Workout workoutActivityType="HKWorkoutActivityTypeSoccer" duration="0.2" durationUnit="min" sourceName="Ab’s Apple Watch" startDate="2026-10-14 07:00:00 +0300" endDate="2026-10-14 07:00:12 +0300"/>
+</HealthData>
