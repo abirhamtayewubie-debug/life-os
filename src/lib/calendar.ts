@@ -218,3 +218,6 @@ export function layoutDay(occ: CalendarEventRow[], dayKey: string, tz: string): 
 
 /** Wall time (HH:mm) of an instant in a zone. */
 export { wallTime };
+
+/** Events kept in step with an outside calendar are read-only here; a one-time file import (provider "ics") is a copy you own. */
+export const isSyncedEvent = (provider: string | null | undefined) => !!provider && provider !== "ics";

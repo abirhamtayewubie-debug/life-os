@@ -24,7 +24,7 @@ export const EXPORT_GROUPS: { key: string; label: string; tables: string[] }[] =
   { key: "wheel", label: "Wheel of Life", tables: ["wheel_categories", "wheel_assessments", "wheel_ratings"] },
   { key: "reports", label: "Reports", tables: ["reports"] },
   { key: "assistant", label: "AI assistant", tables: ["ai_settings", "ai_conversations", "ai_messages", "ai_tool_calls", "ai_usage", "ai_briefings"] },
-  { key: "integrations", label: "Integrations", tables: ["integrations"] },
+  { key: "integrations", label: "Integrations", tables: ["integrations", "push_subscriptions", "calendar_feeds"] },
 ];
 
 export const EXPORT_TABLES: string[] = EXPORT_GROUPS.flatMap((g) => g.tables);

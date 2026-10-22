@@ -1,6 +1,7 @@
 import "server-only";
 import { cookies } from "next/headers";
 import { createServerClient } from "@supabase/ssr";
+import { createClient } from "@supabase/supabase-js";
 import { supabaseEnv } from "./env";
 
 /** A Supabase client acting as the signed-in user (RLS applies). */
@@ -21,4 +22,11 @@ export async function createSupabaseServerClient() {
       },
     },
   });
+}
+
+/** A client with no session at all, for public endpoints that call narrow, token-checked functions. */
+export function createSupabaseAnonClient() {
+  const env = supabaseEnv();
+  if (!env) return null;
+  return createClient(env.url, env.key, { auth: { persistSession: false, autoRefreshToken: false } });
 }

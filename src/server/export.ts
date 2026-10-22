@@ -7,6 +7,11 @@ type Client = Awaited<ReturnType<typeof createSupabaseServerClient>>;
 const PAGE = 1000;
 /** Search indexes are derived from the text that is already exported. */
 const DERIVED_COLUMNS = new Set(["search"]);
+/** Keys that only matter to a device or a link, left out so an export file can't be used to reach them. */
+const WITHHELD: Record<string, Set<string>> = {
+  push_subscriptions: new Set(["p256dh", "auth"]),
+  calendar_feeds: new Set(["token_hash"]),
+};
 /** A stable order so pages never skip or repeat a row. */
 const ORDER: Record<string, string[]> = {
   module_settings: ["module_key"],
@@ -31,7 +36,7 @@ export async function readTable(supabase: Client, userId: string, table: string)
     if (error) throw new Error(`Couldn't read ${table}: ${error.message}`);
     for (const r of data ?? []) {
       const row: Row = {};
-      for (const [k, v] of Object.entries(r)) if (!DERIVED_COLUMNS.has(k)) row[k] = v;
+      for (const [k, v] of Object.entries(r)) if (!DERIVED_COLUMNS.has(k) && !WITHHELD[table]?.has(k)) row[k] = v;
       out.push(row);
     }
     if (!data || data.length < PAGE) return out;

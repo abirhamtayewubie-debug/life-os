@@ -17,6 +17,7 @@ const reminderSchema = z
     taskId: uuid.optional().or(z.literal("")),
     eventId: uuid.optional().or(z.literal("")),
     recurrenceRule: z.string().trim().max(200).optional().or(z.literal("")),
+    notifyDevices: z.boolean().optional(),
   })
   .refine((v) => !v.recurrenceRule || isValidRule(v.recurrenceRule), { path: ["recurrenceRule"], message: "This repeat rule isn't supported" });
 
@@ -42,12 +43,12 @@ export async function createReminder(input: ReminderInput): Promise<ActionResult
     task_id: v.taskId || null,
     event_id: v.eventId || null,
     recurrence_rule: v.recurrenceRule ? serializeRule(parseRule(v.recurrenceRule)) : null,
-    channels: ["in_app"],
+    channels: v.notifyDevices ? ["in_app", "web_push"] : ["in_app"],
     source: "manual",
   });
   if (error) return { ok: false, error: "Couldn't save the reminder." };
   refresh();
-  return { ok: true, message: "Reminder set. It will appear in the app at that time." };
+  return { ok: true, message: v.notifyDevices ? "Reminder set. It will appear in the app and on devices with notifications on." : "Reminder set. It will appear in the app at that time." };
 }
 
 const snoozeSchema = z.union([z.literal(10), z.literal(60), z.literal(180), z.literal("tomorrow")]);

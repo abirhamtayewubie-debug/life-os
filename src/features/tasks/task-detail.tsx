@@ -46,6 +46,7 @@ export function TaskDetail({
   const dueKey = task.due_date ?? (task.due_at ? localDateKey(new Date(task.due_at), tz) : null);
   const [remDate, setRemDate] = useState(dueKey && dueKey >= today ? dueKey : today);
   const [remTime, setRemTime] = useState("09:00");
+  const [remPush, setRemPush] = useState(true);
 
   const subtasks = all.filter((t) => t.parent_task_id === task.id);
   const byId = new Map(all.map((t) => [t.id, t]));
@@ -104,6 +105,7 @@ export function TaskDetail({
                 <li key={r.id} className="flex items-center gap-2 rounded-md bg-muted px-2.5 py-1.5 text-[13px]">
                   <span className="tabular">{localDateKey(new Date(at), tz)} · {formatTime(at, tz, locale)}</span>
                   {r.status === "snoozed" && <span className="text-[11px] text-muted-foreground">snoozed</span>}
+                  {r.channels?.includes("web_push") && <span className="text-[11px] text-muted-foreground">· devices too</span>}
                   <Button variant="ghost" size="icon-sm" className="ml-auto size-6" aria-label="Remove reminder" onClick={() => run(() => cancelReminder(r.id), { quiet: true })}><X /></Button>
                 </li>
               );
@@ -113,9 +115,13 @@ export function TaskDetail({
         <div className="flex flex-wrap gap-2">
           <Input type="date" className="w-auto" value={remDate} min={today} max={addDays(today, 730)} onChange={(e) => setRemDate(e.target.value)} aria-label="Reminder date" />
           <Input type="time" className="w-auto" value={remTime} onChange={(e) => setRemTime(e.target.value)} aria-label="Reminder time" />
-          <Button variant="outline" disabled={pending} onClick={() => run(() => createReminder({ title: task.title, date: remDate, time: remTime, taskId: task.id }))}>Remind me</Button>
+          <Button variant="outline" disabled={pending} onClick={() => run(() => createReminder({ title: task.title, date: remDate, time: remTime, taskId: task.id, notifyDevices: remPush }))}>Remind me</Button>
         </div>
-        <p className="text-[11px] text-muted-foreground">Reminders show inside Life OS while it&apos;s open. Phone and email alerts come in phase 7.</p>
+        <label className="flex items-center gap-2 text-[13px]">
+          <input type="checkbox" checked={remPush} onChange={(e) => setRemPush(e.target.checked)} className="size-4 accent-[var(--brand)]" />
+          Also notify my devices
+        </label>
+        <p className="text-[11px] text-muted-foreground">Reminders always show inside Life OS while it&apos;s open. Devices get them once notifications are turned on in <Link href="/settings#notifications" className="underline underline-offset-2">Settings</Link>.</p>
       </Section>
 
       <Separator />

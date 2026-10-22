@@ -9,7 +9,7 @@
     "lint": "eslint",
     "typecheck": "tsc --noEmit",
     "test": "vitest run",
-    "test:db": "psql \"postgresql://postgres:postgres@127.0.0.1:54322/postgres\" -v ON_ERROR_STOP=1 -q -f supabase/tests/rls_isolation.sql -f supabase/tests/productivity.sql -f supabase/tests/goals_life.sql -f supabase/tests/finance.sql -f supabase/tests/health.sql -f supabase/tests/assistant.sql -f supabase/tests/account.sql",
+    "test:db": "psql \"postgresql://postgres:postgres@127.0.0.1:54322/postgres\" -v ON_ERROR_STOP=1 -q -f supabase/tests/rls_isolation.sql -f supabase/tests/productivity.sql -f supabase/tests/goals_life.sql -f supabase/tests/finance.sql -f supabase/tests/health.sql -f supabase/tests/assistant.sql -f supabase/tests/account.sql -f supabase/tests/integrations.sql",
     "test:e2e": "playwright test",
     "db:start": "supabase start",
     "db:reset": "supabase db reset --local",
@@ -37,6 +37,7 @@
     "server-only": "^0.0.1",
     "sonner": "^2.0.8",
     "tailwind-merge": "^3.7.0",
+    "web-push": "^3.6.7",
     "zod": "^4.6.7"
   },
   "devDependencies": {
@@ -46,6 +47,7 @@
     "@types/node": "^22.20.5",
     "@types/react": "^19",
     "@types/react-dom": "^19",
+    "@types/web-push": "^3.6.4",
     "eslint": "^9",
     "eslint-config-next": "16.4.2",
     "supabase": "^2.121.0",

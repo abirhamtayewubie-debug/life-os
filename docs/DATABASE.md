@@ -44,11 +44,13 @@ Postgres on Supabase. Everything is in versioned SQL under [`supabase/migrations
 
 **0013 account deletion** — `delete_my_account()`: `security definer`, no arguments, deletes `auth.uid()` from `auth.users`; executable by `authenticated` only. Every user-owned table cascades from it.
 
+**0014 integrations** — `push_subscriptions` (one row per browser or phone; https endpoint, unique across accounts, key sizes checked; `last_success_at`, `failure_count`); `reminder_deliveries.next_attempt_at` for retries with backoff; `workouts.external_id` with a unique `(user_id, external_id)` so an import can't add a workout twice; `calendar_feeds` (one private subscribe link per person; only a SHA-256 hash of the token is stored); `calendar_feed(token)` and `touch_calendar_feed(token)`, `security definer`, callable without signing in, returning only the token owner's non-archived events from the last 90 days plus repeating ones.
+
 Trigger helpers never call functions in schema `private`: app roles have no `usage` on it, so any such call from a trigger fails for signed-in users.
 
 Calendar convention: timed events store real instants plus the zone they were created in, and repeats keep the local wall-clock time in that zone. All-day events are floating dates stored as UTC midnight of their first and last day (both inclusive), so `starts_at::date` is the date wherever the viewer is.
 
-## Verified by `supabase/tests/rls_isolation.sql`, `productivity.sql`, `goals_life.sql`, `finance.sql`, `health.sql`, `assistant.sql` and `account.sql`
+## Verified by `supabase/tests/rls_isolation.sql`, `productivity.sql`, `goals_life.sql`, `finance.sql`, `health.sql`, `assistant.sql`, `account.sql` and `integrations.sql`
 
 - Every `public` table has RLS enabled and forced.
 - Sign-up creates a profile.
@@ -69,6 +71,7 @@ Calendar convention: timed events store real instants plus the zone they were cr
 - Check-ins, water, workouts and sets, measurements, sleep and saved reports are invisible to and unchangeable by another user, who also can't attach sets to someone else's workout.
 - The assistant is off with nothing shared by default; unknown models, modules or negative budgets are refused; a suggestion that needs confirmation can't be stored as done; one briefing a day; a journal entry can't be private and readable by the assistant at once.
 - Assistant settings, conversations, suggestions, usage and briefings are invisible to and unchangeable by another user, who can't decide someone else's suggestion; deleting a conversation removes its messages and suggestions.
+- Devices and calendar links are invisible to and unchangeable by another person and by anyone signed out; a push endpoint must be https; an imported workout can't be added twice; the calendar feed answers only to the exact token, with only that person's live events, and records when it was read.
 - Deleting an account is refused when signed out; it removes the caller's rows from every table (transfers, links and other trigger-guarded rows included) and leaves everyone else's alone.
 
 ## Backups, export, deletion

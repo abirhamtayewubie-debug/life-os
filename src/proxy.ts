@@ -2,7 +2,7 @@ import { NextResponse, type NextRequest } from "next/server";
 import { createServerClient } from "@supabase/ssr";
 import { supabaseEnv } from "@/lib/supabase/env";
 
-const PUBLIC_PATHS = ["/login", "/signup", "/auth/", "/healthz"];
+const PUBLIC_PATHS = ["/login", "/signup", "/auth/", "/healthz", "/api/cron/", "/feed/", "/sw.js"];
 
 /**
  * A strict Content-Security-Policy with a fresh nonce per request: only
@@ -20,6 +20,8 @@ function contentSecurityPolicy(nonce: string, https: boolean) {
     "img-src 'self' blob: data:",
     "font-src 'self'",
     `connect-src 'self'${supabase ? ` ${supabase}` : ""}`,
+    "worker-src 'self'",
+    "manifest-src 'self'",
     "object-src 'none'",
     "base-uri 'self'",
     "form-action 'self'",

@@ -45,7 +45,7 @@ export async function getTaskWorkspace(now = new Date()): Promise<TaskWorkspace>
     supabase.from("tasks").select(TASK_COLUMNS).is("archived_at", null).in("status", ["todo", "in_progress", "waiting"]).limit(3000),
     supabase.from("tasks").select(TASK_COLUMNS).is("archived_at", null).eq("status", "done").gte("completed_at", since).order("completed_at", { ascending: false }).limit(500),
     supabase.from("task_dependencies").select("task_id, depends_on_task_id"),
-    supabase.from("reminders").select("id, title, remind_at, timezone, status, snoozed_until, task_id, event_id, source").in("status", ["scheduled", "snoozed"]).order("remind_at").limit(500),
+    supabase.from("reminders").select("id, title, remind_at, timezone, status, snoozed_until, task_id, event_id, channels, source").in("status", ["scheduled", "snoozed"]).order("remind_at").limit(500),
     supabase.from("projects").select("id, name").is("archived_at", null).in("status", ["planned", "active", "on_hold"]).order("name"),
     supabase.from("goals").select("id, title").in("status", ["active", "paused"]).order("title"),
     supabase.from("tags").select("id, name").order("name"),
