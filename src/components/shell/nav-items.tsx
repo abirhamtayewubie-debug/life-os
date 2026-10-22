@@ -52,7 +52,7 @@ export function NavItems({
                   <m.icon className={cn("size-4 shrink-0 text-muted-foreground group-hover:text-foreground", active && "text-brand")} aria-hidden />
                   {collapsed ? <span className="sr-only">{m.label}</span> : <span className="truncate">{m.label}</span>}
                   {!collapsed && m.phase > BUILT_THROUGH_PHASE && (
-                    <span className="ml-auto text-[10px] text-subtle-foreground tabular" title={`Arrives in phase ${m.phase}`}>
+                    <span className="ml-auto text-[10px] text-muted-foreground tabular" title={`Arrives in phase ${m.phase}`}>
                       P{m.phase}
                     </span>
                   )}

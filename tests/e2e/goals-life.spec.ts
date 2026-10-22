@@ -32,7 +32,7 @@ test("goals, projects and the wheel persist and connect", async ({ page }) => {
   await page.getByRole("button", { name: "Add goal" }).click();
   await expect(toast(page, /added|saved/i)).toBeVisible();
 
-  await page.getByRole("button", { name: "Add a goal under A healthy, generous life" }).click({ force: true });
+  await page.getByRole("button", { name: "Sub-goal under A healthy, generous life" }).click({ force: true });
   await dlg(page).getByLabel("Goal").fill("Run a 10K this year");
   await expect(dlg(page).getByLabel("Part of")).toHaveValue(/.+/);
   await page.getByRole("button", { name: "Add goal" }).click();
