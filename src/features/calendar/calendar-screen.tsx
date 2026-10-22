@@ -8,7 +8,7 @@ import { EmptyState } from "@/components/data/empty-state";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { conflictIds, layoutDay, onDay, shiftAnchor, type CalendarView, type Occurrence } from "@/lib/calendar";
+import { conflictIds, isSyncedEvent, layoutDay, onDay, shiftAnchor, type CalendarView, type Occurrence } from "@/lib/calendar";
 import { formatTime, localDateKey, weekdayOf } from "@/lib/dates";
 import { cn } from "@/lib/utils";
 import { EventForm, draftFor, type EventDraft } from "./event-form";
@@ -163,7 +163,7 @@ export function CalendarScreen({ data, nowIso, startNew = false }: { data: Calen
       <Dialog open={!!editing} onOpenChange={(o) => !o && setEditing(null)}>
         <DialogContent className="max-w-lg">
           <DialogHeader>
-            <DialogTitle>{editing?.event ? (editing.event.external_provider ? editing.event.title : "Edit event") : editing?.draft?.kind === "time_block" ? "Block time" : "New event"}</DialogTitle>
+            <DialogTitle>{editing?.event ? (isSyncedEvent(editing.event.external_provider) ? editing.event.title : "Edit event") : editing?.draft?.kind === "time_block" ? "Block time" : "New event"}</DialogTitle>
             <DialogDescription className="sr-only">Event details</DialogDescription>
           </DialogHeader>
           {editing && (

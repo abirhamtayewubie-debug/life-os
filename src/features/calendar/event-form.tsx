@@ -9,7 +9,7 @@ import { Switch } from "@/components/ui/switch";
 import {
   AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogTitle, AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
-import { allDayKey, wallTime } from "@/lib/calendar";
+import { allDayKey, isSyncedEvent, wallTime } from "@/lib/calendar";
 import { addDays, localDateKey } from "@/lib/dates";
 import { describeRule, parseRule, presetFromRule, ruleFromPreset, type RepeatPreset } from "@/lib/recurrence";
 import { createEvent, deleteEvent, updateEvent, type EventInput } from "@/server/actions/calendar";
@@ -77,7 +77,7 @@ export function EventForm({
   const [errors, setErrors] = useState<Errors>({});
   const { pending, run } = useServerAction();
   const set = <K extends keyof EventInput>(k: K, val: EventInput[K]) => setV((s) => ({ ...s, [k]: val }));
-  const readOnly = !!event?.external_provider;
+  const readOnly = isSyncedEvent(event?.external_provider);
   const err = (k: string) => errors[k]?.[0];
 
   const preset = presetFromRule(v.recurrenceRule);

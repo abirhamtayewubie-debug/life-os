@@ -218,9 +218,9 @@ function toEvent(props: Prop[], fallbackTz: string, skip: (r: string) => void): 
   const start = startProp && parseWhen(startProp, fallbackTz);
   if (!start) { skip("Events without a readable start time"); return null; }
 
-  const title = unescapeText(get("SUMMARY")?.value ?? "").slice(0, 200) || "(No title)";
+  const title = unescapeText(get("SUMMARY")?.value ?? "").slice(0, 300) || "(No title)";
   const uid = (get("UID")?.value.trim() || `${title}|${startProp!.value}`).slice(0, 300);
-  const description = get("DESCRIPTION") ? unescapeText(get("DESCRIPTION")!.value).slice(0, 5000) || null : null;
+  const description = get("DESCRIPTION") ? unescapeText(get("DESCRIPTION")!.value).slice(0, 10000) || null : null;
   const location = get("LOCATION") ? unescapeText(get("LOCATION")!.value).slice(0, 300) || null : null;
 
   let recurrenceRule: string | null = null;

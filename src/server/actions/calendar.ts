@@ -3,7 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { z } from "zod";
 import { addDays, diffDays, zonedTimeToUtc } from "@/lib/dates";
-import { allDayIso } from "@/lib/calendar";
+import { allDayIso, isSyncedEvent } from "@/lib/calendar";
 import { isValidRule, parseRule, serializeRule } from "@/lib/recurrence";
 import { DEMO_RESULT, type ActionResult } from "./result";
 import { audit, liveContext } from "./guard";
@@ -92,7 +92,7 @@ export async function updateEvent(id: string, input: EventInput): Promise<Action
   if (!ctx) return DEMO_RESULT;
   const { data: existing } = await ctx.supabase.from("calendar_events").select("id, external_provider, timezone").eq("id", id).maybeSingle();
   if (!existing) return { ok: false, error: "Event not found." };
-  if (existing.external_provider) return { ok: false, error: "This event comes from a connected calendar. Edit it there." };
+  if (isSyncedEvent(existing.external_provider)) return { ok: false, error: "This event comes from a connected calendar. Edit it there." };
   const { error } = await ctx.supabase.from("calendar_events").update(toRow(parsed.data, ctx.viewer.profile.timezone)).eq("id", id);
   if (error) return { ok: false, error: "Couldn't save the event." };
   refresh();
@@ -106,7 +106,7 @@ export async function moveEvent(id: string, date: string, time: string): Promise
   if (!ctx) return DEMO_RESULT;
   const { data: e } = await ctx.supabase.from("calendar_events").select("starts_at, ends_at, all_day, external_provider").eq("id", id).maybeSingle();
   if (!e) return { ok: false, error: "Event not found." };
-  if (e.external_provider) return { ok: false, error: "This event comes from a connected calendar. Move it there." };
+  if (isSyncedEvent(e.external_provider)) return { ok: false, error: "This event comes from a connected calendar. Move it there." };
   const tz = ctx.viewer.profile.timezone;
   let starts: string;
   let ends: string;

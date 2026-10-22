@@ -90,16 +90,25 @@ $$;
 revoke all on function public.calendar_feed(text) from public;
 grant execute on function public.calendar_feed(text) to anon, authenticated;
 
--- Records when a feed was last read (separate so the read stays `stable`).
+-- Says whether a feed link is live, and records when it was last read
+-- (separate so calendar_feed stays `stable`).
 create or replace function public.touch_calendar_feed(feed_token text)
-returns void
-language sql
+returns boolean
+language plpgsql
 security definer
 set search_path = ''
 as $$
+declare
+  h bytea;
+begin
+  if feed_token is null or feed_token !~ '^[A-Za-z0-9_-]{43}$' then
+    return false;
+  end if;
+  h := extensions.digest(feed_token, 'sha256');
   update public.calendar_feeds set last_used_at = now()
-  where token_hash = extensions.digest(feed_token, 'sha256')
-    and (last_used_at is null or last_used_at < now() - interval '10 minutes');
+  where token_hash = h and (last_used_at is null or last_used_at < now() - interval '10 minutes');
+  return exists (select 1 from public.calendar_feeds where token_hash = h);
+end;
 $$;
 revoke all on function public.touch_calendar_feed(text) from public;
 grant execute on function public.touch_calendar_feed(text) to anon, authenticated;
