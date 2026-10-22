@@ -6,6 +6,8 @@ A personal operating system: priorities, plans, money, health, reflection and pr
 - Database: [docs/DATABASE.md](docs/DATABASE.md)
 - Design system: [docs/DESIGN_SYSTEM.md](docs/DESIGN_SYSTEM.md)
 - Roadmap & log: [docs/ROADMAP.md](docs/ROADMAP.md)
+- Deployment, backups, monitoring: [docs/DEPLOYMENT.md](docs/DEPLOYMENT.md)
+- Security and accessibility reviews: [docs/SECURITY.md](docs/SECURITY.md), [docs/ACCESSIBILITY.md](docs/ACCESSIBILITY.md)
 
 ## Run it
 
@@ -32,17 +34,17 @@ Sign up at `/signup` (local Supabase skips email confirmation). Load sample data
 
 ### With a hosted Supabase project
 
-Create a project, then `npx supabase link --project-ref <ref>` and `npx supabase db push`. Put the project URL and publishable key in your host's environment variables. Configure Auth → URL configuration with your site URL and `<site>/auth/callback`.
+See [docs/DEPLOYMENT.md](docs/DEPLOYMENT.md).
 
 ## Checks
 
 ```bash
 npm run check          # typecheck + lint + unit tests
-npm run test:db        # RLS isolation tests (local Supabase running)
-npm run build && PORT=3200 npm start &
+npm run test:db        # database tests (local Supabase running)
+npm run build && ANTHROPIC_API_KEY=e2e-mock ANTHROPIC_BASE_URL=http://127.0.0.1:3299 PORT=3200 npm start &
 npm run test:e2e       # Playwright end-to-end (needs the local stack)
 ```
 
 ## Environment variables
 
-See [.env.example](.env.example). Only the Supabase URL and publishable key are public; RLS protects the data. Secrets (service key, cron secret, Anthropic key) are server-only and not used until their phases.
+See [.env.example](.env.example). Only the Supabase URL and publishable key are public; RLS protects the data. Secrets are server-only: the Anthropic key (optional, for the assistant); the service key and cron secret aren't used yet.

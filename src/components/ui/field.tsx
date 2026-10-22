@@ -1,3 +1,4 @@
+import { cloneElement, isValidElement } from "react";
 import { Label } from "@/components/ui/label";
 import { cn } from "@/lib/utils";
 
@@ -19,8 +20,15 @@ export function Field({
         {label}
         {optional && <span className="font-normal text-muted-foreground"> (optional)</span>}
       </Label>
-      {children}
-      {error ? <p id={`${id}-error`} className="text-xs text-destructive">{error}</p> : hint ? <p className="text-[11px] text-muted-foreground">{hint}</p> : null}
+      {described(children, error ? `${id}-error` : hint ? `${id}-hint` : undefined)}
+      {error ? <p id={`${id}-error`} className="text-xs text-destructive">{error}</p> : hint ? <p id={`${id}-hint`} className="text-[11px] text-muted-foreground">{hint}</p> : null}
     </div>
   );
+}
+
+/** Links the error or hint to the control so screen readers announce it with the field. */
+function described(children: React.ReactNode, describedBy: string | undefined) {
+  if (!describedBy || !isValidElement<{ "aria-describedby"?: string }>(children)) return children;
+  const own = children.props["aria-describedby"];
+  return cloneElement(children, { "aria-describedby": own ? `${own} ${describedBy}` : describedBy });
 }

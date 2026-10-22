@@ -10,7 +10,8 @@ export default async function LoginPage({ searchParams }: PageProps<"/login">) {
   if (isDemoMode()) return <DemoNotice />;
   const sp = await searchParams;
   const next = typeof sp.next === "string" ? sp.next : undefined;
-  const notice = sp.error === "confirmation" ? "That confirmation link is invalid or expired. Sign in or request a new one." : undefined;
+  const notice = sp.error === "confirmation" ? "That confirmation link is invalid or expired. Sign in or request a new one."
+    : sp.deleted === "1" ? "Your account and everything in it were deleted." : undefined;
   return <AuthForm mode="login" action={signIn} next={next} notice={notice} />;
 }
 

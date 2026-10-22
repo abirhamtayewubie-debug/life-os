@@ -9,9 +9,9 @@ Each phase ships working software and must meet the Definition of Done (persists
 | 3 Goals & life | Goals hierarchy + milestones, projects (Kanban/timeline), journal, knowledge base (search, backlinks, files), learning, relationships, home admin, Wheel of Life assessments | **Done** (merged, PR #2; file attachments wait for Storage) |
 | 4 Finance | Accounts, transactions, transfers, budgets, bills/subscriptions, savings & debt, exchange rates, CSV import/export, monthly report | **Done** (merged, PR #3) |
 | 5 Health & analytics | Workouts, measurements, sleep, wellness, reports (daily → annual) with measured vs interpreted split | **Done** (merged, PR #4) |
-| 6 AI assistant | Server-side Anthropic integration, permissioned read tools, confirm-before-write proposals, briefings and report readings | **Built** (PR for review); live use waits for an API key |
+| 6 AI assistant | Server-side Anthropic integration, permissioned read tools, confirm-before-write proposals, briefings and report readings | **Done** (merged, PR #5); not verified live: waits for an API key |
 | 7 Integrations & notifications | Google/Outlook calendar (OAuth), web push, email, health imports, dispatcher with retries | Needs approval per service |
-| 8 Quality & launch | Accessibility & security review, export/deletion, monitoring, backups, deployment docs | |
+| 8 Quality & launch | Accessibility & security review, export/deletion, monitoring, backups, deployment docs | **Built** (PR for review); hosting not set up (needs approval) |
 
 ## Phase 1 log
 
@@ -37,6 +37,20 @@ Each phase ships working software and must meet the Definition of Done (persists
 - Tests: 55 unit tests (adds recurrence, calendar expansion/DST/conflicts/layout, task filters, habit stats), `supabase/tests/productivity.sql` (cycles, series uniqueness, rule checks, view names, delivery idempotency, cross-user isolation for the new tables), and a Playwright flow covering tasks → reminder alert → repeating task → events + overlap → time block → habits → search → second user sees none of it.
 - Known limits: no drag-and-drop on the calendar yet (use the event form), no per-occurrence edits of repeating events, reminders are in-app only, no external calendar sync (phase 7).
 
+
+## Phase 8 log
+
+- Export (Settings → Your data): everything as one JSON file, every table as CSV in one .zip, or a single table as CSV. Read through the person's own session with an explicit owner filter; integration secrets and search indexes are left out; every export is audited. The zip is written by a small built-in writer (no new dependency).
+- Account deletion: password again plus the typed phrase "delete my account". Migration `0013_account_deletion` adds `delete_my_account()`, which deletes only the caller; every table cascades from the auth user. The person lands on the sign-in page with a confirmation.
+- Security: a per-request nonce Content-Security-Policy from `src/proxy.ts` (`strict-dynamic`, no inline scripts; the theme script carries the nonce), plus HSTS and Cross-Origin-Opener-Policy. Assistant provider errors are now logged (type and status only). Review notes in [SECURITY.md](SECURITY.md).
+- Accessibility: an axe scan of all 19 screens plus sign-in and sign-up, in light and dark, now passes WCAG 2.1 AA. Fixed text contrast (the subtle grey, success, warning and destructive colours, chart tooltips), spoken names that didn't match visible text, and form errors and hints that weren't linked to their fields. Notes in [ACCESSIBILITY.md](ACCESSIBILITY.md).
+- Monitoring: `/healthz` for an uptime monitor (200 when the database answers, 503 when not; reveals nothing else).
+- [DEPLOYMENT.md](DEPLOYMENT.md): Supabase and Vercel setup, releasing, backups and a restore drill, monitoring, shutting down. Written and checked against the local stack only; **no accounts were created**.
+- Tests:
+  - 118 unit tests (adds CSV export, CRC-32 and a zip that `unzip` accepts).
+  - `supabase/tests/account.sql`: anonymous callers are refused; deleting removes the caller's rows from every table, including trigger-guarded transfers and links, and leaves another person's data alone.
+  - Playwright: an accessibility suite (scans plus keyboard: skip link, search, dialog focus), and an account flow (security headers, health check, JSON/zip/CSV exports containing only the person's rows, a wrong password refused, deletion, sign-in afterwards refused, the other person's data intact).
+- Known limits: no screen-reader testing yet, no multi-factor sign-in, no import of an export, and Free-plan Supabase has no downloadable backups (use the export).
 
 ## Phase 6 log
 

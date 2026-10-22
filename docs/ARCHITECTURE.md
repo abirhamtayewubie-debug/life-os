@@ -124,13 +124,13 @@ user taps "Confirm" ─► normal Server Action executes the proposal ─► aud
 - RLS enabled on every table in `public`; default deny; policies key on `(select auth.uid())`.
 - Composite FKs prevent cross-tenant references.
 - Secrets only in server env (`.env.local`, Vercel env). `NEXT_PUBLIC_*` holds only the Supabase URL and publishable/anon key, which are safe by design because RLS gates them.
-- Security headers (CSP-lite, frame-ancestors, referrer, permissions policy) in `next.config.ts`.
-- Rate limiting on auth and AI routes (Phase 6) via a Postgres-backed token bucket.
+- Security headers: a per-request nonce CSP from `src/proxy.ts`; frame, referrer, permissions, HSTS and COOP headers in `next.config.ts`.
+- Rate limiting: Supabase Auth limits sign-in attempts; the assistant has a monthly budget and 60 calls per 10 minutes, counted from `ai_usage`.
 - `audit_events` for sign-ins, exports, deletions, integration grants, AI-confirmed actions.
-- Export (JSON/CSV) and full account deletion are user-initiated (Phase 8, with export of individual modules as they ship).
+- Export (JSON/CSV) and full account deletion are user-initiated from Settings. Review notes: [SECURITY.md](SECURITY.md).
 
 ## 7. Environments and deployment
 
 - **Local:** `npm run dev` with either demo mode or a local Supabase stack (`npx supabase start`).
-- **Hosted (proposed, needs approval):** Vercel (Hobby/free) + Supabase (Free tier) to start; Anthropic API is usage-billed and will only be wired in Phase 6 after you approve it.
-- Backups: Supabase daily backups (Pro tier adds PITR); plus user-level JSON export.
+- **Hosted (proposed, needs approval):** Vercel (Hobby/free) + Supabase (Free tier) to start; the Anthropic API is optional and usage-billed. Steps, backups and monitoring: [DEPLOYMENT.md](DEPLOYMENT.md).
+- Health check: `/healthz` for uptime monitors.

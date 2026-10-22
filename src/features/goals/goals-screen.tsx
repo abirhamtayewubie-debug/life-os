@@ -166,7 +166,7 @@ function GoalRow({ g, ws, onOpen, onAddChild }: { g: GoalNode; ws: GoalWorkspace
           <span className="max-w-md"><GoalProgress g={g} ws={ws} /></span>
         </button>
         {g.level !== "quarterly" && g.status === "active" && (
-          <Button variant="ghost" size="sm" className="shrink-0 pointer-fine:opacity-0 pointer-fine:group-hover:opacity-100 focus-visible:opacity-100" onClick={onAddChild} aria-label={`Add a goal under ${g.title}`}>
+          <Button variant="ghost" size="sm" className="shrink-0 pointer-fine:opacity-0 pointer-fine:group-hover:opacity-100 focus-visible:opacity-100" onClick={onAddChild} aria-label={`Sub-goal under ${g.title}`}>
             <Plus /> Sub-goal
           </Button>
         )}

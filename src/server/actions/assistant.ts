@@ -29,6 +29,8 @@ function toolContext(ctx: Ctx, settings: AiSettings, now: Date): ToolContext {
 
 /** Turns provider errors into something the person can act on, without leaking details. */
 function providerError(e: unknown): string {
+  // Logged for the host's function logs: the error type and status only, never the conversation.
+  console.error("assistant error", e instanceof Anthropic.APIError ? `${e.name} ${e.status ?? ""} ${e.requestID ?? ""}` : e instanceof Error ? e.name : "unknown");
   if (e instanceof Anthropic.AuthenticationError || e instanceof Anthropic.PermissionDeniedError) return "Anthropic refused the API key. Check the key on the server.";
   if (e instanceof Anthropic.RateLimitError) return "Anthropic is rate-limiting requests right now. Try again in a minute.";
   if (e instanceof Anthropic.BadRequestError) return /credit|billing/i.test(e.message) ? "Your Anthropic account is out of credit. Add credit in the Anthropic console." : "Anthropic couldn't process that request.";

@@ -42,11 +42,13 @@ Postgres on Supabase. Everything is in versioned SQL under [`supabase/migrations
 
 **0012 assistant** — `ai_settings` gains `model` (Haiku/Sonnet/Opus 5.5) and `monthly_budget_usd` (0–1000), and `allowed_modules` may only name known modules (health, finance and journal have their own switches); `ai_messages` cache token counts; `ai_tool_calls.result_record_id` and `tool_use_id`; `ai_briefings` (one per person per day, `facts` an object, source `ai_suggested`); `ai_usage` per call (purpose chat/briefing/report, non-negative tokens); `reports.interpretation_model` and `interpreted_at`, set together with the interpretation.
 
+**0013 account deletion** — `delete_my_account()`: `security definer`, no arguments, deletes `auth.uid()` from `auth.users`; executable by `authenticated` only. Every user-owned table cascades from it.
+
 Trigger helpers never call functions in schema `private`: app roles have no `usage` on it, so any such call from a trigger fails for signed-in users.
 
 Calendar convention: timed events store real instants plus the zone they were created in, and repeats keep the local wall-clock time in that zone. All-day events are floating dates stored as UTC midnight of their first and last day (both inclusive), so `starts_at::date` is the date wherever the viewer is.
 
-## Verified by `supabase/tests/rls_isolation.sql`, `productivity.sql`, `goals_life.sql`, `finance.sql`, `health.sql` and `assistant.sql`
+## Verified by `supabase/tests/rls_isolation.sql`, `productivity.sql`, `goals_life.sql`, `finance.sql`, `health.sql`, `assistant.sql` and `account.sql`
 
 - Every `public` table has RLS enabled and forced.
 - Sign-up creates a profile.
@@ -67,9 +69,10 @@ Calendar convention: timed events store real instants plus the zone they were cr
 - Check-ins, water, workouts and sets, measurements, sleep and saved reports are invisible to and unchangeable by another user, who also can't attach sets to someone else's workout.
 - The assistant is off with nothing shared by default; unknown models, modules or negative budgets are refused; a suggestion that needs confirmation can't be stored as done; one briefing a day; a journal entry can't be private and readable by the assistant at once.
 - Assistant settings, conversations, suggestions, usage and briefings are invisible to and unchangeable by another user, who can't decide someone else's suggestion; deleting a conversation removes its messages and suggestions.
+- Deleting an account is refused when signed out; it removes the caller's rows from every table (transfers, links and other trigger-guarded rows included) and leaves everyone else's alone.
 
 ## Backups, export, deletion
 
 - Supabase runs daily backups (Pro adds point-in-time recovery).
 - Deleting an `auth.users` row cascades every owned row.
-- User-facing export and account deletion ship in Phase 8; per-module CSV export ships with each module.
+- Export (JSON, zipped CSV, single-table CSV) and account deletion are in Settings → Your data. See [DEPLOYMENT.md](DEPLOYMENT.md) for backups and restore.

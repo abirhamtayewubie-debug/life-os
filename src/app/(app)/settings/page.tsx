@@ -5,6 +5,7 @@ import { AiSettingsForm } from "@/features/settings/ai-settings-form";
 import { AppearancePicker } from "@/features/settings/appearance";
 import { ModuleToggles } from "@/features/settings/module-toggles";
 import { PreferencesForm } from "@/features/settings/preferences-form";
+import { DataExport, DeleteAccount } from "@/features/settings/data-export";
 import { SampleDataControls } from "@/features/settings/sample-data-controls";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 import { DEFAULT_AI_SETTINGS, MODELS, type AiSettings } from "@/features/assistant/models";
@@ -79,9 +80,12 @@ export default async function SettingsPage() {
           {demo ? <p className="text-sm text-muted-foreground">The assistant needs a connected database and an Anthropic API key. Nothing is sent anywhere in demo mode.</p>
             : <AiSettingsForm settings={ai} configured={configured} spendUsd={spendUsd} />}
         </Section>
-        <Section id="data" title="Your data" description="Sample data is always labelled and can be removed in one step.">
-          <SampleDataControls hasSample={hasSample} demo={demo} />
-          <p className="mt-4 text-xs text-muted-foreground">Full export (JSON and CSV) and account deletion are planned for phase 8, with per-module CSV export arriving as each module ships.</p>
+        <Section id="data" title="Your data" description="Download a copy any time. Sample data is always labelled and can be removed in one step.">
+          <div className="grid gap-6">
+            <SampleDataControls hasSample={hasSample} demo={demo} />
+            {demo ? <p className="text-sm text-muted-foreground">Export and account deletion work once a database is connected; demo mode stores nothing of yours.</p>
+              : <><DataExport /><DeleteAccount /></>}
+          </div>
         </Section>
         <Section id="privacy" title="Privacy & security" description="What is true about your data right now.">
           <ul className="grid gap-2.5">
@@ -93,6 +97,7 @@ export default async function SettingsPage() {
               : <Fact ok>The assistant is off. Nothing is sent to an AI provider.</Fact>}
             <Fact ok>Sensitive actions are written to an audit log you can&apos;t accidentally edit.</Fact>
             <Fact ok={false}>Push and email notifications are not set up yet (phase 7).</Fact>
+            <Fact ok={!demo}>You can download all your data, or delete your account and everything in it, from this page.</Fact>
             <Fact ok={false}>No external services are connected (phase 7, each with explicit consent).</Fact>
           </ul>
           {!demo && <p className="mt-4 text-xs text-muted-foreground">Signed in as {viewer.email}.</p>}
