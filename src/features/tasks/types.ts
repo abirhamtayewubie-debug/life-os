@@ -12,6 +12,8 @@ export type ReminderRecord = {
   snoozed_until: string | null;
   task_id: string | null;
   event_id: string | null;
+  /** Missing on demo rows, which are in-app only. */
+  channels?: string[];
   source: DataSource;
 };
 
