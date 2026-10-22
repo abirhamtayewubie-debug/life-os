@@ -10,7 +10,7 @@ Each phase ships working software and must meet the Definition of Done (persists
 | 4 Finance | Accounts, transactions, transfers, budgets, bills/subscriptions, savings & debt, exchange rates, CSV import/export, monthly report | **Done** (merged, PR #3) |
 | 5 Health & analytics | Workouts, measurements, sleep, wellness, reports (daily → annual) with measured vs interpreted split | **Done** (merged, PR #4) |
 | 6 AI assistant | Server-side Anthropic integration, permissioned read tools, confirm-before-write proposals, briefings and report readings | **Done** (merged, PR #5); not verified live: waits for an API key |
-| 7 Integrations & notifications | Google/Outlook calendar (OAuth), web push, email, health imports, dispatcher with retries | Needs approval per service |
+| 7 Integrations & notifications | Web push, reminder sender with retries, calendar files and subscribe link, Apple Health import, Integrations page; Google Calendar (OAuth) and email | **Built** (PR for review) except Google Calendar and email, which need accounts; not verified on real devices or in hosting |
 | 8 Quality & launch | Accessibility & security review, export/deletion, monitoring, backups, deployment docs | **Built** (PR for review); hosting not set up (needs approval) |
 
 ## Phase 1 log
@@ -37,6 +37,24 @@ Each phase ships working software and must meet the Definition of Done (persists
 - Tests: 55 unit tests (adds recurrence, calendar expansion/DST/conflicts/layout, task filters, habit stats), `supabase/tests/productivity.sql` (cycles, series uniqueness, rule checks, view names, delivery idempotency, cross-user isolation for the new tables), and a Playwright flow covering tasks → reminder alert → repeating task → events + overlap → time block → habits → search → second user sees none of it.
 - Known limits: no drag-and-drop on the calendar yet (use the event form), no per-occurrence edits of repeating events, reminders are in-app only, no external calendar sync (phase 7).
 
+
+## Phase 7 log
+
+- Notifications on devices (Settings → Notifications on your devices): turn on per browser or phone, send a test, see each device's last delivery, turn off. iPhone needs Life OS added to the Home Screen first (Apple's rule); the screen explains this. Per reminder, "Also notify my devices" (on by default).
+- Reminder sender: `/api/cron/reminders`, protected by `CRON_SECRET`, with one delivery per reminder per channel, retries after 1, 2, 4, 8 and 16 minutes, devices that have gone away removed, and nothing sent more than a day late. Scheduling it in hosting (Supabase pg_cron) is documented in DEPLOYMENT.md.
+- Calendar → Import & export:
+  - Import an .ics file from Google, Apple or Outlook. It's read in the browser and previewed; what can't be represented (single-occurrence changes, cancelled events, repeat rules this app doesn't support) is listed, never guessed. Re-importing adds only new events. Imported events are copies you can edit.
+  - Download every event as .ics.
+  - A private subscribe link for Google/Apple/Outlook (one-way, read-only), shown once, replaceable and revocable, with "last read" shown.
+- Apple Health (Integrations, and Health → Import from Apple Health): choose the export.zip (or export.xml) from the Health app; it's streamed and read on the device, then previewed with counts and a choice of what to add. Weight, body fat, resting heart rate, sleep (one night per wake-up day, asleep time preferred over time in bed) and workouts (with distance and energy in the notes). Readings recorded by a device are marked "Device"; values typed into the Health app are marked "Imported". Re-importing adds nothing twice.
+- Integrations page: each connection's status, what it can see, and whether it has been seen working (last delivery, last read, last import). Google Calendar and email say plainly that they aren't connected.
+- Migration `0014_integrations`; Phase 7 tables added to the export (device keys and the link hash left out).
+- Tests:
+  - Unit: .ics writing and reading (escaping, folding, all-day, time zones incl. Windows names, durations, unsupported rules, caps) and the Apple Health reader (units, sleep grouping, workouts, any chunk size).
+  - `supabase/tests/integrations.sql`.
+  - Playwright: notifications (encrypted delivery to a stand-in push service, retries, no duplicates, a device that has gone away), calendar files (import once, download, link create/replace/turn off, signed-out access only by token), Apple Health (zip and xml, preview, choose, honest sources, no duplicates).
+- Not verified: delivery through real push services to a real phone, and the schedule in hosting. Both need the app deployed.
+- Waiting for approval: Google Calendar two-way sync (Google Cloud project and OAuth consent) and email reminders (a sending service such as Resend).
 
 ## Phase 8 log
 
