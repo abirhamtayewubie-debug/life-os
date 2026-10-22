@@ -10,6 +10,8 @@ export type JournalEntry = {
   body: string;
   mood: number | null;
   is_private: boolean;
+  /** Shared with the assistant (only possible when not private). */
+  ai_access_allowed: boolean;
   source: DataSource;
   updated_at: string;
 };

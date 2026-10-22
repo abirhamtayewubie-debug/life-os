@@ -3,7 +3,10 @@
 import { useEffect, useMemo, useState } from "react";
 import Form from "next/form";
 import Link from "next/link";
-import { BookHeart, Lock, Pencil, Plus, Search, X } from "lucide-react";
+import { BookHeart, Lock, Pencil, Plus, Search, Sparkles, X } from "lucide-react";
+import {
+  AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogTitle, AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
 import { ConfirmDelete } from "@/components/data/confirm-delete";
 import { EmptyState } from "@/components/data/empty-state";
 import { ProvenanceBadge } from "@/components/data/provenance";
@@ -15,7 +18,7 @@ import { Field } from "@/components/ui/field";
 import { Input, NativeSelect, Textarea } from "@/components/ui/input";
 import { formatShortDate } from "@/lib/dates";
 import { cn } from "@/lib/utils";
-import { deleteJournalEntry, deleteValue, saveJournalEntry, saveValue, type JournalInput } from "@/server/actions/reflection";
+import { deleteJournalEntry, deleteValue, saveJournalEntry, saveValue, setJournalSharing, type JournalInput } from "@/server/actions/reflection";
 import { useServerAction } from "@/features/dashboard/use-server-action";
 import { daysWritten, writingStreak } from "./streak";
 import { KIND_LABEL, KIND_PROMPT, type JournalEntry, type JournalKind, type PersonalValue, type ReflectionWorkspace } from "./types";
@@ -87,7 +90,9 @@ export function ReflectionScreen({ ws, startNew = false }: { ws: ReflectionWorks
                     <Badge variant="outline">{KIND_LABEL[e.kind]}</Badge>
                     {e.mood && <span>Mood: {MOODS[e.mood - 1].label}</span>}
                     <ProvenanceBadge source={e.source} />
+                    {e.ai_access_allowed ? <Badge variant="brand"><Sparkles className="size-3" aria-hidden /> Shared with assistant</Badge> : <span className="flex items-center gap-1"><Lock className="size-3" aria-hidden /> Private</span>}
                     <div className="ml-auto flex gap-1">
+                      <ShareEntry id={e.id} shared={e.ai_access_allowed} />
                       <Button variant="ghost" size="icon-sm" aria-label="Edit entry" onClick={() => setEditing(e)}><Pencil /></Button>
                       <DeleteEntry id={e.id} />
                     </div>
@@ -118,7 +123,7 @@ export function ReflectionScreen({ ws, startNew = false }: { ws: ReflectionWorks
         <ValuesCard values={ws.values} />
         <p className="flex gap-2 rounded-lg border border-border bg-muted/40 p-3 text-[12px] leading-relaxed text-muted-foreground">
           <Lock className="mt-0.5 size-3.5 shrink-0" />
-          Journal entries are private to your account. They are never sent to an AI model. If an assistant arrives later, it will only read entries you explicitly allow.
+          Journal entries are private to your account and never sent to an AI model. The assistant can read an entry only if you share that entry here and switch on Journal in Settings.
         </p>
       </aside>
 
@@ -265,5 +270,25 @@ function ValuesCard({ values }: { values: PersonalValue[] }) {
         )}
       </CardContent>
     </Card>
+  );
+}
+
+function ShareEntry({ id, shared }: { id: string; shared: boolean }) {
+  const { run, pending } = useServerAction();
+  if (shared) return <Button variant="ghost" size="xs" disabled={pending} onClick={() => run(() => setJournalSharing(id, false))}>Make private</Button>;
+  return (
+    <AlertDialog>
+      <AlertDialogTrigger asChild><Button variant="ghost" size="xs" disabled={pending}>Share with assistant</Button></AlertDialogTrigger>
+      <AlertDialogContent>
+        <AlertDialogTitle>Let the assistant read this entry?</AlertDialogTitle>
+        <AlertDialogDescription>
+          If Journal is switched on in Settings, this entry&apos;s text can be sent to Anthropic when you ask the assistant something it&apos;s relevant to. Your other entries stay private. You can make it private again at any time.
+        </AlertDialogDescription>
+        <AlertDialogFooter>
+          <AlertDialogCancel>Keep private</AlertDialogCancel>
+          <AlertDialogAction onClick={() => run(() => setJournalSharing(id, true))}>Share this entry</AlertDialogAction>
+        </AlertDialogFooter>
+      </AlertDialogContent>
+    </AlertDialog>
   );
 }

@@ -5,7 +5,7 @@ import { createSupabaseServerClient } from "@/lib/supabase/server";
 import type { JournalEntry, PersonalValue, ReflectionWorkspace } from "@/features/reflection/types";
 import { getViewer } from "./viewer";
 
-const COLUMNS = "id, entry_date, kind, title, body, mood, is_private, source, updated_at";
+const COLUMNS = "id, entry_date, kind, title, body, mood, is_private, ai_access_allowed, source, updated_at";
 
 /** Journal entries are only ever read for the signed-in owner (RLS) and never leave the server except to them. */
 export async function getReflectionWorkspace(query: string | null, now = new Date()): Promise<ReflectionWorkspace> {
@@ -16,7 +16,7 @@ export async function getReflectionWorkspace(query: string | null, now = new Dat
 
   if (viewer.mode === "demo") {
     const s = generateSampleSet(now, timezone, viewer.profile.baseCurrency);
-    const entries = s.journal_entries.map((e) => ({ ...e, mood: null, updated_at: e.entry_date })) as JournalEntry[];
+    const entries = s.journal_entries.map((e) => ({ ...e, mood: null, ai_access_allowed: false, updated_at: e.entry_date })) as JournalEntry[];
     return {
       entries: q ? entries.filter((e) => `${e.title ?? ""} ${e.body}`.toLowerCase().includes(q.toLowerCase())) : entries,
       values: s.personal_values as PersonalValue[],

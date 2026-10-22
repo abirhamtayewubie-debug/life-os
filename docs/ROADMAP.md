@@ -8,8 +8,8 @@ Each phase ships working software and must meet the Definition of Done (persists
 | 2 Daily productivity | Tasks (subtasks, deps, tags, saved views), reminders with snooze, calendar day/week/month/agenda + time blocking + conflicts, habits CRUD, ⌘K record search, RRULE recurrence, time-zone tests | **Done** (merged, PR #1) |
 | 3 Goals & life | Goals hierarchy + milestones, projects (Kanban/timeline), journal, knowledge base (search, backlinks, files), learning, relationships, home admin, Wheel of Life assessments | **Done** (merged, PR #2; file attachments wait for Storage) |
 | 4 Finance | Accounts, transactions, transfers, budgets, bills/subscriptions, savings & debt, exchange rates, CSV import/export, monthly report | **Done** (merged, PR #3) |
-| 5 Health & analytics | Workouts, measurements, sleep, wellness, reports (daily → annual) with measured vs interpreted split | **Done** (PR for review) |
-| 6 AI assistant | Server-side Anthropic integration, permissioned read tools, confirm-before-write proposals, briefings and weekly reports | Needs approval (paid API) |
+| 5 Health & analytics | Workouts, measurements, sleep, wellness, reports (daily → annual) with measured vs interpreted split | **Done** (merged, PR #4) |
+| 6 AI assistant | Server-side Anthropic integration, permissioned read tools, confirm-before-write proposals, briefings and report readings | **Built** (PR for review); live use waits for an API key |
 | 7 Integrations & notifications | Google/Outlook calendar (OAuth), web push, email, health imports, dispatcher with retries | Needs approval per service |
 | 8 Quality & launch | Accessibility & security review, export/deletion, monitoring, backups, deployment docs | |
 
@@ -37,6 +37,27 @@ Each phase ships working software and must meet the Definition of Done (persists
 - Tests: 55 unit tests (adds recurrence, calendar expansion/DST/conflicts/layout, task filters, habit stats), `supabase/tests/productivity.sql` (cycles, series uniqueness, rule checks, view names, delivery idempotency, cross-user isolation for the new tables), and a Playwright flow covering tasks → reminder alert → repeating task → events + overlap → time block → habits → search → second user sees none of it.
 - Known limits: no drag-and-drop on the calendar yet (use the event form), no per-occurrence edits of repeating events, reminders are in-app only, no external calendar sync (phase 7).
 
+
+## Phase 6 log
+
+- Model: Haiku 5.5 by default (approved by Ab), switchable to Sonnet 5.5 or Opus 5.5 in Settings → AI assistant. Calls go from the server only, through the official `@anthropic-ai/sdk`, with `ANTHROPIC_API_KEY` from the server environment. The browser never sees the key and the model never sees database credentials.
+- Migration `0012_assistant`: per-person assistant settings (off by default, no areas shared, known models and modules only, monthly budget, retention), cache token counts on messages, `ai_usage` per call, `ai_briefings` (one per day, facts kept beside the text), and report write-ups that record which model wrote them and when.
+- Sharing: each module is off until switched on. Health, finance and journal each have their own switch, and journal entries are readable only when shared one by one from Reflection (an entry can't be both private and shared). Relationship notes and admin reference numbers are never sent.
+- The assistant (`/assistant`):
+  - Read tools run as the signed-in person through RLS: tasks, events, habits, goals, projects, learning, people, admin, note search, reports, Wheel of Life, reflection, and (if shared) finance, health and journal. Results are capped and carry links to the records.
+  - Changes are only suggested: add a task, complete a task, add an event or time block, log a habit. Each shows as a card with Confirm and Decline; confirming runs the normal validated action and marks the record `ai_suggested`. Suggestions expire after 7 days and can't be confirmed twice.
+  - Answers separate Facts, Estimates and Suggestions; only in-app links are clickable.
+  - Conversations are kept for the chosen period, can be deleted, and each turn records its tool calls.
+- Briefing: "Write it" on the assistant page writes today's short briefing from the shared areas.
+- Reports: "Write a reading" writes an interpretation of a saved snapshot, shown apart from the measured facts and labelled with the model and time. Re-saving the snapshot clears the old reading.
+- Cost controls: a monthly budget (default $5, the app's own estimate from token counts), 60 calls per 10 minutes, low effort, and prompt caching of the fixed instructions. Ab should also set a spend limit in the Anthropic console.
+- Fixed (found while testing): the Settings page overflowed sideways on phones; an older test raced a background save.
+- Tests:
+  - 113 unit tests. New ones cover the tool loop (results returned together, thinking replayed, proposals never applied, refused or invalid tool calls, refusals, step limit), which tools each sharing choice offers, cost estimates and the safe markdown.
+  - `supabase/tests/assistant.sql`: defaults, model/module/budget checks, a suggestion can't be stored as done, one briefing a day, journal privacy, and another person seeing or deciding none of it.
+  - A Playwright flow against a scripted stand-in for the API (no key, no cost): off by default, sharing two areas, a suggestion that changes nothing until confirmed, linked answers, finance not offered, declining, briefing, report reading, what was sent, and the budget stopping it.
+- **Not yet verified live:** no real API call has been made. That happens once an API key is added.
+- Known limits: answers arrive whole rather than streamed; no voice; the budget is an estimate, not Anthropic's billing.
 
 ## Phase 5 log
 

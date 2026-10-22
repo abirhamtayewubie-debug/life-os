@@ -9,13 +9,14 @@
     "lint": "eslint",
     "typecheck": "tsc --noEmit",
     "test": "vitest run",
-    "test:db": "psql \"postgresql://postgres:postgres@127.0.0.1:54322/postgres\" -v ON_ERROR_STOP=1 -q -f supabase/tests/rls_isolation.sql -f supabase/tests/productivity.sql -f supabase/tests/goals_life.sql -f supabase/tests/finance.sql -f supabase/tests/health.sql",
+    "test:db": "psql \"postgresql://postgres:postgres@127.0.0.1:54322/postgres\" -v ON_ERROR_STOP=1 -q -f supabase/tests/rls_isolation.sql -f supabase/tests/productivity.sql -f supabase/tests/goals_life.sql -f supabase/tests/finance.sql -f supabase/tests/health.sql -f supabase/tests/assistant.sql",
     "test:e2e": "playwright test",
     "db:start": "supabase start",
     "db:reset": "supabase db reset --local",
     "check": "npm run typecheck && npm run lint && npm test"
   },
   "dependencies": {
+    "@anthropic-ai/sdk": "0.131.0",
     "@dnd-kit/core": "^6.3.1",
     "@dnd-kit/sortable": "^10.0.0",
     "@dnd-kit/utilities": "^3.2.2",

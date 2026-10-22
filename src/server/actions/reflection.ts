@@ -21,7 +21,7 @@ function refresh() {
   revalidatePath("/reflection");
 }
 
-/** Entries stay private: is_private is always true and AI access off until the person opts in (phase 6). */
+/** New entries are private, with AI access off. Sharing is a separate, deliberate step (setJournalSharing). */
 export async function saveJournalEntry(id: string | null, input: JournalInput): Promise<ActionResult<{ id: string }>> {
   if (id !== null && !isUuid(id)) return { ok: false, error: "Invalid entry." };
   const parsed = entrySchema.safeParse(input);
@@ -42,6 +42,23 @@ export async function saveJournalEntry(id: string | null, input: JournalInput): 
   if (error) return { ok: false, error: "Couldn't save the entry." };
   refresh();
   return { ok: true, data: { id: data.id }, message: "Saved to your private journal." };
+}
+
+/**
+ * Lets the assistant read one entry, or makes it private again. An entry is
+ * either private or shareable, never both (the database enforces it).
+ */
+export async function setJournalSharing(id: string, share: boolean): Promise<ActionResult> {
+  if (!isUuid(id) || typeof share !== "boolean") return { ok: false, error: "Invalid entry." };
+  const ctx = await liveContext();
+  if (!ctx) return DEMO_RESULT;
+  const { data, error } = await ctx.supabase.from("journal_entries").update({ is_private: !share, ai_access_allowed: share }).eq("id", id).select("id, entry_date");
+  if (error) return { ok: false, error: "Couldn't change sharing." };
+  if (!data?.length) return { ok: false, error: "Entry not found." };
+  await audit(ctx, share ? "journal_entry.shared_with_ai" : "journal_entry.made_private", { type: "journal_entry", id }, { entry_date: data[0].entry_date });
+  refresh();
+  revalidatePath("/assistant");
+  return { ok: true, message: share ? "The assistant may read this entry (if Journal is switched on in Settings)." : "Private again. The assistant can't read it." };
 }
 
 export async function deleteJournalEntry(id: string): Promise<ActionResult> {

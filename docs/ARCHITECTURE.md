@@ -16,7 +16,7 @@ This document is the source of truth for how the system is put together. It is d
 │  proxy.ts            → refreshes the Supabase session cookie    │
 │  Server Components   → read through the Data Access Layer       │
 │  Server Actions      → validate (zod) → authorize → mutate      │
-│  /api/assistant      → (Phase 6) Anthropic + permissioned tools │
+│  assistant actions   → Anthropic + permissioned tools (server)  │
 │  /api/cron/*         → (Phase 2/7) reminder dispatch, secret-auth│
 └───────────────┬──────────────────────────────┬──────────────────┘
                 │ user JWT (anon key + RLS)    │ Anthropic API key (server only)
@@ -91,10 +91,10 @@ journal_entries, notes ── link to goals / projects / tasks via record_links
 
 Every user-owned row carries `user_id`, `source`, `created_at`, `updated_at`, and (where it makes sense) `archived_at`. Child rows reference parents by `(id, user_id)` composite foreign keys, so a row can never point at another user's record even if application code has a bug.
 
-## 4. AI assistant architecture (Phase 6, designed now)
+## 4. AI assistant architecture (Phase 6)
 
 ```
-user question ─► /api/assistant (server)
+user question ─► sendMessage Server Action (server/actions/assistant.ts)
                    ├─ load user's AI preferences + per-module data permissions
                    ├─ build tool list = registry ∩ permitted modules
                    ├─ Anthropic Messages API (tool use), key from server env
@@ -103,12 +103,13 @@ user question ─► /api/assistant (server)
                    │           • write tools: never execute; create a
                    │             `pending_confirmation` row in ai_tool_calls
                    ├─ log every tool call (args hash, row counts, duration)
-                   └─ stream answer with citations to the records used
+                   └─ answer with links to the records used
 user taps "Confirm" ─► normal Server Action executes the proposal ─► audit_events
 ```
 
 - The model never receives database credentials; tools are typed functions with zod-validated inputs and capped result sizes.
 - Private journal and relationship notes are **excluded** from tools unless the user enables that scope explicitly, with a disclosure that the content is sent to Anthropic.
+- Built as Server Actions rather than a route: `server/ai/run.ts` is the tool loop, `server/ai/tools.ts` the registry, `server/ai/account.ts` budget and rate limits (from `ai_usage`). Proposals are claimed with a conditional update so a double tap can't apply one twice, then applied by the same Server Actions the UI uses.
 - Answers separate **Facts** (from records, with links), **Estimates**, and **Suggestions**, and state when data is missing or stale.
 
 ## 5. Reminders and notifications (Phase 2 / 7)

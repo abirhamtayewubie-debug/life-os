@@ -69,9 +69,11 @@ test("foundation flow: sign up, sample data, persisted changes, isolation, remov
 
   // Hide a module from navigation; persists across reload.
   await page.goto("/settings#modules");
-  await page.getByRole("switch", { name: "Finance" }).click();
+  await page.waitForLoadState("networkidle");
+  await page.locator("#mod-finance").click();
+  await page.waitForLoadState("networkidle"); // the toggle saves quietly in the background
   await page.reload();
-  await expect(page.getByRole("switch", { name: "Finance" })).toHaveAttribute("aria-checked", "false");
+  await expect(page.locator("#mod-finance")).toHaveAttribute("aria-checked", "false");
   await expect(page.getByRole("navigation", { name: "Modules" }).getByRole("link", { name: "Finance" })).toHaveCount(0);
 
   // A second user sees none of the first user's data.
