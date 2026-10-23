@@ -30,7 +30,7 @@ export default async function HomePage({ searchParams }: PageProps<"/">) {
             title="Your Command Center is empty, and that's honest"
             action={<Button asChild><Link href="/settings#data">Load sample data</Link></Button>}
           >
-            Nothing here is invented. Tasks, habits and the rest of the modules arrive from phase 2 onward. Until then you can load clearly
+            Nothing here is invented. It fills in as you add tasks, habits, events and the rest from the menu. You can also load clearly
             labelled sample data to explore, and remove it in one click.
           </EmptyState>
         </div>
