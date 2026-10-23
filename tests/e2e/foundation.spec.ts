@@ -66,6 +66,57 @@ test("the confirmation link works in any browser and signs you in", async ({ pag
   await expect(page.getByText(/your email may be confirmed already/)).toBeVisible();
 });
 
+test("a forgotten password can be reset from the emailed link", async ({ page, request }) => {
+  // The request form answers the same way whether or not the email has an account.
+  await page.goto("/login");
+  await page.getByRole("link", { name: "Forgot password?" }).click();
+  await expect(page.getByRole("heading", { name: "Reset your password" })).toBeVisible();
+  await page.getByLabel("Email").fill("nobody@example.test");
+  await page.getByRole("button", { name: "Send reset link" }).click();
+  await expect(page.getByText(/If that email has an account, a reset link is on its way/)).toBeVisible();
+
+  const key = process.env.SUPABASE_SECRET_KEY;
+  test.skip(!key, "needs SUPABASE_SECRET_KEY");
+  const email = unique();
+  await signUp(page, email);
+  await page.context().clearCookies();
+  // The same token Supabase puts in the "Reset password" email.
+  const res = await request.post(`${process.env.SUPABASE_URL ?? "http://127.0.0.1:54321"}/auth/v1/admin/generate_link`, {
+    headers: { apikey: key!, Authorization: `Bearer ${key}` },
+    data: { type: "recovery", email },
+  });
+  expect(res.ok()).toBe(true);
+  const { hashed_token } = (await res.json()) as { hashed_token: string };
+  await page.goto(`/auth/confirm?token_hash=${hashed_token}&type=recovery`);
+  await expect(page).toHaveURL(/\/reset-password$/);
+  const fresh = "a brand new passphrase here";
+  await page.getByLabel("New password").fill(fresh);
+  await page.getByLabel("Type it again").fill("something else entirely");
+  await page.getByRole("button", { name: "Save new password" }).click();
+  await expect(page.getByText("The two passwords don't match.")).toBeVisible();
+  await page.getByLabel("New password").fill(fresh);
+  await page.getByLabel("Type it again").fill(fresh);
+  await page.getByRole("button", { name: "Save new password" }).click();
+  await expect(page.getByText("Your password was changed.")).toBeVisible();
+
+  // The old password no longer works; the new one does.
+  await page.context().clearCookies();
+  await page.goto("/login");
+  await page.getByLabel("Email").fill(email);
+  await page.getByLabel("Password").fill(password);
+  await page.getByRole("button", { name: "Sign in" }).click();
+  await expect(page.getByText("That email and password combination didn't work.")).toBeVisible();
+  await page.getByLabel("Email").fill(email);
+  await page.getByLabel("Password").fill(fresh);
+  await page.getByRole("button", { name: "Sign in" }).click();
+  await page.waitForURL("/");
+
+  // A used reset link says so.
+  await page.context().clearCookies();
+  await page.goto(`/auth/confirm?token_hash=${hashed_token}&type=recovery`);
+  await expect(page.getByText(/That reset link has expired or was already used/)).toBeVisible();
+});
+
 test("foundation flow: sign up, sample data, persisted changes, isolation, removal", async ({ page, browser }) => {
   const email = unique();
   await signUp(page, email);

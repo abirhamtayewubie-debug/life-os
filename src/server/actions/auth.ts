@@ -55,3 +55,36 @@ export async function signOut() {
   }
   redirect("/login");
 }
+
+const emailOnly = z.object({ email: z.email("Enter a valid email address.").max(254) });
+
+/** Sends a reset link. The answer is the same whether or not the email has an account. */
+export async function requestPasswordReset(_prev: ActionResult | null, form: FormData): Promise<ActionResult> {
+  if (isDemoMode()) return { ok: false, error: "Password reset is unavailable in demo mode." };
+  const parsed = emailOnly.safeParse({ email: form.get("email") });
+  if (!parsed.success) return { ok: false, error: "Please fix the highlighted fields.", fieldErrors: z.flattenError(parsed.error).fieldErrors };
+  const origin = (await headers()).get("origin") ?? process.env.NEXT_PUBLIC_SITE_URL ?? "";
+  const supabase = await createSupabaseServerClient();
+  const { error } = await supabase.auth.resetPasswordForEmail(parsed.data.email, { redirectTo: `${origin}/auth/callback?next=/reset-password` });
+  if (error?.status === 429) return { ok: false, error: "Too many emails were sent just now. Wait a few minutes and try again." };
+  return { ok: true, message: "If that email has an account, a reset link is on its way. Check spam too; it can take a few minutes." };
+}
+
+const newPassword = z.object({
+  password: z.string().min(10, "Use at least 10 characters.").max(128),
+  confirm: z.string(),
+}).refine((v) => v.password === v.confirm, { path: ["confirm"], message: "The two passwords don't match." });
+
+/** Sets a new password for the signed-in person (after following a reset link). */
+export async function setNewPassword(_prev: ActionResult | null, form: FormData): Promise<ActionResult> {
+  if (isDemoMode()) return { ok: false, error: "Unavailable in demo mode." };
+  const parsed = newPassword.safeParse({ password: form.get("password"), confirm: form.get("confirm") });
+  if (!parsed.success) return { ok: false, error: "Please fix the highlighted fields.", fieldErrors: z.flattenError(parsed.error).fieldErrors };
+  const supabase = await createSupabaseServerClient();
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) return { ok: false, error: "That reset link has expired. Request a new one from the sign-in page." };
+  const { error } = await supabase.auth.updateUser({ password: parsed.data.password });
+  if (error) return { ok: false, error: error.code === "same_password" ? "Choose a password different from your old one." : "Couldn't change the password. Request a new reset link and try again." };
+  await supabase.from("audit_events").insert({ user_id: user.id, action: "auth.password_changed", metadata: {} });
+  redirect("/?password=changed");
+}

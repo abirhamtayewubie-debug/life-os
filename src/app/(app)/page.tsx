@@ -8,8 +8,10 @@ import { getDashboard } from "@/server/dashboard";
 
 export const metadata = { title: "Command Center" };
 
-export default async function HomePage() {
+export default async function HomePage({ searchParams }: PageProps<"/">) {
   const now = new Date();
+  const passwordChanged = (await searchParams).password === "changed";
+  const notice = passwordChanged && <p role="status" className="mb-4 rounded-md border border-border bg-muted px-3 py-2 text-sm">Your password was changed.</p>;
   const { viewer, model, layout, hasAnyData, hasSampleData } = await getDashboard(now);
   const tz = viewer.profile.timezone;
   const first = viewer.profile.displayName?.split(" ")[0];
@@ -19,6 +21,7 @@ export default async function HomePage() {
   if (viewer.mode === "live" && !hasAnyData) {
     return (
       <div className="animate-rise">
+        {notice}
         <p className="text-xs text-muted-foreground">{longDate}</p>
         <h1 className="mt-1 text-2xl font-semibold tracking-tight">{greeting}</h1>
         <div className="mt-8 rounded-xl border border-dashed border-border">
@@ -37,6 +40,7 @@ export default async function HomePage() {
 
   return (
     <>
+      {notice}
       {viewer.mode === "live" && hasSampleData && (
         <div className="mb-5 flex flex-wrap items-center gap-2 rounded-lg border border-dashed border-warning/50 bg-warning/8 px-3.5 py-2 text-xs">
           <FlaskConical className="size-3.5 text-warning" aria-hidden />

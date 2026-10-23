@@ -9,10 +9,13 @@ import { createSupabaseServerClient } from "@/lib/supabase/server";
 export async function GET(request: NextRequest) {
   const { searchParams, origin } = request.nextUrl;
   const code = searchParams.get("code");
+  // Only same-site paths, so the link can't send anyone elsewhere.
+  const next = searchParams.get("next");
+  const target = next?.startsWith("/") && !next.startsWith("//") ? next : "/";
   if (code) {
     const supabase = await createSupabaseServerClient();
     const { error } = await supabase.auth.exchangeCodeForSession(code);
-    if (!error) return NextResponse.redirect(`${origin}/`);
+    if (!error) return NextResponse.redirect(`${origin}${target}`);
   }
-  return NextResponse.redirect(`${origin}/login?error=confirmation`);
+  return NextResponse.redirect(`${origin}/login?error=${target === "/reset-password" ? "reset" : "confirmation"}`);
 }

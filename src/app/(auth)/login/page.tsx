@@ -11,6 +11,7 @@ export default async function LoginPage({ searchParams }: PageProps<"/login">) {
   const sp = await searchParams;
   const next = typeof sp.next === "string" ? sp.next : undefined;
   const notice = sp.error === "confirmation" ? "That link couldn't sign you in, but your email may be confirmed already: try signing in. If it asks you to confirm first, the link had expired; sign up again with the same email to get a new one."
+    : sp.error === "reset" ? "That reset link has expired or was already used. Request a new one below."
     : sp.deleted === "1" ? "Your account and everything in it were deleted." : undefined;
   return <AuthForm mode="login" action={signIn} next={next} notice={notice} />;
 }
