@@ -8,7 +8,7 @@ self.addEventListener("push", (event) => {
   event.waitUntil(self.registration.showNotification(title, {
     body: typeof data.body === "string" ? data.body.slice(0, 240) : "",
     tag: typeof data.tag === "string" ? data.tag : undefined,
-    icon: "/favicon.ico",
+    icon: "/icons/icon-192.png",
     data: { url: typeof data.url === "string" && data.url.startsWith("/") && !data.url.startsWith("//") ? data.url : "/" },
   }));
 });
