@@ -4,87 +4,99 @@
 
 /*
  * Life OS design tokens. See docs/DESIGN_SYSTEM.md.
- * Neutrals carry the interface; one restrained accent (slate blue) marks focus,
- * selection and the primary data series. Status colours are muted on purpose.
+ * Porcelain and ink carry the interface; one accent (iris) marks progress,
+ * focus and what you can tap. Amber only when something needs attention.
  */
 :root {
-  --background: oklch(0.982 0.002 95);
-  --foreground: oklch(0.21 0.006 265);
-  --surface: oklch(1 0 0);
-  --surface-2: oklch(0.965 0.003 95);
+  --background: #f6f6f4;
+  --foreground: #111318;
+  --surface: #ffffff;
+  --surface-2: #f4f4f1;
   --card: var(--surface);
   --card-foreground: var(--foreground);
-  --popover: oklch(1 0 0);
+  --popover: #ffffff;
   --popover-foreground: var(--foreground);
-  --primary: oklch(0.24 0.008 265);
-  --primary-foreground: oklch(0.985 0.002 95);
-  --secondary: oklch(0.95 0.004 95);
-  --secondary-foreground: oklch(0.24 0.008 265);
-  --muted: oklch(0.955 0.003 95);
-  --muted-foreground: oklch(0.5 0.012 260);
-  --subtle-foreground: oklch(0.53 0.01 260);
-  --accent: oklch(0.945 0.012 250);
-  --accent-foreground: oklch(0.3 0.04 255);
-  --brand: oklch(0.52 0.09 250);
-  --brand-foreground: oklch(0.985 0.002 95);
-  --destructive: oklch(0.52 0.16 27);
-  --destructive-foreground: oklch(0.985 0.002 95);
-  --success: oklch(0.52 0.09 158);
-  --warning: oklch(0.54 0.12 70);
+  --primary: #111318;
+  --primary-foreground: #ffffff;
+  --secondary: #efefec;
+  --secondary-foreground: #111318;
+  --muted: #efefec;
+  --muted-foreground: #565b68;
+  --subtle-foreground: #646978;
+  --accent: #eeeeff;
+  --accent-foreground: #3730a3;
+  --brand: #4f46e5;
+  --brand-foreground: #ffffff;
+  --destructive: #b42318;
+  --destructive-foreground: #ffffff;
+  --success: #0f7a55;
+  --warning: #b45309;
   --info: var(--brand);
-  --border: oklch(0.9 0.004 95);
-  --input: oklch(0.88 0.005 95);
-  --ring: oklch(0.52 0.09 250);
-  --chart-1: oklch(0.52 0.09 250);
-  --chart-2: oklch(0.6 0.08 175);
-  --chart-3: oklch(0.7 0.1 75);
-  --chart-4: oklch(0.58 0.09 310);
-  --chart-5: oklch(0.62 0.03 260);
-  --sidebar: oklch(0.97 0.003 95);
-  --sidebar-foreground: oklch(0.32 0.01 265);
-  --sidebar-accent: oklch(0.93 0.004 95);
-  --sidebar-border: oklch(0.9 0.004 95);
-  --radius: 0.625rem;
-  --shadow-card: 0 1px 2px oklch(0.2 0.01 265 / 0.04), 0 1px 1px oklch(0.2 0.01 265 / 0.03);
+  --border: #e6e6e1;
+  --input: #d9d9d3;
+  --ring: #4f46e5;
+  --chart-1: #4f46e5;
+  --chart-2: #0e8a8a;
+  --chart-3: #d08a1e;
+  --chart-4: #b5468c;
+  --chart-5: #8a8f9c;
+  --sidebar: var(--background);
+  --sidebar-foreground: #4a4f5c;
+  --sidebar-accent: #ecece8;
+  --sidebar-active: #ffffff;
+  --sidebar-border: #e6e6e1;
+  --inverse: #111318;
+  --inverse-foreground: #f2f3f5;
+  --inverse-muted: #b4b8c4;
+  --inverse-accent: #a5a6ff;
+  --radius: 0.75rem;
+  --shadow-card: 0 0 0 1px rgb(16 18 24 / 0.05), 0 1px 2px rgb(16 18 24 / 0.04), 0 10px 28px -18px rgb(16 18 24 / 0.16);
+  --shadow-raised: 0 0 0 1px rgb(16 18 24 / 0.06), 0 12px 32px -12px rgb(16 18 24 / 0.22);
 }
 
 .dark {
-  --background: oklch(0.165 0.004 265);
-  --foreground: oklch(0.93 0.004 95);
-  --surface: oklch(0.198 0.005 265);
-  --surface-2: oklch(0.225 0.006 265);
+  --background: #0b0c0f;
+  --foreground: #f2f3f5;
+  --surface: #15171c;
+  --surface-2: #1c1f26;
   --card: var(--surface);
   --card-foreground: var(--foreground);
-  --popover: oklch(0.215 0.006 265);
+  --popover: #1a1c22;
   --popover-foreground: var(--foreground);
-  --primary: oklch(0.93 0.004 95);
-  --primary-foreground: oklch(0.2 0.006 265);
-  --secondary: oklch(0.255 0.006 265);
-  --secondary-foreground: oklch(0.93 0.004 95);
-  --muted: oklch(0.24 0.006 265);
-  --muted-foreground: oklch(0.7 0.01 260);
-  --subtle-foreground: oklch(0.64 0.01 260);
-  --accent: oklch(0.27 0.025 255);
-  --accent-foreground: oklch(0.88 0.03 250);
-  --brand: oklch(0.7 0.09 250);
-  --brand-foreground: oklch(0.18 0.01 265);
-  --destructive: oklch(0.66 0.15 25);
-  --destructive-foreground: oklch(0.18 0.01 265);
-  --success: oklch(0.7 0.1 158);
-  --warning: oklch(0.78 0.11 75);
-  --border: oklch(0.27 0.006 265);
-  --input: oklch(0.3 0.006 265);
-  --ring: oklch(0.7 0.09 250);
-  --chart-1: oklch(0.7 0.09 250);
-  --chart-2: oklch(0.72 0.08 175);
-  --chart-3: oklch(0.78 0.1 75);
-  --chart-4: oklch(0.7 0.09 310);
-  --chart-5: oklch(0.62 0.02 260);
-  --sidebar: oklch(0.18 0.005 265);
-  --sidebar-foreground: oklch(0.82 0.006 260);
-  --sidebar-accent: oklch(0.24 0.006 265);
-  --sidebar-border: oklch(0.25 0.006 265);
-  --shadow-card: 0 1px 2px oklch(0 0 0 / 0.25);
+  --primary: #f2f3f5;
+  --primary-foreground: #0b0c0f;
+  --secondary: #1f222a;
+  --secondary-foreground: #f2f3f5;
+  --muted: #1f222a;
+  --muted-foreground: #a3a8b5;
+  --subtle-foreground: #8f94a1;
+  --accent: #23244a;
+  --accent-foreground: #c7c8ff;
+  --brand: #8b8cff;
+  --brand-foreground: #0b0c0f;
+  --destructive: #f0705a;
+  --destructive-foreground: #0b0c0f;
+  --success: #5cc99a;
+  --warning: #f5b454;
+  --border: #24262d;
+  --input: #2f323b;
+  --ring: #8b8cff;
+  --chart-1: #8b8cff;
+  --chart-2: #4fc4c0;
+  --chart-3: #f0b45a;
+  --chart-4: #e07ab8;
+  --chart-5: #8f94a1;
+  --sidebar: var(--background);
+  --sidebar-foreground: #a3a8b5;
+  --sidebar-accent: #17191e;
+  --sidebar-active: #1c1f26;
+  --sidebar-border: #1c1e24;
+  --inverse: #1d1e38;
+  --inverse-foreground: #f2f3f5;
+  --inverse-muted: #b4b8c4;
+  --inverse-accent: #a5a6ff;
+  --shadow-card: 0 0 0 1px rgb(255 255 255 / 0.06), 0 1px 2px rgb(0 0 0 / 0.3);
+  --shadow-raised: 0 0 0 1px rgb(255 255 255 / 0.08), 0 16px 36px -12px rgb(0 0 0 / 0.6);
 }
 
 @theme inline {
@@ -124,23 +136,47 @@
   --color-sidebar-foreground: var(--sidebar-foreground);
   --color-sidebar-accent: var(--sidebar-accent);
   --color-sidebar-border: var(--sidebar-border);
-  --font-sans: var(--font-geist-sans), ui-sans-serif, system-ui, sans-serif;
+  --color-sidebar-active: var(--sidebar-active);
+  --color-inverse: var(--inverse);
+  --color-inverse-foreground: var(--inverse-foreground);
+  --color-inverse-muted: var(--inverse-muted);
+  --color-inverse-accent: var(--inverse-accent);
+  --font-sans: var(--font-inter), ui-sans-serif, system-ui, sans-serif;
+  --font-display: var(--font-inter-tight), var(--font-inter), ui-sans-serif, system-ui, sans-serif;
   --font-mono: var(--font-geist-mono), ui-monospace, monospace;
   --radius-sm: calc(var(--radius) - 4px);
   --radius-md: calc(var(--radius) - 2px);
   --radius-lg: var(--radius);
   --radius-xl: calc(var(--radius) + 4px);
+  --radius-2xl: calc(var(--radius) + 8px);
+  --radius-3xl: calc(var(--radius) + 10px);
   --shadow-card: var(--shadow-card);
+  --shadow-raised: var(--shadow-raised);
   --animate-fade-in: fade-in 220ms cubic-bezier(0.2, 0, 0, 1);
-  --animate-rise: rise 260ms cubic-bezier(0.2, 0, 0, 1);
+  --animate-rise: rise 360ms cubic-bezier(0.2, 0, 0, 1) both;
+  --animate-slide-in-left: slide-in-left 280ms cubic-bezier(0.2, 0, 0, 1);
+  --animate-slide-in-up: slide-in-up 320ms cubic-bezier(0.2, 0, 0, 1);
+  --animate-pop: pop 260ms cubic-bezier(0.3, 1.4, 0.5, 1);
 
   @keyframes fade-in {
     from { opacity: 0; }
     to { opacity: 1; }
   }
   @keyframes rise {
-    from { opacity: 0; transform: translateY(4px); }
+    from { opacity: 0; transform: translateY(8px); }
     to { opacity: 1; transform: translateY(0); }
+  }
+  @keyframes slide-in-left {
+    from { transform: translateX(-100%); }
+    to { transform: translateX(0); }
+  }
+  @keyframes slide-in-up {
+    from { transform: translateY(100%); }
+    to { transform: translateY(0); }
+  }
+  @keyframes pop {
+    0% { transform: scale(0.6); }
+    100% { transform: scale(1); }
   }
 }
 
@@ -158,8 +194,12 @@
     background: var(--background);
     color: var(--foreground);
     font-family: var(--font-sans);
-    font-feature-settings: "cv11", "ss01";
+    font-feature-settings: "cv11", "ss03";
     -webkit-font-smoothing: antialiased;
+  }
+  h1, h2, h3 {
+    font-family: var(--font-display);
+    letter-spacing: -0.015em;
   }
   :focus-visible {
     outline: 2px solid var(--ring);

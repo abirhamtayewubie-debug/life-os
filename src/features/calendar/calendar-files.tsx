@@ -74,7 +74,7 @@ export function CalendarFiles({ timezone, locale, feed, demo }: { timezone: stri
           />
           {fileError && <p role="alert" className="text-xs text-destructive">{fileError}</p>}
           {file && (
-            <div className="grid min-w-0 gap-2 rounded-md border border-border p-3" aria-live="polite">
+            <div className="grid min-w-0 gap-2 rounded-xl border border-border p-3" aria-live="polite">
               <p className="text-sm">
                 {file.result.events.length === 0 ? "No events this app can add were found" : `${file.result.events.length} event${file.result.events.length === 1 ? "" : "s"} found`}
                 {file.result.calendarName ? ` in “${file.result.calendarName}”` : ""}.

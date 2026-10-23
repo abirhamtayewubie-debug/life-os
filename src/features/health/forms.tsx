@@ -18,7 +18,7 @@ export function Scale({ id, label, value, onChange, labels }: { id: string; labe
       <div role="radiogroup" aria-labelledby={id} className="grid grid-cols-5 gap-1">
         {[1, 2, 3, 4, 5].map((n) => (
           <button key={n} type="button" role="radio" aria-checked={value === n} aria-label={`${n}: ${labels[n - 1]}`} onClick={() => onChange(value === n ? null : n)}
-            className={cn("h-9 cursor-pointer rounded-md border border-border text-[13px] tabular hover:bg-muted", value === n && "border-transparent bg-brand text-brand-foreground hover:bg-brand")}>
+            className={cn("h-9 cursor-pointer rounded-xl border border-border text-[13px] tabular hover:bg-muted", value === n && "border-transparent bg-brand text-brand-foreground hover:bg-brand")}>
             {n}
           </button>
         ))}

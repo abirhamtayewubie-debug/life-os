@@ -26,7 +26,7 @@ function Scale({ label, value, onChange, low, high }: { label: string; value: nu
             aria-label={`${label} ${n} of 5`}
             onClick={() => onChange(value === n ? null : n)}
             className={cn(
-              "tabular size-8 cursor-pointer rounded-md border border-border text-xs transition-colors hover:border-brand",
+              "tabular size-9 cursor-pointer rounded-xl border border-border text-xs transition-colors hover:border-brand",
               value === n && "border-brand bg-brand text-brand-foreground",
             )}
           >

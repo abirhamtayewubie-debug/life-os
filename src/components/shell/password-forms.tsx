@@ -12,7 +12,7 @@ export function ForgotPasswordForm() {
   const fe = state && !state.ok ? state.fieldErrors ?? {} : {};
   return (
     <div>
-      <h1 className="text-2xl font-semibold tracking-tight">Reset your password</h1>
+      <h1 className="font-display text-[32px] leading-tight font-semibold tracking-[-0.028em]">Reset your password</h1>
       <p className="mt-1 text-sm text-muted-foreground">Enter your account email and we&apos;ll send you a link to choose a new password.</p>
       <form action={formAction} className="mt-6 grid gap-4" noValidate>
         <div className="grid gap-1.5">
@@ -39,7 +39,7 @@ export function NewPasswordForm() {
   const fe = state && !state.ok ? state.fieldErrors ?? {} : {};
   return (
     <div>
-      <h1 className="text-2xl font-semibold tracking-tight">Choose a new password</h1>
+      <h1 className="font-display text-[32px] leading-tight font-semibold tracking-[-0.028em]">Choose a new password</h1>
       <p className="mt-1 text-sm text-muted-foreground">You&apos;ll stay signed in on this device with the new password.</p>
       <form action={formAction} className="mt-6 grid gap-4" noValidate>
         <div className="grid gap-1.5">

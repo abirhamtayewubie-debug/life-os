@@ -122,7 +122,7 @@ export function ImportPanel({ onDone, onCancel }: { onDone: () => void; onCancel
 
       {table && (
         <>
-          <div className="grid gap-4 rounded-md border border-border p-3 sm:grid-cols-3">
+          <div className="grid gap-4 rounded-xl border border-border p-3 sm:grid-cols-3">
             <label className="flex items-center gap-2 text-[13px] sm:col-span-3">
               <input type="checkbox" checked={map.hasHeader} onChange={(e) => set("hasHeader", e.target.checked)} className="size-4 accent-[var(--color-brand)]" /> First line is column names
             </label>
@@ -183,7 +183,7 @@ export function ImportPanel({ onDone, onCancel }: { onDone: () => void; onCancel
                 </ul>
               )}
               {result.rows.length > 0 && (
-                <div className="max-h-56 overflow-auto rounded-md border border-border">
+                <div className="max-h-56 overflow-auto rounded-xl border border-border">
                   <table className="w-full text-[12px]">
                     <thead className="sticky top-0 bg-muted text-left text-muted-foreground">
                       <tr><th className="px-2 py-1 font-medium">Date</th><th className="px-2 py-1 font-medium">Description</th><th className="px-2 py-1 text-right font-medium">Amount</th></tr>

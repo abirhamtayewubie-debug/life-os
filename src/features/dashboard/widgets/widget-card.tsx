@@ -41,7 +41,7 @@ export function WidgetCard({
         <div className="flex shrink-0 items-center gap-1">
           {actions}
           {href && (
-            <Link href={href} className="inline-flex items-center gap-0.5 rounded-sm text-xs text-muted-foreground transition-colors hover:text-foreground">
+            <Link href={href} className="-my-1 inline-flex h-8 items-center gap-0.5 rounded-lg px-2 text-xs font-medium text-muted-foreground transition-colors hover:bg-muted hover:text-foreground">
               {hrefLabel}
               <ArrowUpRight className="size-3.5" aria-hidden />
             </Link>

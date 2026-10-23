@@ -25,7 +25,7 @@ export function TaskRow({ task, showDue = true, showSource = false }: { task: Ta
   };
   const p = PRIORITY[task.priority];
   return (
-    <li className="group flex items-start gap-3 py-2">
+    <li className="group flex items-start gap-3 py-2.5">
       <button
         type="button"
         role="checkbox"
@@ -34,15 +34,15 @@ export function TaskRow({ task, showDue = true, showSource = false }: { task: Ta
         onClick={toggle}
         disabled={pending}
         className={cn(
-          "mt-0.5 flex size-4 shrink-0 cursor-pointer items-center justify-center rounded-[5px] border border-input transition-colors hover:border-brand",
-          done && "border-brand bg-brand text-brand-foreground",
+          "relative flex size-[22px] shrink-0 cursor-pointer items-center justify-center rounded-full border-[1.5px] border-input transition-colors before:absolute before:-inset-2.5 before:content-[''] hover:border-brand",
+          done && "animate-pop border-brand bg-brand text-brand-foreground",
         )}
       >
-        {done && <Check className="size-3" strokeWidth={3} aria-hidden />}
+        {done && <Check className="size-3.5" strokeWidth={3} aria-hidden />}
       </button>
       <div className="min-w-0 flex-1">
-        <p className={cn("text-[13px] leading-snug text-foreground", done && "text-muted-foreground line-through")}>{task.title}</p>
-        <div className="mt-0.5 flex flex-wrap items-center gap-x-2 gap-y-1 text-[11px] text-muted-foreground">
+        <p className={cn("text-sm leading-snug font-medium text-foreground", done && "font-normal text-muted-foreground line-through")}>{task.title}</p>
+        <div className="mt-1 flex flex-wrap items-center gap-x-2 gap-y-1 text-xs text-muted-foreground">
           <span className="inline-flex items-center gap-1">
             <span className={cn("size-1.5 rounded-full", p.className)} aria-hidden />
             {p.label}

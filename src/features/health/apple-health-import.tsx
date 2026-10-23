@@ -166,7 +166,7 @@ export function AppleHealthImport({ timeZone, demo, triggerLabel = "Import from 
             chosen === 0 && Object.values(counts).every((c) => c === 0) ? (
               <p className="text-sm">Nothing this app imports was found in that period. Try a longer period, or check that the export is from the Health app.</p>
             ) : (
-              <div className="grid min-w-0 gap-2 rounded-md border border-border p-3">
+              <div className="grid min-w-0 gap-2 rounded-xl border border-border p-3">
                 <p className="text-sm">
                   Found in {result.file}{result.data.range ? `, ${result.data.range.from} to ${result.data.range.to}` : ""}:
                 </p>

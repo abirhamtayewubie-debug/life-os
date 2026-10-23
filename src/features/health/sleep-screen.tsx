@@ -126,7 +126,7 @@ function Stat({ label, value, sub }: { label: string; value: React.ReactNode; su
   return (
     <div className="grid content-start gap-0.5">
       <span className="text-[11px] text-muted-foreground">{label}</span>
-      <span className="tabular text-xl font-semibold tracking-tight">{value}</span>
+      <span className="tabular font-display text-xl font-semibold tracking-[-0.025em]">{value}</span>
       {sub && <span className="text-[11px] text-muted-foreground">{sub}</span>}
     </div>
   );

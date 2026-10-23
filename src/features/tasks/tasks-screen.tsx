@@ -164,7 +164,7 @@ export function TasksScreen({ ws, filters, nowIso, openId, startNew = false }: {
 
       {/* Reminders */}
       <aside aria-label="Reminders" className="grid content-start gap-3 lg:col-span-2 xl:col-span-1">
-        <div className="rounded-xl border border-border bg-card p-4">
+        <div className="rounded-3xl bg-card p-5 shadow-card">
           <h2 className="flex items-center gap-1.5 text-[13px] font-medium"><AlarmClock className="size-3.5 text-muted-foreground" /> Reminders</h2>
           {dueReminders.length === 0 && laterReminders.length === 0 && (
             <p className="mt-2 text-xs text-muted-foreground">No reminders set. Open a task to add one.</p>
@@ -200,7 +200,7 @@ export function TasksScreen({ ws, filters, nowIso, openId, startNew = false }: {
             </ul>
           )}
           <p className="mt-3 border-t border-border pt-2.5 text-[11px] leading-relaxed text-subtle-foreground">
-            Shown while Life OS is open in a browser tab. Nothing is sent to your phone or email yet.
+            Also sent as notifications to devices where you turned them on in Settings.
           </p>
         </div>
       </aside>

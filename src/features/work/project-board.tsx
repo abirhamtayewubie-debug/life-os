@@ -88,7 +88,7 @@ function Card({ t, today, onMove }: { t: ProjectTask; today: string; onMove: (id
     <li
       ref={setNodeRef}
       style={{ transform: CSS.Translate.toString(transform) }}
-      className={cn("flex items-start gap-1.5 rounded-lg border border-border bg-surface p-2 text-[13px] shadow-card", isDragging && "z-10 opacity-80 shadow-lg")}
+      className={cn("flex items-start gap-1.5 rounded-2xl border border-border bg-surface p-2 text-[13px] shadow-card", isDragging && "z-10 opacity-80 shadow-lg")}
     >
       <button type="button" className="mt-0.5 cursor-grab touch-none text-subtle-foreground active:cursor-grabbing" aria-label={`Drag ${t.title}`} {...attributes} {...listeners}>
         <GripVertical className="size-3.5" />

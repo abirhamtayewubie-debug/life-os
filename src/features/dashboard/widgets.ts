@@ -26,12 +26,15 @@ export const WIDGETS: WidgetDef[] = [
 
 export type WidgetPref = { key: WidgetKey; size: WidgetSize; visible: boolean };
 
+const HIDDEN_BY_DEFAULT: WidgetKey[] = ["briefing", "priorities"];
+
 export const DEFAULT_LAYOUT: WidgetPref[] = [
   "briefing", "priorities", "agenda", "deadlines", "suggestions", "habits", "finance", "goals",
   "projects", "wheel", "reminders", "changes", "sleep", "wellness", "journal",
 ].map((key) => {
   const def = WIDGETS.find((w) => w.key === key)!;
-  return { key: def.key, size: def.defaultSize, visible: true };
+  // The Today hero already shows the top three, so these two start hidden.
+  return { key: def.key, size: def.defaultSize, visible: !HIDDEN_BY_DEFAULT.includes(def.key) };
 });
 
 /**

@@ -206,7 +206,7 @@ export function TaskForm({
         <Textarea id="task-notes" value={v.notes} maxLength={10000} onChange={(e) => set("notes", e.target.value)} className="min-h-16" />
       </div>
 
-      <label className={cn("flex cursor-pointer items-center gap-3 rounded-lg border border-border px-3 py-2.5", v.isTopPriority && "border-brand/50 bg-accent/50")}>
+      <label className={cn("flex cursor-pointer items-center gap-3 rounded-2xl border border-border px-3 py-2.5", v.isTopPriority && "border-brand/50 bg-accent/50")}>
         <Star className={cn("size-4 text-muted-foreground", v.isTopPriority && "fill-brand text-brand")} aria-hidden />
         <span className="flex-1 text-[13px]">
           Today&apos;s focus
@@ -216,7 +216,7 @@ export function TaskForm({
       </label>
 
       {!task && (
-        <div className={cn("grid gap-2 rounded-lg border border-border px-3 py-2.5", rem.on && "border-brand/50 bg-accent/50")}>
+        <div className={cn("grid gap-2 rounded-2xl border border-border px-3 py-2.5", rem.on && "border-brand/50 bg-accent/50")}>
           <label className="flex cursor-pointer items-center gap-3">
             <BellRing className={cn("size-4 text-muted-foreground", rem.on && "text-brand")} aria-hidden />
             <span className="flex-1 text-[13px]">

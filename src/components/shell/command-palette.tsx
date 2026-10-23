@@ -35,6 +35,13 @@ export function openCommandPalette() {
   window.dispatchEvent(new Event("lifeos:command"));
 }
 
+/** Open a module's "new" form: fire the event when already on that page, otherwise ?new=1 opens it on arrival. */
+export function useOpenNew() {
+  const router = useRouter();
+  const pathname = usePathname();
+  return (href: string, event: string) => (pathname === href ? window.dispatchEvent(new Event(event)) : router.push(`${href}?new=1`));
+}
+
 export function CommandPalette({ hidden }: { hidden: string[] }) {
   const [open, setOpen] = useState(false);
   const router = useRouter();
@@ -86,9 +93,8 @@ export function CommandPalette({ hidden }: { hidden: string[] }) {
     setQuery("");
     fn();
   };
-  // Already on the page: tell it directly. Otherwise ?new=1 opens the form on arrival.
-  const goAndFire = (href: string, event: string) =>
-    run(() => (pathname === href ? window.dispatchEvent(new Event(event)) : router.push(`${href}?new=1`)));
+  const openNew = useOpenNew();
+  const goAndFire = (href: string, event: string) => run(() => openNew(href, event));
 
   const item =
     "flex h-9 cursor-pointer items-center gap-2.5 rounded-md px-2.5 text-[13px] data-[selected=true]:bg-muted [&_svg]:size-4 [&_svg]:text-muted-foreground";

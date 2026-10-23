@@ -95,7 +95,7 @@ export function NotificationSettings({ devices, configured, publicKey, locale }:
       )}
 
       {devices.length > 0 && (
-        <ul className="divide-y divide-border rounded-md border border-border" aria-label="Devices with notifications on">
+        <ul className="divide-y divide-border rounded-xl border border-border" aria-label="Devices with notifications on">
           {devices.map((d) => (
             <li key={d.id} className="flex items-center gap-3 px-3 py-2.5">
               <Smartphone className="size-4 shrink-0 text-muted-foreground" aria-hidden />

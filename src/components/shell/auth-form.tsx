@@ -14,9 +14,9 @@ export function AuthForm({ mode, action, next, notice }: { mode: Mode; action: (
   const fe = state && !state.ok ? state.fieldErrors ?? {} : {};
   return (
     <div>
-      <h1 className="text-2xl font-semibold tracking-tight">{mode === "login" ? "Welcome back" : "Create your account"}</h1>
+      <h1 className="font-display text-[32px] leading-tight font-semibold tracking-[-0.028em]">{mode === "login" ? "Welcome back" : "Create your account"}</h1>
       <p className="mt-1 text-sm text-muted-foreground">{mode === "login" ? "Sign in to your Life OS." : "One account, all of your life areas, private by default."}</p>
-      {notice && <p className="mt-4 rounded-md border border-border bg-muted px-3 py-2 text-xs text-muted-foreground">{notice}</p>}
+      {notice && <p className="mt-4 rounded-xl border border-border bg-muted px-3 py-2 text-xs text-muted-foreground">{notice}</p>}
       <form action={formAction} className="mt-6 grid gap-4" noValidate>
         {next && <input type="hidden" name="next" value={next} />}
         {mode === "signup" && (

@@ -99,7 +99,7 @@ function Stat({ label, value, sub }: { label: string; value: React.ReactNode; su
   return (
     <div className="grid content-start gap-0.5">
       <span className="text-[11px] text-muted-foreground">{label}</span>
-      <span className="tabular text-xl font-semibold tracking-tight">{value}</span>
+      <span className="tabular font-display text-xl font-semibold tracking-[-0.025em]">{value}</span>
       {sub && <span className="text-[11px] text-muted-foreground">{sub}</span>}
     </div>
   );
@@ -183,7 +183,7 @@ function TodayTab({ ws, onEdit }: { ws: HealthWorkspace; onEdit: (e: Editor) => 
           <Stat label="Workouts" value={wk.sessions} sub={wk.minutes ? `${formatMinutes(wk.minutes)} in total` : "no timed sessions"} />
           <Stat label="Water" value={waterWeek.length ? `${(waterWeek.reduce((a, d) => a + d.ml, 0) / waterWeek.length / 1000).toFixed(1)} L` : "–"} sub={waterWeek.length ? `average on ${waterWeek.length} logged days` : "nothing logged"} />
         </div>
-        <div className="rounded-md border border-border p-3 text-[12px] text-muted-foreground">
+        <div className="rounded-xl border border-border p-3 text-[12px] text-muted-foreground">
           {lastNight ? <>Last night: <span className="font-medium text-foreground">{formatMinutes(lastNight.duration_minutes)}</span>{lastNight.quality ? `, felt ${lastNight.quality}/5` : ""}. </> : "Last night isn't logged yet. "}
           <Link href="/sleep" className="text-foreground underline underline-offset-2">Sleep</Link>
         </div>
@@ -315,7 +315,7 @@ function BodyTab({ ws, onEdit }: { ws: HealthWorkspace; onEdit: (e: Editor) => v
               <Button size="sm" variant="ghost" className="ml-auto" onClick={() => onEdit({ k: "measure", metric: m })}><Plus /> Add</Button>
             </div>
             <div className="flex items-baseline gap-3">
-              <span className="tabular text-2xl font-semibold tracking-tight">{s.latest}<span className="text-sm font-normal text-muted-foreground"> {unit}</span></span>
+              <span className="tabular font-display text-2xl font-semibold tracking-[-0.025em]">{s.latest}<span className="text-sm font-normal text-muted-foreground"> {unit}</span></span>
               {s.change !== null && <span className="text-[12px] text-muted-foreground">{s.change > 0 ? "+" : ""}{s.change} {unit} since {formatShortDate(s.points[0].at.slice(0, 10), ws.locale)}</span>}
             </div>
             {s.points.length >= 2 && (

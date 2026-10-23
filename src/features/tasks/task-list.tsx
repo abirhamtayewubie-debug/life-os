@@ -30,12 +30,12 @@ export function TaskCheckbox({ task, className }: { task: TaskRecord; className?
         run(() => setTaskStatus(task.id, next ? "done" : "todo"), { onError: () => setDone(!next) });
       }}
       className={cn(
-        "flex size-4 shrink-0 cursor-pointer items-center justify-center rounded-[5px] border border-input transition-colors hover:border-brand",
-        done && "border-brand bg-brand text-brand-foreground",
+        "relative flex size-[22px] shrink-0 cursor-pointer items-center justify-center rounded-full border-[1.5px] border-input transition-colors before:absolute before:-inset-2.5 before:content-[''] hover:border-brand",
+        done && "animate-pop border-brand bg-brand text-brand-foreground",
         className,
       )}
     >
-      {done && <Check className="size-3" strokeWidth={3} aria-hidden />}
+      {done && <Check className="size-3.5" strokeWidth={3} aria-hidden />}
     </button>
   );
 }

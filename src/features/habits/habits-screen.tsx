@@ -112,7 +112,7 @@ export function HabitsScreen({ ws, startNew = false }: { ws: HabitWorkspace; sta
       {archived.length > 0 && (
         <details className="group">
           <summary className="cursor-pointer text-[13px] text-muted-foreground hover:text-foreground">Archived ({archived.length})</summary>
-          <ul className="mt-2 divide-y divide-border rounded-lg border border-border bg-surface">
+          <ul className="mt-2 divide-y divide-border rounded-2xl border border-border bg-surface">
             {archived.map((h) => (
               <li key={h.id} className="flex items-center gap-2 px-3 py-2 text-[13px]">
                 <span className="flex-1 truncate">{h.name}</span>
@@ -205,9 +205,9 @@ function HabitCard({
                   disabled={pending || isPaused || d.state === "before"}
                   onClick={() => onLog(d.date, next(d.date))}
                   className={cn(
-                    "flex size-8 cursor-pointer items-center justify-center rounded-md border text-[11px] transition-colors disabled:cursor-not-allowed",
-                    d.state === "done" && "border-success bg-success text-white",
-                    c > 0 && d.state !== "done" && "border-success/60 bg-success/15 text-success",
+                    "flex size-10 cursor-pointer items-center justify-center rounded-xl border text-[11px] transition-colors disabled:cursor-not-allowed sm:size-9",
+                    d.state === "done" && "animate-pop border-brand bg-brand text-brand-foreground",
+                    c > 0 && d.state !== "done" && "border-brand/60 bg-brand/15 text-brand",
                     c === 0 && d.state === "missed" && "border-destructive/30 bg-destructive/5",
                     c === 0 && (d.state === "future" || d.state === "off") && "border-border hover:bg-muted",
                     off && "border-dashed",

@@ -24,7 +24,7 @@ export function BriefingWidget({ m }: { m: DashboardModel }) {
             </li>
           ))}
         </ul>
-        <div className="rounded-lg border border-border bg-surface-2/60 p-3.5">
+        <div className="rounded-2xl bg-surface-2 p-4">
           <p className="text-[11px] font-medium tracking-wide text-muted-foreground uppercase">Suggested focus</p>
           {m.briefing.suggestedPriorities.length ? (
             <ol className="mt-2 space-y-1.5">
@@ -160,7 +160,7 @@ export function RemindersWidget({ m }: { m: DashboardModel }) {
         <EmptyState compact icon={AlarmClock} title="No reminders today" />
       )}
       <p className="mt-3 border-t border-border pt-2.5 text-[11px] leading-relaxed text-subtle-foreground">
-        Reminders currently appear only while the app is open. Push and email delivery arrive in phase 7, once verified end to end.
+        Reminders also arrive as notifications on devices where you turned them on in Settings.
       </p>
     </WidgetCard>
   );

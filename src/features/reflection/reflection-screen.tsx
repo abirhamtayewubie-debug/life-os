@@ -121,7 +121,7 @@ export function ReflectionScreen({ ws, startNew = false }: { ws: ReflectionWorks
           </CardContent>
         </Card>
         <ValuesCard values={ws.values} />
-        <p className="flex gap-2 rounded-lg border border-border bg-muted/40 p-3 text-[12px] leading-relaxed text-muted-foreground">
+        <p className="flex gap-2 rounded-2xl border border-border bg-muted/40 p-3 text-[12px] leading-relaxed text-muted-foreground">
           <Lock className="mt-0.5 size-3.5 shrink-0" />
           Journal entries are private to your account and never sent to an AI model. The assistant can read an entry only if you share that entry here and switch on Journal in Settings.
         </p>
@@ -143,7 +143,7 @@ export function ReflectionScreen({ ws, startNew = false }: { ws: ReflectionWorks
 function Stat({ label, value }: { label: string; value: number | string }) {
   return (
     <div>
-      <p className="tabular text-xl font-semibold">{value}</p>
+      <p className="tabular font-display text-xl font-semibold tracking-[-0.025em]">{value}</p>
       <p className="text-[11px] text-muted-foreground">{label}</p>
     </div>
   );

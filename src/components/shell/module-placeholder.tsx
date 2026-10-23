@@ -34,7 +34,7 @@ export function ModulePlaceholder({ moduleKey }: { moduleKey: string }) {
         eyebrow={<Badge variant="outline">Arrives in phase {m.phase}</Badge>}
         title={m.label}
         description={m.summary}
-        actions={<Button variant="outline" size="sm" asChild><Link href="/">Back to Command Center</Link></Button>}
+        actions={<Button variant="outline" size="sm" asChild><Link href="/">Back to Today</Link></Button>}
       />
       <div className="grid gap-4 lg:grid-cols-3">
         <Card className="lg:col-span-2">
