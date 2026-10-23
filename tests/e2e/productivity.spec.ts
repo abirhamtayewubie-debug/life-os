@@ -38,6 +38,21 @@ test("tasks, reminders, calendar, habits and search persist per user", async ({ 
   const row = page.getByRole("button", { name: /Draft café proposal/ });
   await expect(row).toBeVisible();
 
+  // A reminder can be set while adding the task.
+  await page.getByRole("button", { name: "New task" }).first().click();
+  await dlg(page).getByLabel("Title").fill("Call the supplier");
+  await dlg(page).getByRole("switch", { name: "Remind me" }).click();
+  await expect(dlg(page).getByLabel("Also notify my devices")).toBeChecked();
+  await dlg(page).getByLabel("Reminder time").fill("23:59");
+  await page.getByRole("button", { name: "Add task" }).click();
+  await expect(page.getByText(/Task added\. Reminder set/)).toBeVisible();
+  await page.getByRole("button", { name: /^All open/ }).click();
+  await page.getByText("Call the supplier").first().click();
+  await expect(dlg(page).getByText(/23:59|11:59/)).toBeVisible();
+  await expect(dlg(page).getByText("· devices too")).toBeVisible();
+  await page.keyboard.press("Escape");
+  await page.getByRole("button", { name: /^Today/ }).click();
+
   // Validation: empty title is refused with a message.
   await page.getByRole("button", { name: "New task" }).first().click();
   await page.getByRole("button", { name: "Add task" }).click();
