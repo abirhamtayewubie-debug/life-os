@@ -26,6 +26,7 @@ Prices are as published by each provider; check their pricing pages before signi
 3. Auth settings (Dashboard → Authentication):
    - **URL configuration:** Site URL = your app URL; add `<app-url>/auth/callback` to the redirect allow-list.
    - **Email:** keep "Confirm email" on. Supabase's built-in email sender is limited to a few messages an hour; add your own SMTP before inviting anyone else.
+   - **Email template (Authentication → Emails → Confirm signup):** change the link to `{{ .SiteURL }}/auth/confirm?token_hash={{ .TokenHash }}&type=email`. The default link only finishes signing in if it's opened in the same browser that signed up; this one works anywhere (on a phone, in another browser).
    - **Password:** minimum length 10 (the app already requires 10).
    - **Rate limits:** the defaults (30 sign-in/sign-up attempts per 5 minutes per IP) are enough for one person. Note that sign-in calls come from the app's server, so on Vercel they share that server's addresses.
 4. The secret (service-role) key bypasses Row Level Security. The app uses it in exactly one place: the reminder sender at `/api/cron/reminders`, which has to see everyone's due reminders and only runs when called with `CRON_SECRET`. Put it in the Vercel environment as `SUPABASE_SECRET_KEY` and nowhere else; never in a `NEXT_PUBLIC_` variable.

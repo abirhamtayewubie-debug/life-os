@@ -46,6 +46,26 @@ test("an unconfirmed email is told to confirm, but only with the right password"
   await expect(page.getByText(/Confirm your email first/)).toBeVisible();
 });
 
+test("the confirmation link works in any browser and signs you in", async ({ page, request }) => {
+  const key = process.env.SUPABASE_SECRET_KEY;
+  test.skip(!key, "needs SUPABASE_SECRET_KEY");
+  const email = unique();
+  // The same token Supabase puts in the "Confirm signup" email.
+  const res = await request.post(`${process.env.SUPABASE_URL ?? "http://127.0.0.1:54321"}/auth/v1/admin/generate_link`, {
+    headers: { apikey: key!, Authorization: `Bearer ${key}` },
+    data: { type: "signup", email, password },
+  });
+  expect(res.ok()).toBe(true);
+  const { hashed_token } = (await res.json()) as { hashed_token: string };
+  await page.goto(`/auth/confirm?token_hash=${hashed_token}&type=email`);
+  await expect(page).toHaveURL(/\/$/);
+  await expect(page.getByRole("heading", { level: 1 })).toBeVisible();
+  // A used or forged link explains what to do next.
+  await page.context().clearCookies();
+  await page.goto(`/auth/confirm?token_hash=${hashed_token}&type=email`);
+  await expect(page.getByText(/your email may be confirmed already/)).toBeVisible();
+});
+
 test("foundation flow: sign up, sample data, persisted changes, isolation, removal", async ({ page, browser }) => {
   const email = unique();
   await signUp(page, email);
