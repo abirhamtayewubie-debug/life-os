@@ -26,6 +26,22 @@ test("pages are served with a strict, per-request security policy", async ({ req
   expect(a.headers()["x-powered-by"]).toBeUndefined();
 });
 
+test("the app can be installed: manifest and icons load without signing in", async ({ page, request }) => {
+  const res = await request.get("/manifest.webmanifest", { maxRedirects: 0 });
+  expect(res.status()).toBe(200);
+  const m = await res.json();
+  expect(m).toMatchObject({ name: "Life OS", start_url: "/", display: "standalone" });
+  for (const icon of m.icons as { src: string; sizes: string }[]) {
+    const img = await request.get(icon.src, { maxRedirects: 0 });
+    expect(img.status(), icon.src).toBe(200);
+    expect(img.headers()["content-type"]).toBe("image/png");
+  }
+  expect(m.icons.map((i: { sizes: string }) => i.sizes)).toEqual(expect.arrayContaining(["192x192", "512x512"]));
+  await page.goto("/login");
+  await expect(page.locator('link[rel="manifest"]')).toHaveAttribute("href", "/manifest.webmanifest");
+  await expect(page.locator('link[rel="apple-touch-icon"]')).toHaveCount(1);
+});
+
 test("health check answers without signing in and reveals nothing", async ({ request }) => {
   const res = await request.get("/healthz", { maxRedirects: 0 });
   expect(res.status()).toBe(200);
