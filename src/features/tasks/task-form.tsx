@@ -1,14 +1,15 @@
 "use client";
 
 import { useState } from "react";
-import { Repeat, Star } from "lucide-react";
+import { BellRing, Repeat, Star } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input, NativeSelect, Textarea } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
-import { localDateKey } from "@/lib/dates";
+import { addDays, localDateKey } from "@/lib/dates";
 import { describeRule, parseRule, presetFromRule, ruleFromPreset, type RepeatPreset } from "@/lib/recurrence";
 import { cn } from "@/lib/utils";
+import { createReminder } from "@/server/actions/reminders";
 import { createTask, updateTask, type TaskInput } from "@/server/actions/tasks";
 import { useServerAction } from "@/features/dashboard/use-server-action";
 import { AREAS, PRIORITY_LABEL, type Priority, type TaskRecord } from "./types";
@@ -62,6 +63,10 @@ export function TaskForm({
   const [errors, setErrors] = useState<Errors>({});
   const { pending, run } = useServerAction();
   const set = <K extends keyof TaskInput>(k: K, val: TaskInput[K]) => setV((s) => ({ ...s, [k]: val }));
+  // New tasks can get a reminder in the same step; existing ones manage reminders in their details.
+  const today = localDateKey(new Date(), tz);
+  const [rem, setRem] = useState({ on: false, date: today, time: "09:00", devices: true });
+  const toggleReminder = (on: boolean) => setRem((r) => (on ? { ...r, on, date: v.dueDate && v.dueDate >= today ? v.dueDate : today, time: v.dueTime || r.time } : { ...r, on }));
 
   const preset = presetFromRule(v.recurrenceRule);
   const ruleText = (() => {
@@ -75,11 +80,18 @@ export function TaskForm({
   const submit = (e: React.FormEvent) => {
     e.preventDefault();
     setErrors({});
+    if (!task && rem.on && (!rem.date || !rem.time)) return setErrors({ reminder: ["Pick a date and time for the reminder."] });
     const payload = { ...v, tags: tagText.split(",").map((t) => t.trim()).filter(Boolean) };
     run(
       async () => {
         const r = task ? await updateTask(task.id, payload) : await createTask(payload);
         if (!r.ok && r.fieldErrors) setErrors(r.fieldErrors);
+        const id = r.ok ? (r.data as { id?: string } | undefined)?.id : undefined;
+        if (!task && rem.on && r.ok && id) {
+          // The task exists either way, so a failed reminder is reported without undoing it.
+          const rr = await createReminder({ title: payload.title, date: rem.date, time: rem.time, taskId: id, notifyDevices: rem.devices });
+          return { ...r, message: rr.ok ? `Task added. ${rr.message}` : "Task added, but the reminder couldn't be saved. Open the task to add one." };
+        }
         return r;
       },
       { onSuccess: (r) => onDone((r.data as { id?: string } | undefined)?.id) },
@@ -202,6 +214,32 @@ export function TaskForm({
         </span>
         <Switch checked={v.isTopPriority} onCheckedChange={(c) => set("isTopPriority", c)} aria-label="Today's focus" />
       </label>
+
+      {!task && (
+        <div className={cn("grid gap-2 rounded-lg border border-border px-3 py-2.5", rem.on && "border-brand/50 bg-accent/50")}>
+          <label className="flex cursor-pointer items-center gap-3">
+            <BellRing className={cn("size-4 text-muted-foreground", rem.on && "text-brand")} aria-hidden />
+            <span className="flex-1 text-[13px]">
+              Remind me
+              <span className="block text-[11px] text-muted-foreground">A due date alone doesn&apos;t send anything; a reminder does.</span>
+            </span>
+            <Switch checked={rem.on} onCheckedChange={toggleReminder} aria-label="Remind me" />
+          </label>
+          {rem.on && (
+            <>
+              <div className="flex flex-wrap gap-2">
+                <Input type="date" className="w-auto" value={rem.date} min={today} max={addDays(today, 730)} onChange={(e) => setRem((r) => ({ ...r, date: e.target.value }))} aria-label="Reminder date" />
+                <Input type="time" className="w-auto" value={rem.time} onChange={(e) => setRem((r) => ({ ...r, time: e.target.value }))} aria-label="Reminder time" />
+              </div>
+              <label className="flex items-center gap-2 text-[13px]">
+                <input type="checkbox" checked={rem.devices} onChange={(e) => setRem((r) => ({ ...r, devices: e.target.checked }))} className="size-4 accent-[var(--brand)]" />
+                Also notify my devices
+              </label>
+              {err("reminder") && <p className="text-xs text-destructive">{err("reminder")}</p>}
+            </>
+          )}
+        </div>
+      )}
 
       <div className="flex flex-col-reverse gap-2 sm:flex-row sm:justify-end">
         <Button type="button" variant="outline" onClick={onCancel}>Cancel</Button>
