@@ -31,7 +31,10 @@ export function AuthForm({ mode, action, next, notice }: { mode: Mode; action: (
           {fe.email && <p id="email-err" className="text-xs text-destructive">{fe.email[0]}</p>}
         </div>
         <div className="grid gap-1.5">
-          <Label htmlFor="password">Password</Label>
+          <div className="flex items-baseline justify-between gap-2">
+            <Label htmlFor="password">Password</Label>
+            {mode === "login" && <Link className="text-xs text-muted-foreground underline-offset-4 hover:text-foreground hover:underline" href="/forgot-password">Forgot password?</Link>}
+          </div>
           <Input id="password" name="password" type="password" autoComplete={mode === "login" ? "current-password" : "new-password"} required minLength={10} aria-invalid={!!fe.password} aria-describedby="pw-hint" />
           <p id="pw-hint" className={fe.password ? "text-xs text-destructive" : "text-xs text-muted-foreground"}>
             {fe.password?.[0] ?? (mode === "signup" ? "At least 10 characters. A passphrase works well." : "")}

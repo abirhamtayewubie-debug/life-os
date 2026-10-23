@@ -7,6 +7,7 @@ const TYPES = new Set<EmailOtpType>(["email", "signup", "recovery", "email_chang
 /**
  * Confirms an email from the link in Supabase's email (template:
  * {{ .SiteURL }}/auth/confirm?token_hash={{ .TokenHash }}&type=email).
+ * The "Reset password" email uses the same route with type=recovery.
  * Unlike /auth/callback it doesn't need the browser that signed up, so the
  * link works when opened on a phone or in another browser.
  */
@@ -17,7 +18,8 @@ export async function GET(request: NextRequest) {
   if (tokenHash && type && TYPES.has(type)) {
     const supabase = await createSupabaseServerClient();
     const { error } = await supabase.auth.verifyOtp({ type, token_hash: tokenHash });
-    if (!error) return NextResponse.redirect(`${origin}/`);
+    // A password-reset link always continues to the page that sets the new password.
+    if (!error) return NextResponse.redirect(`${origin}${type === "recovery" ? "/reset-password" : "/"}`);
   }
-  return NextResponse.redirect(`${origin}/login?error=confirmation`);
+  return NextResponse.redirect(`${origin}/login?error=${type === "recovery" ? "reset" : "confirmation"}`);
 }

@@ -2,7 +2,7 @@ import { NextResponse, type NextRequest } from "next/server";
 import { createServerClient } from "@supabase/ssr";
 import { supabaseEnv } from "@/lib/supabase/env";
 
-const PUBLIC_PATHS = ["/login", "/signup", "/auth/", "/healthz", "/api/cron/", "/feed/", "/sw.js"];
+const PUBLIC_PATHS = ["/login", "/signup", "/forgot-password", "/auth/", "/healthz", "/api/cron/", "/feed/", "/sw.js"];
 
 /**
  * A strict Content-Security-Policy with a fresh nonce per request: only
