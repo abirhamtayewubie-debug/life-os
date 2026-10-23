@@ -22,6 +22,8 @@ export async function signIn(_prev: ActionResult | null, form: FormData): Promis
   if (!parsed.success) return { ok: false, error: "Check your email and password.", fieldErrors: z.flattenError(parsed.error).fieldErrors };
   const supabase = await createSupabaseServerClient();
   const { error } = await supabase.auth.signInWithPassword(parsed.data);
+  // Supabase reports an unconfirmed email only once the password matched, so saying so reveals nothing new.
+  if (error?.code === "email_not_confirmed") return { ok: false, error: "Confirm your email first: open the link we sent you (check spam too), then sign in." };
   // Same message for unknown email and wrong password (no account enumeration).
   if (error) return { ok: false, error: "That email and password combination didn't work." };
   redirect(safeNext(form.get("next")));

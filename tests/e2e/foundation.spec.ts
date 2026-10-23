@@ -25,6 +25,27 @@ test("wrong password gets a generic error", async ({ page }) => {
   await expect(page.getByText("That email and password combination didn't work.")).toBeVisible();
 });
 
+test("an unconfirmed email is told to confirm, but only with the right password", async ({ page, request }) => {
+  // Needs SUPABASE_SECRET_KEY to create a user whose email isn't confirmed (local projects skip confirmation).
+  const key = process.env.SUPABASE_SECRET_KEY;
+  test.skip(!key, "needs SUPABASE_SECRET_KEY");
+  const email = unique();
+  const res = await request.post(`${process.env.SUPABASE_URL ?? "http://127.0.0.1:54321"}/auth/v1/admin/users`, {
+    headers: { apikey: key!, Authorization: `Bearer ${key}` },
+    data: { email, password, email_confirm: false },
+  });
+  expect(res.ok()).toBe(true);
+  await page.goto("/login");
+  await page.getByLabel("Email").fill(email);
+  await page.getByLabel("Password").fill("not-the-password-123");
+  await page.getByRole("button", { name: "Sign in" }).click();
+  await expect(page.getByText("That email and password combination didn't work.")).toBeVisible();
+  await page.getByLabel("Email").fill(email);
+  await page.getByLabel("Password").fill(password);
+  await page.getByRole("button", { name: "Sign in" }).click();
+  await expect(page.getByText(/Confirm your email first/)).toBeVisible();
+});
+
 test("foundation flow: sign up, sample data, persisted changes, isolation, removal", async ({ page, browser }) => {
   const email = unique();
   await signUp(page, email);
