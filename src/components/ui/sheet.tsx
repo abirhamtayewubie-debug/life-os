@@ -9,15 +9,17 @@ const SheetTrigger = SheetPrimitive.Trigger;
 const SheetClose = SheetPrimitive.Close;
 const SheetTitle = SheetPrimitive.Title;
 
-function SheetContent({ className, children, ...props }: React.ComponentProps<typeof SheetPrimitive.Content>) {
+const SIDE = {
+  left: "inset-y-0 left-0 w-[18rem] max-w-[85vw] data-[state=open]:animate-slide-in-left",
+  bottom: "inset-x-0 bottom-0 max-h-[85dvh] rounded-t-[28px] pb-[env(safe-area-inset-bottom)] data-[state=open]:animate-slide-in-up",
+} as const;
+
+function SheetContent({ className, children, side = "left", ...props }: React.ComponentProps<typeof SheetPrimitive.Content> & { side?: keyof typeof SIDE }) {
   return (
     <SheetPrimitive.Portal>
-      <SheetPrimitive.Overlay className="fixed inset-0 z-50 bg-black/40 data-[state=open]:animate-fade-in" />
+      <SheetPrimitive.Overlay className="fixed inset-0 z-50 bg-[rgb(11_12_15/0.45)] backdrop-blur-sm data-[state=open]:animate-fade-in" />
       <SheetPrimitive.Content
-        className={cn(
-          "fixed inset-y-0 left-0 z-50 flex w-[18rem] max-w-[85vw] flex-col bg-sidebar shadow-xl outline-none data-[state=open]:animate-fade-in",
-          className,
-        )}
+        className={cn("fixed z-50 flex flex-col bg-sidebar shadow-raised outline-none", SIDE[side], className)}
         {...props}
       >
         {children}

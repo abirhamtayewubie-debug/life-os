@@ -22,7 +22,7 @@ export function AppearancePicker() {
           aria-checked={mounted && theme === o.v}
           onClick={() => setTheme(o.v)}
           className={cn(
-            "flex cursor-pointer flex-col items-center gap-1.5 rounded-lg border border-border px-3 py-3 text-xs transition-colors hover:bg-muted",
+            "flex cursor-pointer flex-col items-center gap-1.5 rounded-2xl border border-border px-3 py-3 text-xs transition-colors hover:bg-muted",
             mounted && theme === o.v && "border-brand bg-accent text-accent-foreground",
           )}
         >

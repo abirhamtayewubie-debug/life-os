@@ -12,6 +12,7 @@ import { cn } from "@/lib/utils";
 import { resetDashboardLayout, saveDashboardLayout } from "@/server/actions/dashboard";
 import type { DashboardModel } from "./compute";
 import { EveningReview } from "./evening-review";
+import { TodayHero } from "./today-hero";
 import { useServerAction } from "./use-server-action";
 import { DEFAULT_LAYOUT, WIDGETS, normalizeLayout, type WidgetKey, type WidgetPref, type WidgetSize } from "./widgets";
 import { AgendaWidget, BriefingWidget, DeadlinesWidget, PrioritiesWidget, RemindersWidget } from "./widgets/planning";
@@ -26,6 +27,16 @@ const SIZE_CLASS: Record<WidgetSize, string> = {
   lg: "md:col-span-6 xl:col-span-8",
   full: "md:col-span-6 xl:col-span-12",
 };
+const COUNT_WORDS = ["Nothing", "One thing", "Two things", "Three things"];
+
+function daySummary(m: DashboardModel, now: Date): string {
+  const n = m.briefing.suggestedPriorities.length;
+  const head = n ? `${COUNT_WORDS[n] ?? `${n} things`} ${n === 1 ? "matters" : "matter"} today.` : "Nothing urgent today.";
+  const left = m.agenda.filter((e) => !e.all_day && new Date(e.ends_at) > now).length;
+  const tail = left ? ` ${left} more ${left === 1 ? "event" : "events"} on your calendar.` : " Your calendar is clear for the rest of the day.";
+  return head + tail;
+}
+
 const SIZE_LABEL: Record<WidgetSize, string> = { sm: "S", md: "M", lg: "L", full: "Full" };
 const LOCAL_KEY = "lifeos:demo-layout";
 
@@ -59,7 +70,7 @@ function SortableWidget({ pref, editing, onToggle, onSize, children }: {
       ref={setNodeRef}
       aria-label={def.title}
       style={{ transform: CSS.Translate.toString(transform), transition }}
-      className={cn("col-span-1 min-w-0 animate-rise", SIZE_CLASS[pref.size], isDragging && "z-10 opacity-80", editing && "rounded-xl outline-1 outline-dashed outline-brand/40 outline-offset-4")}
+      className={cn("col-span-1 min-w-0 animate-rise", SIZE_CLASS[pref.size], isDragging && "z-10 opacity-80", editing && "rounded-3xl outline-1 outline-dashed outline-brand/40 outline-offset-4")}
     >
       {editing && (
         <div className="mb-2 flex items-center gap-1.5">
@@ -67,12 +78,12 @@ function SortableWidget({ pref, editing, onToggle, onSize, children }: {
             ref={setActivatorNodeRef}
             {...attributes}
             {...listeners}
-            className="flex h-7 cursor-grab items-center gap-1 rounded-md border border-border bg-surface px-1.5 text-xs text-muted-foreground active:cursor-grabbing"
+            className="flex h-7 cursor-grab items-center gap-1 rounded-lg border border-border bg-surface px-1.5 text-xs text-muted-foreground active:cursor-grabbing"
             aria-label={`Move ${def.title}. Use space then arrow keys.`}
           >
             <GripVertical className="size-3.5" aria-hidden /> {def.title}
           </button>
-          <div className="ml-auto flex items-center rounded-md border border-border bg-surface p-0.5" role="group" aria-label={`${def.title} size`}>
+          <div className="ml-auto flex items-center rounded-lg border border-border bg-surface p-0.5" role="group" aria-label={`${def.title} size`}>
             {def.sizes.map((s) => (
               <button
                 key={s}
@@ -93,8 +104,9 @@ function SortableWidget({ pref, editing, onToggle, onSize, children }: {
 }
 
 export function CommandCenter({
-  model, initialLayout, demo, locale, greeting, longDate,
-}: { model: DashboardModel; initialLayout: WidgetPref[]; demo: boolean; locale: string; greeting: string; longDate: string }) {
+  model, initialLayout, demo, locale, greeting, longDate, nowIso,
+}: { model: DashboardModel; initialLayout: WidgetPref[]; demo: boolean; locale: string; greeting: string; longDate: string; nowIso: string }) {
+  const now = useMemo(() => new Date(nowIso), [nowIso]);
   const [layout, setLayout] = useState(initialLayout);
   const [editing, setEditing] = useState(false);
   const [snapshot, setSnapshot] = useState<WidgetPref[] | null>(null);
@@ -157,18 +169,11 @@ export function CommandCenter({
 
   return (
     <div>
-      <div className="mb-6 flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
+      <div className="mb-7 flex flex-col gap-5 pt-2 sm:flex-row sm:items-end sm:justify-between">
         <div>
-          <p className="text-xs text-muted-foreground">{longDate}</p>
-          <h1 className="mt-1 text-2xl font-semibold tracking-tight">{greeting}</h1>
-          <dl className="mt-2 flex flex-wrap gap-x-5 gap-y-1 text-xs text-muted-foreground">
-            <div className="flex gap-1"><dt>Open tasks</dt><dd className="tabular font-medium text-foreground">{model.stats.openTasks}</dd></div>
-            <div className="flex gap-1"><dt>Done today</dt><dd className="tabular font-medium text-foreground">{model.stats.doneToday}</dd></div>
-            <div className="flex gap-1"><dt>Events</dt><dd className="tabular font-medium text-foreground">{model.agenda.length}</dd></div>
-            {model.stats.habitsScheduledToday > 0 && (
-              <div className="flex gap-1"><dt>Habits</dt><dd className="tabular font-medium text-foreground">{model.stats.habitsDoneToday}/{model.stats.habitsScheduledToday}</dd></div>
-            )}
-          </dl>
+          <p className="text-xs font-semibold tracking-[0.1em] text-subtle-foreground uppercase">{longDate}</p>
+          <h1 className="mt-2 font-display text-[34px] leading-[1.05] font-semibold tracking-[-0.028em] text-balance sm:text-[44px]">{greeting}</h1>
+          <p className="mt-2 text-[15px] text-muted-foreground">{daySummary(model, now)}</p>
         </div>
         <div className="flex flex-wrap items-center gap-2">
           {editing ? (
@@ -186,8 +191,10 @@ export function CommandCenter({
         </div>
       </div>
 
+      {!editing && <TodayHero m={model} now={now} />}
+
       {editing && (
-        <div className="mb-5 rounded-xl border border-dashed border-border bg-surface-2/50 p-4 text-[13px] animate-fade-in">
+        <div className="mb-5 rounded-2xl border border-dashed border-border bg-surface-2/50 p-4 text-[13px] animate-fade-in">
           <p className="text-muted-foreground">Drag widgets to reorder, choose a size, or hide what you don&apos;t need.</p>
           {hidden.length > 0 && (
             <div className="mt-3 flex flex-wrap items-center gap-2">
@@ -204,7 +211,7 @@ export function CommandCenter({
 
       <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={onDragEnd}>
         <SortableContext items={visible.map((w) => w.key)} strategy={rectSortingStrategy}>
-          <div className="grid grid-flow-row-dense grid-cols-1 gap-4 md:grid-cols-6 xl:grid-cols-12">
+          <div className="grid grid-flow-row-dense grid-cols-1 gap-5 md:grid-cols-6 xl:grid-cols-12">
             {visible.map((w) => (
               <SortableWidget key={w.key} pref={w} editing={editing} onToggle={() => update(w.key, { visible: false })} onSize={(size) => update(w.key, { size })}>
                 {renderWidget(w.key, model, locale)}
@@ -214,7 +221,7 @@ export function CommandCenter({
         </SortableContext>
       </DndContext>
       {!visible.length && (
-        <div className="rounded-xl border border-dashed border-border p-10 text-center text-sm text-muted-foreground">
+        <div className="rounded-3xl border border-dashed border-border p-10 text-center text-sm text-muted-foreground">
           All widgets are hidden. Use <strong>Customize</strong> to bring some back.
         </div>
       )}

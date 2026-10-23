@@ -61,7 +61,7 @@ export function TaskDetail({
 
       <Section title={`Subtasks${subtasks.length ? ` · ${subtasks.filter((s) => s.status === "done").length}/${subtasks.length}` : ""}`} icon={Plus}>
         {subtasks.length > 0 && (
-          <ul className="divide-y divide-border rounded-lg border border-border">
+          <ul className="divide-y divide-border rounded-2xl border border-border">
             {subtasks.map((s) => (
               <li key={s.id} className="flex items-center gap-2.5 px-3 py-2 text-[13px]">
                 <TaskCheckbox task={s} />

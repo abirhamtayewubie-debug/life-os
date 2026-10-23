@@ -1,6 +1,6 @@
 import {
   BarChart3, BookOpen, Briefcase, CalendarDays, Flower2, GraduationCap, HeartPulse, House,
-  LayoutDashboard, ListChecks, Moon, Orbit, Plug, Repeat, Settings, Sparkles, Target, Users, Wallet,
+  ListChecks, Moon, Orbit, Plug, Repeat, Settings, Sparkles, Sun, Target, Users, Wallet,
   type LucideIcon,
 } from "lucide-react";
 
@@ -23,7 +23,7 @@ export type ModuleDef = {
 };
 
 export const MODULES: ModuleDef[] = [
-  { key: "home", label: "Command Center", href: "/", icon: LayoutDashboard, group: "overview", phase: 1, required: true,
+  { key: "home", label: "Today", href: "/", icon: Sun, group: "overview", phase: 1, required: true,
     summary: "Today at a glance: priorities, agenda, progress, and what changed.",
     capabilities: [] },
   { key: "assistant", label: "AI Assistant", href: "/assistant", icon: Sparkles, group: "overview", phase: 6,

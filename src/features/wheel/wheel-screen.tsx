@@ -179,7 +179,7 @@ export function WheelScreen({ ws, startNew = false }: { ws: WheelWorkspace; star
       {ws.assessments.length > 0 && (
         <section aria-label="Past check-ins" className="grid gap-2">
           <h2 className="text-[11px] font-medium tracking-wide text-subtle-foreground uppercase">Check-ins</h2>
-          <ul className="divide-y divide-border rounded-lg border border-border bg-surface">
+          <ul className="divide-y divide-border rounded-2xl border border-border bg-surface">
             {ws.assessments.map((a) => (
               <li key={a.id} className="flex items-center gap-3 px-3 py-2 text-[13px]">
                 <span className="tabular shrink-0 sm:w-28">{formatShortDate(a.assessed_on, ws.locale)}</span>

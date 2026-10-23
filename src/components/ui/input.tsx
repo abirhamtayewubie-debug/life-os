@@ -2,10 +2,10 @@ import * as React from "react";
 import { cn } from "@/lib/utils";
 
 const fieldClass =
-  "w-full min-w-0 rounded-md border border-input bg-surface px-3 text-sm text-foreground placeholder:text-subtle-foreground outline-none transition-colors focus-visible:border-ring focus-visible:ring-2 focus-visible:ring-ring/25 disabled:opacity-50 aria-invalid:border-destructive aria-invalid:ring-destructive/20";
+  "w-full min-w-0 rounded-xl border border-input bg-surface px-3.5 text-sm text-foreground placeholder:text-subtle-foreground outline-none transition-colors focus-visible:border-ring focus-visible:ring-2 focus-visible:ring-ring/25 disabled:opacity-50 aria-invalid:border-destructive aria-invalid:ring-destructive/20";
 
 function Input({ className, ...props }: React.ComponentProps<"input">) {
-  return <input data-slot="input" className={cn(fieldClass, "h-9", className)} {...props} />;
+  return <input data-slot="input" className={cn(fieldClass, "h-11 sm:h-10", className)} {...props} />;
 }
 
 function Textarea({ className, ...props }: React.ComponentProps<"textarea">) {
@@ -13,7 +13,7 @@ function Textarea({ className, ...props }: React.ComponentProps<"textarea">) {
 }
 
 function NativeSelect({ className, ...props }: React.ComponentProps<"select">) {
-  return <select data-slot="select" className={cn(fieldClass, "h-9 pr-8", className)} {...props} />;
+  return <select data-slot="select" className={cn(fieldClass, "h-11 pr-8 sm:h-10", className)} {...props} />;
 }
 
 export { Input, Textarea, NativeSelect, fieldClass };

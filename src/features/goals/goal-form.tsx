@@ -90,7 +90,7 @@ export function GoalForm({
           </NativeSelect>
         </Field>
       </div>
-      <fieldset className="grid gap-3 rounded-lg border border-border p-3">
+      <fieldset className="grid gap-3 rounded-2xl border border-border p-3">
         <legend className="px-1 text-[13px] font-medium">Measure it <span className="font-normal text-muted-foreground">(optional)</span></legend>
         <div className="grid gap-3 sm:grid-cols-3">
           <Field id="goal-metric-label" label="Unit" error={err("metricLabel")}>

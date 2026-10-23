@@ -13,7 +13,7 @@ export function ThemeToggle() {
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
-        <Button variant="ghost" size="icon-sm" aria-label="Theme">
+        <Button variant="ghost" size="icon" aria-label="Theme">
           <Icon />
         </Button>
       </DropdownMenuTrigger>

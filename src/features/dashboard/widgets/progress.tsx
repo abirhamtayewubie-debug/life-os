@@ -33,7 +33,7 @@ function HabitRow({ h }: { h: HabitView }) {
         onClick={toggle}
         className={cn(
           "flex size-6 shrink-0 cursor-pointer items-center justify-center rounded-full border border-input transition-colors hover:border-brand disabled:cursor-default disabled:opacity-40",
-          done && "border-success bg-success text-white hover:border-success",
+          done && "animate-pop border-brand bg-brand text-brand-foreground hover:border-brand",
         )}
       >
         {done && <Check className="size-3.5" strokeWidth={3} aria-hidden />}
@@ -52,7 +52,7 @@ function HabitRow({ h }: { h: HabitView }) {
             title={`${formatShortDate(d.date)}: ${d.state === "done" ? "done" : d.state === "missed" ? "missed" : d.state === "off" ? "not scheduled" : d.state === "future" ? "pending" : "before habit started"}`}
             className={cn(
               "size-2.5 rounded-[3px]",
-              d.state === "done" && "bg-success",
+              d.state === "done" && "bg-brand",
               d.state === "missed" && "bg-destructive/25",
               d.state === "off" && "bg-muted",
               d.state === "future" && "border border-dashed border-input",

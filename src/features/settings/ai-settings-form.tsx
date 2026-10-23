@@ -33,7 +33,7 @@ export function AiSettingsForm({ settings, configured, spendUsd }: { settings: A
       <fieldset className="grid min-w-0 gap-2">
         <legend className="mb-1 text-[13px] font-medium">Model</legend>
         {MODEL_IDS.map((id) => (
-          <label key={id} className={cn("flex cursor-pointer items-start gap-3 rounded-md border border-border p-3", v.model === id && "border-brand/50 bg-brand/5")}>
+          <label key={id} className={cn("flex cursor-pointer items-start gap-3 rounded-xl border border-border p-3", v.model === id && "border-brand/50 bg-brand/5")}>
             <input type="radio" name="ai-model" value={id} checked={v.model === id} onChange={() => set("model", id)} className="mt-1" />
             <span className="grid gap-0.5">
               <span className="text-[13px] font-medium">{MODELS[id].label}</span>
@@ -56,7 +56,7 @@ export function AiSettingsForm({ settings, configured, spendUsd }: { settings: A
         </ul>
       </fieldset>
 
-      <fieldset className="grid min-w-0 gap-2 rounded-md border border-border p-3">
+      <fieldset className="grid min-w-0 gap-2 rounded-xl border border-border p-3">
         <legend className="flex items-center gap-1.5 px-1 text-[13px] font-medium"><Lock className="size-3.5" aria-hidden /> Sensitive areas</legend>
         <Sensitive id="ai-health" label="Health & sleep" checked={v.includeHealth} onChange={(on) => set("includeHealth", on)}>Check-ins, sleep, workouts, water and measurements are sent when relevant. It describes them; it never diagnoses.</Sensitive>
         <Sensitive id="ai-finance" label="Finance" checked={v.includeFinance} onChange={(on) => set("includeFinance", on)}>Balances, this month&apos;s totals and upcoming bills. Account numbers aren&apos;t stored, so they&apos;re never sent.</Sensitive>

@@ -13,8 +13,8 @@ export function UserMenu({ name, email, demo }: { name: string | null; email: st
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
-        <Button variant="ghost" size="icon-sm" className="rounded-full" aria-label="Account menu">
-          <span className="flex size-7 items-center justify-center rounded-full bg-secondary text-[11px] font-semibold text-secondary-foreground ring-1 ring-border">
+        <Button variant="ghost" size="icon" className="rounded-full" aria-label="Account menu">
+          <span className="flex size-9 items-center justify-center rounded-full bg-accent text-[13px] font-semibold text-accent-foreground">
             {demo ? "D" : initials || "Y"}
           </span>
         </Button>

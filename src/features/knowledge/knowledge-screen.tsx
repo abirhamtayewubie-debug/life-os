@@ -182,8 +182,8 @@ function NoteDetail({ note, ws, onBack, onEdit, onOpenTitle, onSelect, onTag, on
       {(note.tags.length > 0 || goal || project) && (
         <div className="mt-4 flex flex-wrap gap-2 text-[12px]">
           {note.tags.map((t) => <button key={t} type="button" onClick={() => onTag(t)} className="cursor-pointer rounded-md bg-muted px-2 py-0.5 text-muted-foreground hover:text-foreground">#{t}</button>)}
-          {goal && <Link href="/goals" className="rounded-md border border-border px-2 py-0.5 hover:bg-muted">Goal: {goal.title}</Link>}
-          {project && <Link href={`/work?project=${project.id}`} className="rounded-md border border-border px-2 py-0.5 hover:bg-muted">Project: {project.name}</Link>}
+          {goal && <Link href="/goals" className="rounded-lg border border-border px-2 py-0.5 hover:bg-muted">Goal: {goal.title}</Link>}
+          {project && <Link href={`/work?project=${project.id}`} className="rounded-lg border border-border px-2 py-0.5 hover:bg-muted">Project: {project.name}</Link>}
         </div>
       )}
       <Separator className="my-4" />
