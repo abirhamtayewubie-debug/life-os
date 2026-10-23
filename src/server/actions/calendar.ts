@@ -5,6 +5,7 @@ import { z } from "zod";
 import { addDays, diffDays, zonedTimeToUtc } from "@/lib/dates";
 import { allDayIso, isSyncedEvent } from "@/lib/calendar";
 import { isValidRule, parseRule, serializeRule } from "@/lib/recurrence";
+import { syncSoon } from "@/server/google/sync";
 import { DEMO_RESULT, type ActionResult } from "./result";
 import { audit, liveContext } from "./guard";
 
@@ -80,6 +81,7 @@ export async function createEvent(input: EventInput): Promise<ActionResult<{ id:
   const { data, error } = await ctx.supabase.from("calendar_events").insert({ ...row, user_id: ctx.viewer.userId, source: "manual" }).select("id").single();
   if (error) return { ok: false, error: "Couldn't save the event." };
   refresh();
+  syncSoon(ctx.viewer.userId);
   if (row.task_id) revalidatePath("/tasks");
   return { ok: true, data: { id: data.id }, message: row.kind === "time_block" ? "Time blocked." : "Event added." };
 }
@@ -96,6 +98,7 @@ export async function updateEvent(id: string, input: EventInput): Promise<Action
   const { error } = await ctx.supabase.from("calendar_events").update(toRow(parsed.data, ctx.viewer.profile.timezone)).eq("id", id);
   if (error) return { ok: false, error: "Couldn't save the event." };
   refresh();
+  syncSoon(ctx.viewer.userId);
   return { ok: true, message: "Event updated." };
 }
 
@@ -123,6 +126,7 @@ export async function moveEvent(id: string, date: string, time: string): Promise
   const { error } = await ctx.supabase.from("calendar_events").update({ starts_at: starts, ends_at: ends, timezone: tz }).eq("id", id);
   if (error) return { ok: false, error: "Couldn't move the event." };
   refresh();
+  syncSoon(ctx.viewer.userId);
   return { ok: true, message: "Event moved." };
 }
 
@@ -136,5 +140,6 @@ export async function deleteEvent(id: string): Promise<ActionResult> {
   if (!data?.length) return { ok: false, error: "Event not found." };
   await audit(ctx, "calendar_event.deleted", { type: "calendar_event", id }, { title: data[0].title });
   refresh();
+  syncSoon(ctx.viewer.userId);
   return { ok: true, message: "Event deleted." };
 }

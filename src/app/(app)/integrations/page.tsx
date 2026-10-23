@@ -1,21 +1,33 @@
 import Link from "next/link";
-import { BellRing, Bot, CalendarDays, CalendarSync, Clock, HeartPulse, Mail } from "lucide-react";
+import { BellRing, Bot, CalendarCheck2, CalendarDays, CalendarSync, Clock, HeartPulse, Mail } from "lucide-react";
 import { PageHeader } from "@/components/shell/page-header";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { AppleHealthImport } from "@/features/health/apple-health-import";
+import { GoogleCalendarActions } from "@/features/integrations/google-calendar-actions";
 import { getIntegrationStatus } from "@/server/integrations";
 
 export const metadata = { title: "Integrations" };
 
-type State = "on" | "ready" | "off" | "not_set_up" | "not_connected";
+type State = "on" | "ready" | "off" | "not_set_up" | "not_connected" | "attention";
 const STATE: Record<State, { label: string; variant: "success" | "outline" | "default" | "warning" }> = {
   on: { label: "On", variant: "success" },
   ready: { label: "Set up", variant: "outline" },
   off: { label: "Off", variant: "default" },
   not_set_up: { label: "Not set up", variant: "warning" },
   not_connected: { label: "Not connected", variant: "default" },
+  attention: { label: "Needs you", variant: "warning" },
+};
+
+// Shown once after coming back from Google's sign-in screen.
+const GOOGLE_RETURN: Record<string, string> = {
+  connected: "Google Calendar is connected. Your events are syncing.",
+  denied: "Google Calendar wasn't connected: the request was cancelled on Google's screen.",
+  no_access: "Google Calendar wasn't connected: tick the box that allows Life OS to see and edit your events, then try again.",
+  expired: "That sign-in took too long or came from another browser. Please try connecting again.",
+  failed: "Google Calendar couldn't be connected. Please try again in a minute.",
+  not_set_up: "Google Calendar isn't set up on the server yet.",
 };
 
 function Item({ icon: Icon, title, state, children, action }: { icon: typeof BellRing; title: string; state: State; children: React.ReactNode; action?: React.ReactNode }) {
@@ -36,12 +48,16 @@ function Item({ icon: Icon, title, state, children, action }: { icon: typeof Bel
   );
 }
 
-export default async function IntegrationsPage() {
-  const s = await getIntegrationStatus();
+export default async function IntegrationsPage({ searchParams }: PageProps<"/integrations">) {
+  const [s, sp] = await Promise.all([getIntegrationStatus(), searchParams]);
+  const googleReturn = typeof sp.google === "string" ? GOOGLE_RETURN[sp.google] : undefined;
+  const g = s.google;
+  const googleState: State = !g.configured ? "not_set_up" : g.status === "connected" ? (g.lastError ? "attention" : "on") : g.status === "error" ? "attention" : "not_connected";
   const fmt = (iso: string | null) => (iso ? new Date(iso).toLocaleString(s.locale, { timeZone: s.timezone, dateStyle: "medium", timeStyle: "short" }) : null);
   return (
     <div className="animate-rise">
       <PageHeader title="Integrations" description="What Life OS connects to, what each connection can see, and whether it has been seen working." />
+      {googleReturn && <p role="status" className="mb-4 rounded-2xl bg-accent px-4 py-3 text-sm text-accent-foreground">{googleReturn}</p>}
       {s.demo && <p className="mb-4 rounded-md border border-dashed border-border p-3 text-xs text-muted-foreground">Demo mode: nothing is connected and nothing is saved.</p>}
       <div className="grid gap-4 lg:grid-cols-2">
         <Item icon={BellRing} title="Notifications on your devices" state={!s.push.configured ? "not_set_up" : s.push.devices ? "on" : "off"}
@@ -83,12 +99,19 @@ export default async function IntegrationsPage() {
           <p>{s.ai.configured ? "An API key is set on the server." : "No API key on the server yet."}</p>
         </Item>
 
-        <Item icon={CalendarDays} title="Google Calendar (two-way)" state="not_connected">
-          <p>Keeping Life OS and Google Calendar in step both ways needs a Google Cloud project and your approval. Until then, use the subscribe link (one-way) or calendar files.</p>
+        <Item icon={CalendarCheck2} title="Google Calendar (two-way)" state={googleState}
+          action={g.configured && !s.demo ? <GoogleCalendarActions status={g.status} /> : undefined}>
+          <p>Events from your main Google calendar appear here, and events you add or change in Life OS appear in Google. Life OS can see and edit your calendar events only, nothing else in your Google account.</p>
+          <p>
+            {!g.configured ? "Not set up on the server yet: it needs a Google Cloud project (see the deployment guide)."
+              : g.status === "error" ? (g.lastError ?? "Google needs you to sign in again.")
+              : g.status === "connected" ? `Connected${g.account ? ` to ${g.account}` : ""}. ${g.events} synced event${g.events === 1 ? "" : "s"}. ${g.lastSynced ? `Last synced ${fmt(g.lastSynced)}.` : "First sync hasn't finished yet."}${g.lastError ? ` ${g.lastError}` : ""}`
+              : "Not connected. Syncs every couple of minutes once connected, and right away when you change an event here."}
+          </p>
         </Item>
 
         <Item icon={Mail} title="Email reminders" state="not_connected">
-          <p>Needs an email sending service, which is a paid account and needs your approval. Reminders set to email are recorded as skipped until then.</p>
+          <p>Needs an account with an email sending service and your approval. Reminders set to email are recorded as skipped until then.</p>
         </Item>
       </div>
     </div>
