@@ -21,7 +21,10 @@ import { formatShortDate } from "@/lib/dates";
 import { cn } from "@/lib/utils";
 import { deleteJournalEntry, deleteValue, saveJournalEntry, saveValue, setJournalSharing, type JournalInput } from "@/server/actions/reflection";
 import { useServerAction } from "@/features/dashboard/use-server-action";
+import { ItemForm } from "@/features/learning/learning-screen";
+import type { LearningItem } from "@/features/learning/types";
 import { MeditationForm, MeditationTab, PracticeForm } from "./meditation-tab";
+import { ReadingForm, ReadingTab } from "./reading-tab";
 import { suggestedPeriod } from "./reviews";
 import { PeriodReviewForm, ReviewsTab, type ReviewTarget } from "./reviews-tab";
 import { daysWritten, writingStreak } from "./streak";
@@ -32,10 +35,11 @@ const MOODS = [
 ];
 type Errors = Record<string, string[] | undefined>;
 
-export type ReflectionTab = "journal" | "meditation" | "reviews";
+export type ReflectionTab = "journal" | "meditation" | "reading" | "reviews";
 const TABS: { v: ReflectionTab; label: string }[] = [
   { v: "journal", label: "Journal" },
   { v: "meditation", label: "Meditation" },
+  { v: "reading", label: "Reading" },
   { v: "reviews", label: "Reviews" },
 ];
 
@@ -44,6 +48,8 @@ export function ReflectionScreen({ ws, tab = "journal", startNew = false }: { ws
   const pathname = usePathname();
   const [meditation, setMeditation] = useState<MeditationLink | "new" | null>(startNew && tab === "meditation" ? "new" : null);
   const [practice, setPractice] = useState<MeditationLink | "any" | null>(null);
+  const [book, setBook] = useState<LearningItem | "new" | null>(startNew && tab === "reading" ? "new" : null);
+  const [readFor, setReadFor] = useState<LearningItem | "any" | null>(null);
   const [review, setReview] = useState<ReviewTarget | null>(startNew && tab === "reviews" ? { kind: "weekly", period: suggestedPeriod("weekly", ws.reviews, ws.today, ws.weekStart) } : null);
 
   return (
@@ -63,9 +69,16 @@ export function ReflectionScreen({ ws, tab = "journal", startNew = false }: { ws
             <Button size="sm" onClick={() => setMeditation("new")}><Plus /> Meditation</Button>
           </div>
         )}
+        {tab === "reading" && (
+          <div className="ml-auto flex gap-2">
+            {ws.books.some((b) => b.status !== "completed" && b.status !== "dropped") && <Button size="sm" variant="outline" onClick={() => setReadFor("any")}><Timer /> Log reading</Button>}
+            <Button size="sm" onClick={() => setBook("new")}><Plus /> Book</Button>
+          </div>
+        )}
       </div>
 
       {tab === "meditation" ? <MeditationTab ws={ws} onEdit={(m) => setMeditation(m ?? "new")} onLog={(m) => setPractice(m ?? "any")} />
+        : tab === "reading" ? <ReadingTab ws={ws} onEdit={(b) => setBook(b ?? "new")} onLog={(b) => setReadFor(b ?? "any")} />
         : tab === "reviews" ? <ReviewsTab ws={ws} onWrite={setReview} />
         : <JournalTab ws={ws} startNew={startNew} />}
 
@@ -85,6 +98,24 @@ export function ReflectionScreen({ ws, tab = "journal", startNew = false }: { ws
             <DialogDescription>Time you spent meditating.</DialogDescription>
           </DialogHeader>
           {practice !== null && <PracticeForm ws={ws} meditation={practice === "any" ? null : practice} onDone={() => setPractice(null)} onCancel={() => setPractice(null)} />}
+        </DialogContent>
+      </Dialog>
+      <Dialog open={book !== null} onOpenChange={(o) => !o && setBook(null)}>
+        <DialogContent className="sm:max-w-xl">
+          <DialogHeader>
+            <DialogTitle>{book === "new" ? "Add a book" : "Edit book"}</DialogTitle>
+            <DialogDescription>It&apos;s saved to your Learning list too, so there&apos;s one record per book. Upload a file from the book&apos;s card.</DialogDescription>
+          </DialogHeader>
+          {book !== null && <ItemForm item={book === "new" ? null : book} ws={ws} defaultKind="book" onDone={() => setBook(null)} />}
+        </DialogContent>
+      </Dialog>
+      <Dialog open={readFor !== null} onOpenChange={(o) => !o && setReadFor(null)}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Log reading</DialogTitle>
+            <DialogDescription>Pages and time. The book moves to the page you reached.</DialogDescription>
+          </DialogHeader>
+          {readFor !== null && <ReadingForm ws={ws} book={readFor === "any" ? null : readFor} onDone={() => setReadFor(null)} onCancel={() => setReadFor(null)} />}
         </DialogContent>
       </Dialog>
       <Dialog open={review !== null} onOpenChange={(o) => !o && setReview(null)}>

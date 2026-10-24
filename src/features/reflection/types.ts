@@ -1,4 +1,5 @@
 import type { DataSource } from "@/features/dashboard/types";
+import type { LearningItem, StudySession } from "@/features/learning/types";
 
 export type JournalKind = "journal" | "gratitude" | "reflection" | "prayer" | "meditation" | "intention";
 
@@ -48,6 +49,11 @@ export type ReflectionWorkspace = {
   practice: MeditationSession[];
   /** Reviews from the last year or so, newest first. */
   reviews: Review[];
+  /** Books and articles from Learning (the same records, not a copy). */
+  books: LearningItem[];
+  /** Study sessions with a book or article, from the last few months, newest first. */
+  reading: StudySession[];
+  goals: { id: string; title: string }[];
   query: string | null;
   today: string;
   /** First day of the week from the profile (0 = Sunday), shared with Reports. */

@@ -85,7 +85,7 @@ export function SessionsTab({ ws, onLog }: { ws: LearningWorkspace; onLog: () =>
               <li key={s.id} className="flex items-start gap-3 py-2 text-[13px]">
                 <span className="w-16 shrink-0 text-[12px] text-muted-foreground">{formatShortDate(s.studied_on, ws.locale)}</span>
                 <div className="min-w-0 flex-1">
-                  <p className="truncate">{[rm?.title, step?.title, item?.title].filter(Boolean).join(" · ") || "Study"}</p>
+                  <p className="truncate">{[rm?.title, step?.title, item?.title, s.page_from || s.page_to ? `p. ${s.page_from ?? "?"}–${s.page_to ?? "?"}` : null].filter(Boolean).join(" · ") || "Study"}</p>
                   {s.notes && <p className="line-clamp-2 text-[12px] text-muted-foreground">{s.notes}</p>}
                 </div>
                 <ProvenanceBadge source={s.source} />
@@ -111,14 +111,17 @@ export function SessionForm({ ws, roadmap, onDone, onCancel }: { ws: LearningWor
       itemId: up?.learning_item_id ?? "",
       markStepDone: false,
       notes: "",
+      pageFrom: "",
+      pageTo: "",
     };
   });
   const rm = ws.roadmaps.find((r) => r.id === v.roadmapId);
   const steps = rm ? [...rm.steps].sort((a, b) => a.position - b.position) : [];
   const step = steps.find((s) => s.id === v.stepId);
+  const book = ws.items.find((i) => i.id === v.itemId && (i.kind === "book" || i.kind === "article"));
 
   return (
-    <form noValidate className="grid gap-4" onSubmit={submit(logStudySession, onDone)}>
+    <form noValidate className="grid gap-4" onSubmit={submit((x) => logStudySession(book ? x : { ...x, pageFrom: "", pageTo: "" }), onDone)}>
       <div className="grid gap-4 sm:grid-cols-2">
         <Field id="ss-date" label="Day" error={err("date")}>
           <Input id="ss-date" type="date" max={ws.today} value={v.date} onChange={(e) => set("date", e.target.value)} aria-invalid={!!err("date")} />
@@ -160,6 +163,16 @@ export function SessionForm({ ws, roadmap, onDone, onCancel }: { ws: LearningWor
           {ws.items.filter((i) => i.status !== "dropped" || i.id === v.itemId).map((i) => <option key={i.id} value={i.id}>{i.title}</option>)}
         </NativeSelect>
       </Field>
+      {book && (
+        <div className="grid gap-4 sm:grid-cols-2">
+          <Field id="ss-pfrom" label="From page" optional error={err("pageFrom")}>
+            <Input id="ss-pfrom" inputMode="numeric" placeholder={book.current_page ? String(book.current_page + 1) : ""} value={v.pageFrom} onChange={(e) => set("pageFrom", e.target.value.replace(/\D/g, "").slice(0, 5))} aria-invalid={!!err("pageFrom")} />
+          </Field>
+          <Field id="ss-pto" label="To page" optional error={err("pageTo")}>
+            <Input id="ss-pto" inputMode="numeric" placeholder={book.total_pages ? `of ${book.total_pages}` : ""} value={v.pageTo} onChange={(e) => set("pageTo", e.target.value.replace(/\D/g, "").slice(0, 5))} aria-invalid={!!err("pageTo")} />
+          </Field>
+        </div>
+      )}
       <Field id="ss-notes" label="Notes" optional>
         <Textarea id="ss-notes" value={v.notes} maxLength={2000} className="min-h-14" placeholder="What you covered, what to pick up next" onChange={(e) => set("notes", e.target.value)} />
       </Field>
