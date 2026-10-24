@@ -4,7 +4,8 @@ import { toCsv } from "@/features/finance/csv";
  * Everything a person owns, grouped the way the app presents it. The export
  * reads each table through the person's own session, so RLS decides what is
  * included. Left out on purpose: `integration_credentials` (secrets, never
- * readable), `currencies` (shared reference data) and the `account_balances`
+ * readable), `calendar_sync_deletions` (Google ids waiting to be deleted
+ * there, also unreadable), `currencies` (shared reference data) and the `account_balances`
  * view (derived from accounts and transactions, which are included).
  */
 export const EXPORT_GROUPS: { key: string; label: string; tables: string[] }[] = [

@@ -30,7 +30,7 @@ Prices are as published by each provider; check their pricing pages before signi
    - **Email template (Authentication → Emails → Reset password):** change the link to `{{ .SiteURL }}/auth/confirm?token_hash={{ .TokenHash }}&type=recovery`, so a reset link also works in any browser and goes straight to choosing a new password.
    - **Password:** minimum length 10 (the app already requires 10).
    - **Rate limits:** the defaults (30 sign-in/sign-up attempts per 5 minutes per IP) are enough for one person. Note that sign-in calls come from the app's server, so on Vercel they share that server's addresses.
-4. The secret (service-role) key bypasses Row Level Security. The app uses it in exactly one place: the reminder sender at `/api/cron/reminders`, which has to see everyone's due reminders and only runs when called with `CRON_SECRET`. Put it in the Vercel environment as `SUPABASE_SECRET_KEY` and nowhere else; never in a `NEXT_PUBLIC_` variable.
+4. The secret (service-role) key bypasses Row Level Security. The app uses it in two places: the reminder sender at `/api/cron/reminders`, which has to see everyone's due reminders and only runs when called with `CRON_SECRET`, and Google Calendar sync, the only code that may read stored Google sign-ins. Put it in the Vercel environment as `SUPABASE_SECRET_KEY` and nowhere else; never in a `NEXT_PUBLIC_` variable.
 
 ## 2. App (Vercel)
 
@@ -41,6 +41,7 @@ Prices are as published by each provider; check their pricing pages before signi
    - `ANTHROPIC_API_KEY` only if you want the assistant. Set a monthly spend limit in the Anthropic console first.
    - Notifications on devices: generate a key pair once with `npx web-push generate-vapid-keys`, then set `NEXT_PUBLIC_VAPID_PUBLIC_KEY` (public), `VAPID_PRIVATE_KEY` (secret) and `VAPID_SUBJECT` (`mailto:` your address; push services use it to contact you about problems). Changing the pair later turns notifications off on every device until each is turned on again.
    - Reminder sender: `CRON_SECRET` (32 or more random characters, for example `openssl rand -base64 36`) and `SUPABASE_SECRET_KEY` (see step 1.4).
+   - Google Calendar (optional, see 2c): `GOOGLE_CLIENT_ID` and `GOOGLE_CLIENT_SECRET`. Also needs `SUPABASE_SECRET_KEY`.
    - Never set `PUSH_TEST_ENDPOINTS` in hosting; it exists for the test suite only.
 3. Deploy. Then open `/healthz`: it should return `{"ok":true,"database":"ok"}`.
 4. Sign up, then in Settings check that "Every record is isolated to your account" shows as true.
@@ -67,6 +68,26 @@ $$);
 Check it: `select status_code, content from net._http_response order by created desc limit 5;` should show `200` and a summary like `{"queued":0,"sent":0,...}`. The sender is safe to call often or twice at once; each delivery is claimed before it's sent, failed sends are retried after 1, 2, 4, 8 and 16 minutes, and a reminder more than a day late is not sent. To stop it: `select cron.unschedule('life-os-reminders');`.
 
 **Not yet verified:** this schedule has only been exercised locally, and notifications have only been delivered to a stand-in push service in the tests. The first real check is turning notifications on from a phone after deploying.
+
+## 2c. Google Calendar two-way sync (optional)
+
+Keeps your main Google calendar and Life OS in step. Free; it needs a Google Cloud project that you own.
+
+1. Open [console.cloud.google.com](https://console.cloud.google.com), signed in with the Google account whose calendar you want, and create a project (for example "Life OS").
+2. APIs & Services → Library → search "Google Calendar API" → Enable.
+3. Google Auth Platform (OAuth consent screen) → Get started: app name "Life OS", your email as support and contact email, audience **External**.
+   - Audience → Test users → add your own Gmail address.
+   - Data access → Add or remove scopes → tick `.../auth/calendar.events` ("See and edit events on all your calendars") → Update → Save.
+4. Clients → Create client → type **Web application** → Authorized redirect URIs → add `<app-url>/api/google/callback` exactly (for example `https://life-os-woad-alpha.vercel.app/api/google/callback`) → Create.
+5. Copy the Client ID and Client secret into Vercel → Settings → Environment Variables as `GOOGLE_CLIENT_ID` and `GOOGLE_CLIENT_SECRET` (Production, mark the secret Sensitive), then redeploy.
+6. In Life OS: Integrations → Google Calendar → Connect, and allow calendar access on Google's screen.
+
+How it behaves:
+- The first sync brings in events from the last 30 days onward and sends your Life OS events from the same window to Google. After that, changes go both ways: Life OS changes are sent right after you save, and Google changes arrive within about two minutes (the reminder schedule from 2b runs the sync).
+- When both sides changed the same event, the newer edit wins. Deleting on either side deletes on the other.
+- Repeating events made in Google arrive as single occurrences. Repeating events made in Life OS are sent to Google as a series; edits to that series in Google don't come back.
+- Disconnecting removes the events that came from Google and keeps yours.
+- **While the Google project is in "Testing", Google ends the sign-in every 7 days**; Integrations then says "Needs you" and Reconnect fixes it. To stop that, Audience → Publish app. Google then shows an "unverified app" warning on the consent screen (Advanced → Go to Life OS), which is expected for a personal project.
 
 ## 3. Releasing changes
 

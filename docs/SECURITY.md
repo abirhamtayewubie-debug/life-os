@@ -24,6 +24,14 @@ Reviewed 2026-10-22 against the code on `main` plus this phase's changes. This i
 - **File imports** (.ics, Apple Health): parsed in the browser, so the raw file never leaves the device; the server validates every row again with zod (sizes, dates, units, plausible ranges, repeat rules) and writes through the person's own session.
 - **Export** leaves out device keys and the link hash.
 
+## Google Calendar sync (2026-10-23)
+
+- **Scope**: `calendar.events` only (events on the person's calendars); no Gmail, contacts or profile access.
+- **Sign-in**: authorization code flow with PKCE and a random `state`, both kept in a 10-minute http-only cookie scoped to `/api/google` and bound to the signed-in user id; the callback refuses a mismatch.
+- **Tokens**: encrypted in the app with AES-256-GCM before storage, using a key derived (HKDF) from `SUPABASE_SECRET_KEY`, so a database copy alone can't use them. `integration_credentials` has RLS forced with no policies, so only the secret-key client reads it. Disconnecting deletes the tokens and asks Google to revoke them.
+- **Secret-key client**: sync code always filters by the signed-in person's `user_id`, and runs only from the cron route (behind `CRON_SECRET`) or after that person's own action.
+- **Deletions to send** are queued by a database trigger in `calendar_sync_deletions` (no policies; holds only Google event ids) and cleared when the connection row goes away, including on account deletion.
+
 ## Changed in this phase
 
 - Replaced the static header-only CSP with a nonce-based policy from `src/proxy.ts`; the theme script receives the nonce. Development keeps `'unsafe-eval'` (React needs it there); production does not.
@@ -37,6 +45,5 @@ Reviewed 2026-10-22 against the code on `main` plus this phase's changes. This i
 - **Sign-in rate limiting is per IP at Supabase.** Because sign-in requests come from the app server, all users share that limit. Fine for a personal app. If more people use it, add an app-level limit keyed by email, or move sign-in to the browser client.
 - **No multi-factor authentication yet.** Supabase supports TOTP; adding it is a contained change.
 - **Backups on the Free plan are your exports.** See DEPLOYMENT.md.
-- **OAuth tokens** (Google Calendar, when approved) must be encrypted with Supabase Vault before any account is connected. `integration_credentials` is already unreadable to signed-in users.
 - **The calendar feed has no rate limit of its own.** Guessing a 256-bit token isn't feasible; heavy polling of a valid link costs one small query per call.
 - **Not done:** an independent penetration test, and automated dependency updates (for example Dependabot), which needs a repository setting.
