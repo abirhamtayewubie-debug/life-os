@@ -17,7 +17,9 @@ function contentSecurityPolicy(nonce: string, https: boolean) {
     "default-src 'self'",
     `script-src 'self' 'nonce-${nonce}' 'strict-dynamic'${dev ? " 'unsafe-eval'" : ""}`,
     "style-src 'self' 'unsafe-inline'",
-    "img-src 'self' blob: data:",
+    // YouTube thumbnails and the privacy-enhanced player for saved meditations.
+    "img-src 'self' blob: data: https://i.ytimg.com",
+    "frame-src https://www.youtube-nocookie.com",
     "font-src 'self'",
     `connect-src 'self'${supabase ? ` ${supabase}` : ""}`,
     "worker-src 'self'",

@@ -74,7 +74,7 @@ export function SessionsTab({ ws, onLog }: { ws: LearningWorkspace; onLog: () =>
         </div>
       </Card>
 
-      <Card className="grid gap-2 p-5">
+      <Card className="grid grid-cols-[minmax(0,1fr)] gap-2 p-5">
         <h2 className="text-[13px] font-medium">Sessions</h2>
         <ul className="divide-y divide-border">
           {ws.sessions.map((s) => {
