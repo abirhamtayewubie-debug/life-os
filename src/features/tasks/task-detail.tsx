@@ -2,7 +2,8 @@
 
 import { useState } from "react";
 import Link from "next/link";
-import { AlarmClock, CalendarPlus, Link2, Plus, Trash2, X } from "lucide-react";
+import { usePathname } from "next/navigation";
+import { AlarmClock, CalendarPlus, FolderKanban, Link2, Plus, Trash2, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input, NativeSelect } from "@/components/ui/input";
 import {
@@ -40,6 +41,7 @@ export function TaskDetail({
   onClose: () => void;
 }) {
   const { pending, run } = useServerAction();
+  const pathname = usePathname();
   const [sub, setSub] = useState("");
   const [dep, setDep] = useState("");
   const today = localDateKey(new Date(), tz);
@@ -129,6 +131,11 @@ export function TaskDetail({
         <Button variant="outline" size="sm" asChild>
           <Link href={`/calendar?view=day&date=${dueKey && dueKey >= today ? dueKey : today}&block=${task.id}`}><CalendarPlus /> Block time on calendar</Link>
         </Button>
+        {task.project_id && !pathname.startsWith("/work") && (
+          <Button variant="outline" size="sm" asChild>
+            <Link href={`/work?tab=board&project=${task.project_id}`}><FolderKanban /> Project board</Link>
+          </Button>
+        )}
         <AlertDialog>
           <AlertDialogTrigger asChild>
             <Button variant="ghost" size="sm" className="ml-auto text-destructive hover:text-destructive"><Trash2 /> Delete</Button>

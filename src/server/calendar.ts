@@ -31,14 +31,15 @@ export async function getCalendarData(view: CalendarView, anchor: string | null,
       .filter((t) => t.status !== "done")
       .map((t) => ({ id: t.id, title: t.title, due_date: t.due_date, due_at: t.due_at, priority: t.priority, estimate_minutes: null, status: t.status }));
     const block = blockTaskId ? tasks.find((t) => t.id === blockTaskId) ?? null : null;
-    return { ...base, occurrences: expandEvents(events, from, to, tz), tasks: tasks.filter((t) => inRange(t, from, to, tz)), blockTask: block, demo: true };
+    const dates = projectDates(s.milestones.filter((m) => !m.completed_at), s.projects);
+    return { ...base, occurrences: expandEvents(events, from, to, tz), tasks: [...tasks, ...dates].filter((t) => inRange(t, from, to, tz)), blockTask: block, demo: true };
   }
 
   const supabase = await createSupabaseServerClient();
   // One day of padding each side catches events that cross midnight.
   const startIso = zonedTimeToUtc(addDays(from, -1), "00:00", tz).toISOString();
   const endIso = zonedTimeToUtc(addDays(to, 2), "00:00", tz).toISOString();
-  const [single, recurring, dated, timed, block] = await Promise.all([
+  const [single, recurring, dated, timed, block, milestones, projects] = await Promise.all([
     supabase.from("calendar_events").select(EVENT_COLUMNS).is("archived_at", null).is("recurrence_rule", null).lt("starts_at", endIso).gt("ends_at", startIso).order("starts_at").limit(1000),
     supabase.from("calendar_events").select(EVENT_COLUMNS).is("archived_at", null).not("recurrence_rule", "is", null).lt("starts_at", endIso).limit(300),
     supabase.from("tasks").select("id, title, due_date, due_at, priority, estimate_minutes, status").is("archived_at", null).in("status", ["todo", "in_progress", "waiting"]).gte("due_date", from).lte("due_date", to).limit(500),
@@ -46,8 +47,10 @@ export async function getCalendarData(view: CalendarView, anchor: string | null,
     blockTaskId && /^[0-9a-f-]{36}$/i.test(blockTaskId)
       ? supabase.from("tasks").select("id, title, due_date, due_at, priority, estimate_minutes, status").eq("id", blockTaskId).maybeSingle()
       : Promise.resolve({ data: null, error: null }),
+    supabase.from("milestones").select("id, title, due_date, project_id, goal_id").is("completed_at", null).gte("due_date", from).lte("due_date", to).limit(200),
+    supabase.from("projects").select("id, name, due_date").is("archived_at", null).in("status", ["planned", "active", "on_hold"]).gte("due_date", from).lte("due_date", to).limit(200),
   ]);
-  for (const r of [single, recurring, dated, timed]) if (r.error) throw new Error(`Could not load the calendar: ${r.error.message}`);
+  for (const r of [single, recurring, dated, timed, milestones, projects]) if (r.error) throw new Error(`Could not load the calendar: ${r.error.message}`);
 
   const events = [...(single.data ?? []), ...(recurring.data ?? [])] as CalendarEvent[];
   const taskMap = new Map<string, CalendarTask>();
@@ -56,10 +59,25 @@ export async function getCalendarData(view: CalendarView, anchor: string | null,
   return {
     ...base,
     occurrences: expandEvents(events, from, to, tz),
-    tasks: [...taskMap.values()],
+    tasks: [...taskMap.values(), ...projectDates(milestones.data ?? [], projects.data ?? [])],
     blockTask: (block.data as CalendarTask | null) ?? null,
     demo: false,
   };
+}
+
+/** Open milestones and project due dates as all-day chips, linked to where they live. */
+function projectDates(
+  milestones: { id: string; title: string; due_date: string | null; project_id: string | null; goal_id: string | null }[],
+  projects: { id: string; name: string; due_date: string | null }[],
+): CalendarTask[] {
+  const base = { due_at: null, priority: 3, estimate_minutes: null, status: "todo" };
+  return [
+    ...projects.map((p) => ({ ...base, id: `project-${p.id}`, title: `${p.name} due`, due_date: p.due_date, kind: "project_due" as const, href: `/work?tab=calendar&project=${p.id}` })),
+    ...milestones.map((m) => ({
+      ...base, id: `milestone-${m.id}`, title: m.title, due_date: m.due_date, kind: "milestone" as const,
+      href: m.project_id ? `/work?tab=calendar&project=${m.project_id}` : "/goals",
+    })),
+  ];
 }
 
 function inRange(t: CalendarTask, from: string, to: string, tz: string) {

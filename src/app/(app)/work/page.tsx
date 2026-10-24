@@ -1,21 +1,22 @@
 import { PageHeader } from "@/components/shell/page-header";
-import { WorkScreen } from "@/features/work/work-screen";
+import { WorkScreen, type WorkTab } from "@/features/work/work-screen";
 import { getWorkWorkspace } from "@/server/work";
 
 export const metadata = { title: "Work & Projects" };
 
-const TABS = new Set(["projects", "board", "timeline", "time"]);
+const TABS = new Set<WorkTab>(["projects", "board", "list", "calendar", "timeline", "time"]);
 
 export default async function WorkPage({ searchParams }: PageProps<"/work">) {
   const sp = await searchParams;
   const now = new Date();
   const ws = await getWorkWorkspace(now);
-  const tab = typeof sp.tab === "string" && TABS.has(sp.tab) ? (sp.tab as "projects") : "projects";
+  const tab = typeof sp.tab === "string" && TABS.has(sp.tab as WorkTab) ? (sp.tab as WorkTab) : "projects";
   const project = typeof sp.project === "string" ? sp.project : null;
+  const task = typeof sp.task === "string" ? sp.task : null;
   return (
     <div className="animate-rise">
-      <PageHeader title="Work & Projects" description="Projects with milestones, a board for the work, a timeline for the dates, and the time it really takes." />
-      <WorkScreen ws={ws} tab={tab} projectId={project} nowIso={now.toISOString()} startNew={sp.new === "1"} />
+      <PageHeader title="Work & Projects" description="Every project in one place: a board for the work, a list and a calendar for the deadlines, milestones, a timeline and the time it really takes." />
+      <WorkScreen key={task ?? "work"} ws={ws} tab={tab} projectId={project} taskId={task} nowIso={now.toISOString()} startNew={sp.new === "1"} />
     </div>
   );
 }

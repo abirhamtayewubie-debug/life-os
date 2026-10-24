@@ -19,33 +19,43 @@ import { cn } from "@/lib/utils";
 import { deleteProject, deleteTimeEntry, logTime, startTimer, stopTimer } from "@/server/actions/work";
 import { useServerAction } from "@/features/dashboard/use-server-action";
 import { MilestoneList } from "@/features/goals/milestone-list";
+import { TaskDetail } from "@/features/tasks/task-detail";
 import { ProjectBoard } from "./project-board";
 import { ProjectForm } from "./project-form";
+import { DeadlineCalendar, TaskListView } from "./project-views";
 import { spendIn } from "@/features/finance/ledger";
-import { entryMinutes, formatDuration, projectProgress, timelineWindow, weekTotals } from "./stats";
-import { PROJECT_STATUS_LABEL, type ProjectRecord, type WorkWorkspace } from "./types";
+import { boardOrder, entryMinutes, formatDuration, projectProgress, statusCounts, taskDueKey, timelineWindow, weekTotals } from "./stats";
+import { BOARD_COLUMNS, PROJECT_STATUS_LABEL, type ProjectRecord, type WorkWorkspace } from "./types";
 
-type Tab = "projects" | "board" | "timeline" | "time";
-const TABS: { v: Tab; label: string }[] = [
+export type WorkTab = "projects" | "board" | "list" | "calendar" | "timeline" | "time";
+const TABS: { v: WorkTab; label: string }[] = [
   { v: "projects", label: "Projects" },
   { v: "board", label: "Board" },
+  { v: "list", label: "List" },
+  { v: "calendar", label: "Calendar" },
   { v: "timeline", label: "Timeline" },
   { v: "time", label: "Time" },
 ];
+/** Views that show tasks from one project or all of them. */
+const SCOPED: WorkTab[] = ["board", "list", "calendar"];
 
-export function WorkScreen({ ws, tab, projectId, nowIso, startNew = false }: { ws: WorkWorkspace; tab: Tab; projectId: string | null; nowIso: string; startNew?: boolean }) {
+export function WorkScreen({ ws, tab, projectId, taskId = null, nowIso, startNew = false }: { ws: WorkWorkspace; tab: WorkTab; projectId: string | null; taskId?: string | null; nowIso: string; startNew?: boolean }) {
   const router = useRouter();
   const pathname = usePathname();
   const [editing, setEditing] = useState<ProjectRecord | "new" | null>(startNew ? "new" : null);
   const [openId, setOpenId] = useState<string | null>(null);
+  const [openTaskId, setOpenTaskId] = useState<string | null>(taskId);
   const now = useMemo(() => new Date(nowIso), [nowIso]);
-  const go = (t: Tab, p?: string | null) => router.replace(`${pathname}?tab=${t}${p ? `&project=${p}` : ""}`, { scroll: false });
+  const go = (t: WorkTab, p?: string | null) => router.replace(`${pathname}?tab=${t}${p ? `&project=${p}` : ""}`, { scroll: false });
 
   const live = ws.projects.filter((p) => p.status !== "completed" && p.status !== "cancelled");
   const closed = ws.projects.filter((p) => p.status === "completed" || p.status === "cancelled");
-  const boardProject = ws.projects.find((p) => p.id === projectId) ?? live[0] ?? null;
+  // No project chosen (or an unknown one) means every project.
+  const scope = ws.projects.find((p) => p.id === projectId) ?? null;
   const week = weekTotals(ws.time, ws.today, ws.timezone, now);
   const open = openId ? ws.projects.find((p) => p.id === openId) ?? null : null;
+  const openTask = openTaskId ? ws.tasks.find((t) => t.id === openTaskId) ?? null : null;
+  const taskProjects = live.map((p) => ({ id: p.id, name: p.name }));
 
   useEffect(() => {
     const onNew = () => setEditing("new");
@@ -58,13 +68,14 @@ export function WorkScreen({ ws, tab, projectId, nowIso, startNew = false }: { w
       <div className="flex flex-wrap items-center gap-2">
         <div role="tablist" aria-label="Work views" className="flex rounded-md bg-muted p-0.5">
           {TABS.map((t) => (
-            <button key={t.v} role="tab" aria-selected={tab === t.v} onClick={() => go(t.v, t.v === "board" ? boardProject?.id : null)} className={cn("h-7 cursor-pointer rounded px-3 text-[13px] text-muted-foreground", tab === t.v && "bg-surface font-medium text-foreground shadow-card")}>
+            <button key={t.v} role="tab" aria-selected={tab === t.v} onClick={() => go(t.v, SCOPED.includes(t.v) ? scope?.id : null)} className={cn("h-7 cursor-pointer rounded px-3 text-[13px] text-muted-foreground", tab === t.v && "bg-surface font-medium text-foreground shadow-card")}>
               {t.label}
             </button>
           ))}
         </div>
-        {tab === "board" && ws.projects.length > 0 && (
-          <NativeSelect aria-label="Project" className="w-auto max-w-64" value={boardProject?.id ?? ""} onChange={(e) => go("board", e.target.value)}>
+        {SCOPED.includes(tab) && ws.projects.length > 0 && (
+          <NativeSelect aria-label="Project" className="w-auto max-w-64" value={scope?.id ?? ""} onChange={(e) => go(tab, e.target.value || null)}>
+            <option value="">All projects</option>
             {[...live, ...closed].map((p) => <option key={p.id} value={p.id}>{p.name}</option>)}
           </NativeSelect>
         )}
@@ -88,7 +99,11 @@ export function WorkScreen({ ws, tab, projectId, nowIso, startNew = false }: { w
           )}
         </div>
       ) : tab === "board" ? (
-        boardProject && <ProjectBoard key={boardProject.id} projectId={boardProject.id} tasks={ws.tasks} today={ws.today} />
+        <ProjectBoard key={scope?.id ?? "all"} projectId={scope?.id ?? null} projects={ws.projects} tasks={ws.tasks} today={ws.today} tz={ws.timezone} locale={ws.locale} onOpenTask={setOpenTaskId} />
+      ) : tab === "list" ? (
+        <TaskListView key={scope?.id ?? "all"} ws={ws} projectId={scope?.id ?? null} onOpenTask={setOpenTaskId} />
+      ) : tab === "calendar" ? (
+        <DeadlineCalendar ws={ws} projectId={scope?.id ?? null} onOpenTask={setOpenTaskId} onOpenProject={setOpenId} />
       ) : tab === "timeline" ? (
         <Timeline projects={live} ws={ws} onOpen={setOpenId} />
       ) : (
@@ -107,7 +122,31 @@ export function WorkScreen({ ws, tab, projectId, nowIso, startNew = false }: { w
 
       <Dialog open={!!open} onOpenChange={(o) => !o && setOpenId(null)}>
         <DialogContent className="max-w-xl">
-          {open && <ProjectDetail p={open} ws={ws} week={week} onEdit={() => { setOpenId(null); setEditing(open); }} onBoard={() => { setOpenId(null); go("board", open.id); }} onClose={() => setOpenId(null)} />}
+          {open && (
+            <ProjectDetail
+              p={open} ws={ws} week={week}
+              onEdit={() => { setOpenId(null); setEditing(open); }}
+              onView={(t) => { setOpenId(null); go(t, open.id); }}
+              onOpenTask={(id) => { setOpenId(null); setOpenTaskId(id); }}
+              onClose={() => setOpenId(null)}
+            />
+          )}
+        </DialogContent>
+      </Dialog>
+
+      <Dialog open={!!openTask} onOpenChange={(o) => !o && setOpenTaskId(null)}>
+        <DialogContent className="max-h-[90dvh] max-w-xl overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>Task</DialogTitle>
+            <DialogDescription className="sr-only">Edit the task, its subtasks, what it waits on and its reminders</DialogDescription>
+          </DialogHeader>
+          {openTask && (
+            <TaskDetail
+              key={openTask.id} task={openTask} all={ws.tasks} reminders={ws.reminders}
+              projects={taskProjects.some((p) => p.id === openTask.project_id) ? taskProjects : [...taskProjects, ...ws.projects.filter((p) => p.id === openTask.project_id).map((p) => ({ id: p.id, name: p.name }))]}
+              goals={ws.goals} tz={ws.timezone} locale={ws.locale} onClose={() => setOpenTaskId(null)}
+            />
+          )}
         </DialogContent>
       </Dialog>
     </div>
@@ -164,10 +203,18 @@ function ProjectGrid({ projects, ws, week, onOpen }: { projects: ProjectRecord[]
   );
 }
 
-function ProjectDetail({ p, ws, week, onEdit, onBoard, onClose }: { p: ProjectRecord; ws: WorkWorkspace; week: Map<string | null, number>; onEdit: () => void; onBoard: () => void; onClose: () => void }) {
+function ProjectDetail({ p, ws, week, onEdit, onView, onOpenTask, onClose }: {
+  p: ProjectRecord; ws: WorkWorkspace; week: Map<string | null, number>;
+  onEdit: () => void; onView: (t: WorkTab) => void; onOpenTask: (id: string) => void; onClose: () => void;
+}) {
   const { pending, run } = useServerAction();
   const prog = projectProgress(p, ws.tasks);
   const total = ws.time.filter((t) => t.project_id === p.id).reduce((a, t) => a + entryMinutes(t, new Date()), 0);
+  const counts = statusCounts(ws.tasks, p.id);
+  const ms = ws.milestones.filter((m) => m.project_id === p.id);
+  const openTasks = ws.tasks.filter((t) => t.project_id === p.id && !t.parent_task_id && t.status !== "done" && t.status !== "cancelled");
+  const overdue = openTasks.filter((t) => { const k = taskDueKey(t, ws.timezone); return k && k < ws.today; }).length;
+  const next = [...openTasks].sort((a, b) => boardOrder(a, b, ws.timezone)).slice(0, 5);
   return (
     <div className="grid gap-5">
       <DialogHeader>
@@ -184,6 +231,34 @@ function ProjectDetail({ p, ws, week, onEdit, onBoard, onClose }: { p: ProjectRe
         <div><dt className="text-[11px] text-muted-foreground">This week</dt><dd className="tabular">{formatDuration(week.get(p.id) ?? 0)}</dd></div>
         <div><dt className="text-[11px] text-muted-foreground">Last 60 days</dt><dd className="tabular">{formatDuration(total)}</dd></div>
       </dl>
+      <section className="grid gap-2" aria-label="Progress">
+        <Progress value={prog.pct ?? 0} aria-label={prog.pct === null ? "No tasks yet" : `${prog.pct}% of tasks done`} />
+        <ul className="flex flex-wrap gap-x-4 gap-y-1 text-[12px] text-muted-foreground">
+          {BOARD_COLUMNS.map((c) => <li key={c.status}>{c.label} <span className="tabular text-foreground">{counts[c.status]}</span></li>)}
+          {ms.length > 0 && <li>Milestones <span className="tabular text-foreground">{ms.filter((m) => m.completed_at).length}/{ms.length}</span></li>}
+          {overdue > 0 && <li className="text-destructive">Overdue <span className="tabular">{overdue}</span></li>}
+        </ul>
+      </section>
+      {next.length > 0 && (
+        <section className="grid gap-1.5">
+          <h3 className="text-[13px] font-medium">Up next</h3>
+          <ul className="grid gap-0.5">
+            {next.map((t) => {
+              const k = taskDueKey(t, ws.timezone);
+              return (
+                <li key={t.id}>
+                  <button type="button" onClick={() => onOpenTask(t.id)} className="flex w-full cursor-pointer items-center gap-2 rounded-md px-2 py-1.5 text-left text-[13px] hover:bg-muted">
+                    <span className="min-w-0 flex-1 truncate">{t.title}</span>
+                    {t.status === "waiting" && <Badge variant="warning">Blocked</Badge>}
+                    {t.status === "in_progress" && <Badge variant="brand">Doing</Badge>}
+                    {k && <span className={cn("tabular shrink-0 text-[12px] text-muted-foreground", k < ws.today && "text-destructive")}>{formatShortDate(k, ws.locale)}</span>}
+                  </button>
+                </li>
+              );
+            })}
+          </ul>
+        </section>
+      )}
       <ProjectBudget p={p} ws={ws} />
       <section className="grid gap-2">
         <h3 className="text-[13px] font-medium">Milestones</h3>
@@ -191,7 +266,9 @@ function ProjectDetail({ p, ws, week, onEdit, onBoard, onClose }: { p: ProjectRe
       </section>
       <div className="flex flex-wrap items-center gap-2 border-t border-border pt-4">
         <Button variant="outline" size="sm" onClick={onEdit}><Pencil /> Edit</Button>
-        <Button variant="outline" size="sm" onClick={onBoard}>Open board</Button>
+        <Button variant="outline" size="sm" onClick={() => onView("board")}>Board</Button>
+        <Button variant="outline" size="sm" onClick={() => onView("list")}>List</Button>
+        <Button variant="outline" size="sm" onClick={() => onView("calendar")}>Calendar</Button>
         <span className="ml-auto">
           <ConfirmDelete
             title={`Delete “${p.name}”?`}
