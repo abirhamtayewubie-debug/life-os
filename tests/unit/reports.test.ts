@@ -80,4 +80,40 @@ describe("computeReport", () => {
     expect(delta(null, 3)).toBeNull();
     expect(delta(4.2, 3)).toBe(1.2);
   });
+  it("counts projects, study, reading, meditation and reviews in the period", () => {
+    const r = computeReport({
+      ...empty,
+      projectsCompleted: [{ completed_on: "2026-10-20", name: "Café rebrand" }, { completed_on: "2026-10-10", name: "Old" }],
+      milestonesDone: ["2026-10-19", "2026-10-30"],
+      study: [
+        { date: "2026-10-19", minutes: 30, book: false, pages: 0 },
+        { date: "2026-10-20", minutes: 20, book: true, pages: 12 },
+        { date: "2026-10-20", minutes: 10, book: true, pages: 0 },
+        { date: "2026-10-12", minutes: 99, book: true, pages: 50 },
+      ],
+      stepsDone: ["2026-10-21", "2026-10-01"],
+      meditation: [{ date: "2026-10-19", minutes: 10 }, { date: "2026-10-19", minutes: 5 }, { date: "2026-10-21", minutes: 20 }],
+      reviews: [{ date: "2026-10-19", kind: "weekly" }, { date: "2026-10-20", kind: "evening" }, { date: "2026-10-01", kind: "monthly" }],
+      learningFinished: [{ finished_on: "2026-10-20", title: "Type book", book: true }, { finished_on: "2026-10-21", title: "Course" }],
+    }, "weekly", "2026-10-19", "2026-10-25", "2026-10-21", TZ);
+    expect(r.work).toEqual({ projectsCompleted: ["Café rebrand"], milestones: 1 });
+    expect(r.learning).toEqual({ minutes: 60, sessions: 3, days: 2, stepsDone: 1, finished: ["Course"] });
+    expect(r.reflection).toEqual({
+      meditationMinutes: 35, meditationSessions: 3, meditationDays: 2,
+      readingMinutes: 30, readingDays: 1, pages: 12, booksFinished: ["Type book"],
+      reviews: { evening: 1, weekly: 1, monthly: 0 },
+    });
+    expect(r.daysWithData).toBe(3);
+  });
+  it("tells never tracked apart from nothing this period", () => {
+    const never = computeReport(empty, "weekly", "2026-10-19", "2026-10-25", "2026-10-21", TZ);
+    expect(Object.values(never.tracked).every((x) => x === false)).toBe(true);
+    const quiet = computeReport({ ...empty, tracked: { meditation: true, reading: true } }, "weekly", "2026-10-19", "2026-10-25", "2026-10-21", TZ);
+    expect(quiet.tracked.meditation).toBe(true);
+    expect(quiet.reflection.meditationMinutes).toBe(0);
+    expect(quiet.tracked.projects).toBe(false);
+    // Something logged in the period counts as tracked on its own.
+    const here = computeReport({ ...empty, meditation: [{ date: "2026-10-20", minutes: 5 }] }, "weekly", "2026-10-19", "2026-10-25", "2026-10-21", TZ);
+    expect(here.tracked.meditation).toBe(true);
+  });
 });
