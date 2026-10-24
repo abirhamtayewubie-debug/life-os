@@ -115,14 +115,16 @@ export async function claimDueReminders(): Promise<ActionResult<{ id: string; ti
   const now = new Date().toISOString();
   const { data, error } = await ctx.supabase
     .from("reminders")
-    .select("id, title, remind_at, snoozed_until, status, timezone, recurrence_rule, habit_id")
+    .select("id, title, remind_at, snoozed_until, status, timezone, recurrence_rule, habit_id, channels")
     .in("status", ["scheduled", "snoozed"])
     .lte("remind_at", now)
     .order("remind_at")
     .limit(20);
   if (error) return { ok: false, error: "Couldn't check reminders." };
   const due = (data ?? []).filter((r) => (r.snoozed_until ?? r.remind_at) <= now);
-  const quiet = await settleHabitReminders(ctx.supabase, due, new Date(now));
+  // Reminders that also go to devices are moved on by the cron sender after it
+  // queues the push; moving them here first would mean the push never goes out.
+  const quiet = await settleHabitReminders(ctx.supabase, due, new Date(now), (r) => !(r.channels ?? []).some((c) => c === "web_push" || c === "email"));
   const out: { id: string; title: string; at: string }[] = [];
   for (const r of due) {
     if (quiet.has(r.id)) continue;

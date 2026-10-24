@@ -101,6 +101,14 @@ describe("settling due habit reminders", () => {
     expect((await settleHabitReminders(paused.db, [due], now)).has("r")).toBe(true);
   });
 
+  it("only moves the reminders the caller may advance, but still reports quiet ones", async () => {
+    const { settleHabitReminders } = await import("@/server/notify/habit-reminders");
+    const { db, updates } = fakeDb({ habits: [habitRow], habit_logs: [{ habit_id: "h", log_date: "2026-10-24", count: 1 }] });
+    const quiet = await settleHabitReminders(db, [{ ...due, channels: ["in_app", "web_push"] }], now, (r) => !r.channels?.includes("web_push"));
+    expect(quiet.has("r")).toBe(true);
+    expect(updates).toHaveLength(0);
+  });
+
   it("leaves other reminders alone", async () => {
     const { settleHabitReminders } = await import("@/server/notify/habit-reminders");
     const { db, updates } = fakeDb({ habits: [], habit_logs: [] });
