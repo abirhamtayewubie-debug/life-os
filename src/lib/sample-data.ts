@@ -262,6 +262,25 @@ export function generateSampleSet(now: Date, tz: string, baseCurrency = "ETB", i
   const daily_reviews = [
     { id: id(), review_date: addDays(today, -1), kind: "evening" as const, achievements: "Typography exploration done; good run.", unfinished: "Internet bill", tomorrow_priorities: ["Logo concepts", "Send site photos", "Pay internet bill"], mood: 4, energy: 3, notes: null as string | null, source: S },
   ];
+  // Demo-only: a weekly review for last week (not seeded into real accounts).
+  const lastMonday = addDays(today, -(((new Date(`${today}T12:00:00Z`).getUTCDay() + 6) % 7) + 7));
+  const demo_reviews = [
+    ...daily_reviews,
+    { id: id(), review_date: lastMonday, kind: "weekly" as const, achievements: "Moodboard approved. Three study sessions.", unfinished: "Didn't get to the site photos.", tomorrow_priorities: ["Logo concepts", "Finish the presentations course"], mood: 4, energy: 3, notes: "Mornings work better for deep design work.", source: S },
+  ];
+
+  // Meditation (demo-only) ---------------------------------------------------------
+  const medLink = (title: string, url: string, minutes: number, category: string, favourite = false) => ({
+    id: id(), title, url, minutes, category, notes: null as string | null, favourite, archived_at: null as string | null, source: S,
+  });
+  const meditation_links = [
+    medLink("10-minute morning breath", "https://www.youtube.com/watch?v=inpok4MKVLM", 10, "Morning", true),
+    medLink("Body scan for sleep", "https://www.youtube.com/watch?v=15q-N-_kkrU", 20, "Sleep"),
+    medLink("5-minute reset between tasks", "https://www.youtube.com/watch?v=ssss7V1_eyA", 5, "Focus"),
+  ];
+  const meditation_sessions = [-13, -11, -9, -8, -6, -5, -3, -2, -1].map((d, i) => ({
+    id: id(), practiced_on: addDays(today, d), minutes: [10, 10, 20, 5, 10, 10, 20, 10, 10][i], link_id: meditation_links[[0, 0, 1, 2, 0, 0, 1, 0, 0][i]].id as string | null, notes: null as string | null, source: S,
+  }));
 
   // Phase 3: milestones, time, people, learning, admin, values ------------------
   const ms = (title: string, project: string | null, goal: string | null, due: number, doneDay: number | null, order: number) => ({
@@ -408,6 +427,7 @@ export function generateSampleSet(now: Date, tz: string, baseCurrency = "ETB", i
     habits, habit_logs, financial_accounts, transaction_categories, transactions, budgets: [budget], budget_lines, exchange_rates, recurring_transactions, savings_goals,
     wellness_logs, sleep_logs, workouts, workout_sets, workout_programs, program_exercises, body_measurements, hydration_logs, journal_entries, notes, note_links, daily_reviews,
     milestones, time_entries, people, interactions, important_dates, learning_items, skills, learning_roadmaps, learning_steps, study_sessions, admin_items, personal_values,
+    meditation_links, meditation_sessions, demo_reviews,
   };
 }
 

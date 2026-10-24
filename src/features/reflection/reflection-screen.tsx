@@ -3,7 +3,8 @@
 import { useEffect, useMemo, useState } from "react";
 import Form from "next/form";
 import Link from "next/link";
-import { BookHeart, Lock, Pencil, Plus, Search, Sparkles, X } from "lucide-react";
+import { usePathname, useRouter } from "next/navigation";
+import { BookHeart, Lock, Pencil, Plus, Search, Sparkles, Timer, X } from "lucide-react";
 import {
   AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogTitle, AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
@@ -20,15 +21,86 @@ import { formatShortDate } from "@/lib/dates";
 import { cn } from "@/lib/utils";
 import { deleteJournalEntry, deleteValue, saveJournalEntry, saveValue, setJournalSharing, type JournalInput } from "@/server/actions/reflection";
 import { useServerAction } from "@/features/dashboard/use-server-action";
+import { MeditationForm, MeditationTab, PracticeForm } from "./meditation-tab";
+import { suggestedPeriod } from "./reviews";
+import { PeriodReviewForm, ReviewsTab, type ReviewTarget } from "./reviews-tab";
 import { daysWritten, writingStreak } from "./streak";
-import { KIND_LABEL, KIND_PROMPT, type JournalEntry, type JournalKind, type PersonalValue, type ReflectionWorkspace } from "./types";
+import { KIND_LABEL, KIND_PROMPT, type JournalEntry, type JournalKind, type MeditationLink, type PersonalValue, type ReflectionWorkspace } from "./types";
 
 const MOODS = [
   { v: 1, label: "Very low" }, { v: 2, label: "Low" }, { v: 3, label: "Okay" }, { v: 4, label: "Good" }, { v: 5, label: "Very good" },
 ];
 type Errors = Record<string, string[] | undefined>;
 
-export function ReflectionScreen({ ws, startNew = false }: { ws: ReflectionWorkspace; startNew?: boolean }) {
+export type ReflectionTab = "journal" | "meditation" | "reviews";
+const TABS: { v: ReflectionTab; label: string }[] = [
+  { v: "journal", label: "Journal" },
+  { v: "meditation", label: "Meditation" },
+  { v: "reviews", label: "Reviews" },
+];
+
+export function ReflectionScreen({ ws, tab = "journal", startNew = false }: { ws: ReflectionWorkspace; tab?: ReflectionTab; startNew?: boolean }) {
+  const router = useRouter();
+  const pathname = usePathname();
+  const [meditation, setMeditation] = useState<MeditationLink | "new" | null>(startNew && tab === "meditation" ? "new" : null);
+  const [practice, setPractice] = useState<MeditationLink | "any" | null>(null);
+  const [review, setReview] = useState<ReviewTarget | null>(startNew && tab === "reviews" ? { kind: "weekly", period: suggestedPeriod("weekly", ws.reviews, ws.today, ws.weekStart) } : null);
+
+  return (
+    <div className="grid grid-cols-[minmax(0,1fr)] gap-5">
+      <div className="flex flex-wrap items-center gap-2">
+        <div role="tablist" aria-label="Reflection views" className="flex w-max rounded-md bg-muted p-0.5">
+          {TABS.map((t) => (
+            <button key={t.v} role="tab" aria-selected={tab === t.v} onClick={() => router.replace(t.v === "journal" ? pathname : `${pathname}?tab=${t.v}`, { scroll: false })}
+              className={cn("h-7 cursor-pointer rounded px-3 text-[13px] whitespace-nowrap text-muted-foreground", tab === t.v && "bg-surface font-medium text-foreground shadow-card")}>
+              {t.label}
+            </button>
+          ))}
+        </div>
+        {tab === "meditation" && (
+          <div className="ml-auto flex gap-2">
+            <Button size="sm" variant="outline" onClick={() => setPractice("any")}><Timer /> Log practice</Button>
+            <Button size="sm" onClick={() => setMeditation("new")}><Plus /> Meditation</Button>
+          </div>
+        )}
+      </div>
+
+      {tab === "meditation" ? <MeditationTab ws={ws} onEdit={(m) => setMeditation(m ?? "new")} onLog={(m) => setPractice(m ?? "any")} />
+        : tab === "reviews" ? <ReviewsTab ws={ws} onWrite={setReview} />
+        : <JournalTab ws={ws} startNew={startNew} />}
+
+      <Dialog open={meditation !== null} onOpenChange={(o) => !o && setMeditation(null)}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>{meditation === "new" ? "Add a meditation" : "Edit meditation"}</DialogTitle>
+            <DialogDescription>Paste a YouTube link to a guided meditation you like.</DialogDescription>
+          </DialogHeader>
+          {meditation !== null && <MeditationForm meditation={meditation === "new" ? null : meditation} onDone={() => setMeditation(null)} onCancel={() => setMeditation(null)} />}
+        </DialogContent>
+      </Dialog>
+      <Dialog open={practice !== null} onOpenChange={(o) => !o && setPractice(null)}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Log practice</DialogTitle>
+            <DialogDescription>Time you spent meditating.</DialogDescription>
+          </DialogHeader>
+          {practice !== null && <PracticeForm ws={ws} meditation={practice === "any" ? null : practice} onDone={() => setPractice(null)} onCancel={() => setPractice(null)} />}
+        </DialogContent>
+      </Dialog>
+      <Dialog open={review !== null} onOpenChange={(o) => !o && setReview(null)}>
+        <DialogContent className="sm:max-w-xl">
+          <DialogHeader>
+            <DialogTitle>{review?.kind === "monthly" ? "Monthly review" : "Weekly review"}</DialogTitle>
+            <DialogDescription>Private to you. Write as much or as little as helps.</DialogDescription>
+          </DialogHeader>
+          {review !== null && <PeriodReviewForm key={`${review.kind}-${review.period.start}`} ws={ws} target={review} onDone={() => setReview(null)} onCancel={() => setReview(null)} />}
+        </DialogContent>
+      </Dialog>
+    </div>
+  );
+}
+
+function JournalTab({ ws, startNew }: { ws: ReflectionWorkspace; startNew: boolean }) {
   const [editing, setEditing] = useState<JournalEntry | "new" | null>(startNew ? "new" : null);
   const [kind, setKind] = useState<JournalKind | "all">("all");
   const [open, setOpen] = useState<string | null>(null);
