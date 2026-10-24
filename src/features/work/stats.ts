@@ -1,4 +1,5 @@
 import { addDays, diffDays, localDateKey, weekdayOf } from "@/lib/dates";
+import type { MilestoneRecord } from "@/features/goals/types";
 import type { ProjectRecord, ProjectTask, TimeEntry } from "./types";
 
 /** Minutes of an entry; a running timer counts up to `now`. */
@@ -50,4 +51,74 @@ export function timelineWindow(projects: Pick<ProjectRecord, "start_date" | "due
   const span = diffDays(from, to);
   const pos = (k: string) => Math.max(0, Math.min(100, (diffDays(from, k) / span) * 100));
   return { from, to, span, pos };
+}
+
+/** Top-level tasks per board column for one project, or all projects when `projectId` is null. */
+export function statusCounts(tasks: ProjectTask[], projectId: string | null): Record<ProjectTask["status"], number> {
+  const c = { todo: 0, in_progress: 0, waiting: 0, done: 0, cancelled: 0 };
+  for (const t of tasks) if (!t.parent_task_id && (projectId === null || t.project_id === projectId)) c[t.status]++;
+  return c;
+}
+
+/** Done and total subtasks per parent task. */
+export function subtaskCounts(tasks: ProjectTask[]): Map<string, { done: number; total: number }> {
+  const m = new Map<string, { done: number; total: number }>();
+  for (const t of tasks) {
+    if (!t.parent_task_id || t.status === "cancelled") continue;
+    const c = m.get(t.parent_task_id) ?? { done: 0, total: 0 };
+    c.total++;
+    if (t.status === "done") c.done++;
+    m.set(t.parent_task_id, c);
+  }
+  return m;
+}
+
+/** Local due day of a task: its all-day date, or the day its due instant falls on. */
+export const taskDueKey = (t: Pick<ProjectTask, "due_date" | "due_at">, tz: string) => t.due_date ?? (t.due_at ? localDateKey(new Date(t.due_at), tz) : null);
+
+export type Deadline = {
+  key: string;
+  date: string;
+  kind: "task" | "milestone" | "start" | "due";
+  title: string;
+  projectId: string;
+  /** Task id for task deadlines. */
+  taskId?: string;
+  done: boolean;
+  priority?: number;
+};
+
+/**
+ * Everything dated in the projects between `from` and `to` (inclusive):
+ * task due dates, milestones, project starts and due dates. Subtasks and
+ * cancelled work are left out so a day isn't counted twice.
+ */
+export function projectDeadlines(
+  ws: { projects: ProjectRecord[]; tasks: ProjectTask[]; milestones: MilestoneRecord[] },
+  from: string, to: string, tz: string, projectId: string | null,
+): Deadline[] {
+  const inRange = (k: string | null): k is string => !!k && k >= from && k <= to;
+  const wanted = (pid: string | null): pid is string => !!pid && (projectId === null || pid === projectId);
+  const out: Deadline[] = [];
+  for (const p of ws.projects) {
+    if (!wanted(p.id) || p.status === "cancelled") continue;
+    if (inRange(p.start_date)) out.push({ key: `s-${p.id}`, date: p.start_date, kind: "start", title: `${p.name} starts`, projectId: p.id, done: false });
+    if (inRange(p.due_date)) out.push({ key: `d-${p.id}`, date: p.due_date, kind: "due", title: `${p.name} due`, projectId: p.id, done: p.status === "completed" });
+  }
+  for (const m of ws.milestones) {
+    if (wanted(m.project_id) && inRange(m.due_date)) out.push({ key: `m-${m.id}`, date: m.due_date, kind: "milestone", title: m.title, projectId: m.project_id, done: !!m.completed_at });
+  }
+  for (const t of ws.tasks) {
+    const k = taskDueKey(t, tz);
+    if (t.parent_task_id || t.status === "cancelled" || !wanted(t.project_id) || !inRange(k)) continue;
+    out.push({ key: `t-${t.id}`, date: k, kind: "task", title: t.title, projectId: t.project_id, taskId: t.id, done: t.status === "done", priority: t.priority });
+  }
+  const order = { due: 0, milestone: 1, start: 2, task: 3 };
+  return out.sort((a, b) => a.date.localeCompare(b.date) || order[a.kind] - order[b.kind] || (a.priority ?? 9) - (b.priority ?? 9) || a.title.localeCompare(b.title));
+}
+
+/** Board order inside a column: urgent first, then the nearest deadline, then oldest. Done shows the latest first. */
+export function boardOrder(a: ProjectTask, b: ProjectTask, tz: string): number {
+  if (a.status === "done" && b.status === "done") return (b.completed_at ?? "").localeCompare(a.completed_at ?? "");
+  return a.priority - b.priority || (taskDueKey(a, tz) ?? "9999").localeCompare(taskDueKey(b, tz) ?? "9999") || a.created_at.localeCompare(b.created_at);
 }

@@ -62,16 +62,34 @@ test("goals, projects and the wheel persist and connect", async ({ page }) => {
   await page.getByRole("button", { name: "Add project" }).click();
   await expect(toast(page, /added|created|saved/i)).toBeVisible();
   await open(page, "/work?tab=board");
+  // The board starts on every project; pick one to add tasks to it.
+  await page.getByLabel("Project", { exact: true }).selectOption({ label: "Kitchen renovation" });
   await page.getByLabel("Add a task to To do").fill("Measure the walls");
   await page.getByLabel("Add a task to To do").press("Enter");
-  const card = page.getByRole("region", { name: "To do column" }).getByRole("link", { name: "Measure the walls" });
+  const card = page.getByRole("region", { name: "To do column" }).getByRole("button", { name: "Measure the walls" });
   await expect(card).toBeVisible();
   // Move it with the card menu (keyboard and touch friendly) and check it stuck.
   await page.getByRole("button", { name: "Move Measure the walls" }).click();
-  await page.getByRole("menuitem", { name: "In progress" }).click();
-  await expect(page.getByRole("region", { name: "In progress column" }).getByRole("link", { name: "Measure the walls" })).toBeVisible();
+  await page.getByRole("menuitem", { name: "Doing" }).click();
+  await expect(page.getByRole("region", { name: "Doing column" }).getByRole("button", { name: "Measure the walls" })).toBeVisible();
   await page.reload();
-  await expect(page.getByRole("region", { name: "In progress column" }).getByRole("link", { name: "Measure the walls" })).toBeVisible();
+  await expect(page.getByRole("region", { name: "Doing column" }).getByRole("button", { name: "Measure the walls" })).toBeVisible();
+  // Blocked is the same task status the Tasks screen shows.
+  await page.getByRole("button", { name: "Move Measure the walls" }).click();
+  await page.getByRole("menuitem", { name: "Blocked" }).click();
+  await expect(page.getByRole("region", { name: "Blocked column" }).getByRole("button", { name: "Measure the walls" })).toBeVisible();
+  // The card opens the task in place, with subtasks.
+  await page.getByRole("region", { name: "Blocked column" }).getByRole("button", { name: "Measure the walls" }).click();
+  await dlg(page).getByLabel("New subtask").fill("Kitchen wall");
+  await dlg(page).getByRole("button", { name: "Add", exact: true }).click();
+  await expect(dlg(page).getByText("Kitchen wall")).toBeVisible();
+  await page.keyboard.press("Escape");
+  await expect(page.getByRole("region", { name: "Blocked column" }).getByTitle("Subtasks done")).toContainText("0/1");
+  // All projects, as a list.
+  await open(page, "/work?tab=list");
+  await expect(page.getByLabel("Status of Measure the walls")).toHaveValue("waiting");
+  await open(page, "/tasks?view=all");
+  await expect(page.getByRole("listitem").filter({ hasText: "Measure the walls" }).first()).toContainText("Blocked");
 
   /* Wheel of Life ---------------------------------------------------------- */
   await open(page, "/wheel");

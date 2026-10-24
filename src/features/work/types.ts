@@ -1,6 +1,7 @@
 import type { Rate } from "@/features/finance/ledger";
 import type { DataSource } from "@/features/dashboard/types";
 import type { MilestoneRecord } from "@/features/goals/types";
+import type { ReminderRecord, TaskRecord } from "@/features/tasks/types";
 
 export type ProjectStatus = "planned" | "active" | "on_hold" | "completed" | "cancelled";
 
@@ -18,17 +19,8 @@ export type ProjectRecord = {
   source: DataSource;
 };
 
-export type ProjectTask = {
-  id: string;
-  title: string;
-  status: "todo" | "in_progress" | "waiting" | "done" | "cancelled";
-  priority: number;
-  project_id: string | null;
-  due_date: string | null;
-  due_at: string | null;
-  parent_task_id: string | null;
-  source: DataSource;
-};
+/** Project work is ordinary tasks with a project_id: one task system, shown here as a board. */
+export type ProjectTask = TaskRecord;
 
 export type TimeEntry = {
   id: string;
@@ -43,6 +35,8 @@ export type TimeEntry = {
 export type WorkWorkspace = {
   projects: ProjectRecord[];
   tasks: ProjectTask[];
+  /** Open reminders on project tasks, for the in-place task detail. */
+  reminders: ReminderRecord[];
   milestones: MilestoneRecord[];
   time: TimeEntry[];
   goals: { id: string; title: string }[];
@@ -60,9 +54,15 @@ export type WorkWorkspace = {
 export const PROJECT_STATUS_LABEL: Record<ProjectStatus, string> = {
   planned: "Planned", active: "Active", on_hold: "On hold", completed: "Completed", cancelled: "Cancelled",
 };
+/**
+ * Board columns map onto the existing task statuses: "Blocked" is the
+ * `waiting` status (stuck on someone or something), so no task changes meaning.
+ */
 export const BOARD_COLUMNS = [
   { status: "todo", label: "To do" },
-  { status: "in_progress", label: "In progress" },
-  { status: "waiting", label: "Waiting" },
+  { status: "in_progress", label: "Doing" },
+  { status: "waiting", label: "Blocked" },
   { status: "done", label: "Done" },
 ] as const;
+export type BoardStatus = (typeof BOARD_COLUMNS)[number]["status"];
+export const BOARD_LABEL: Record<BoardStatus, string> = Object.fromEntries(BOARD_COLUMNS.map((c) => [c.status, c.label])) as Record<BoardStatus, string>;

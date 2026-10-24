@@ -19,7 +19,13 @@ export type CalendarTask = {
   priority: number;
   estimate_minutes: number | null;
   status: string;
+  /** Project dates shown alongside tasks; plain tasks leave these out. */
+  kind?: "task" | "milestone" | "project_due";
+  /** Where the chip links; tasks open in Tasks & Reminders. */
+  href?: string;
 };
+
+export const taskHref = (t: Pick<CalendarTask, "id" | "href">) => t.href ?? `/tasks?view=all&open=${t.id}`;
 
 export type CalendarData = {
   view: CalendarView;

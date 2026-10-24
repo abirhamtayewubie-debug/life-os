@@ -166,8 +166,8 @@ export function TaskForm({
           <Label htmlFor="task-status">Status</Label>
           <NativeSelect id="task-status" value={v.status} onChange={(e) => set("status", e.target.value as TaskInput["status"])}>
             <option value="todo">To do</option>
-            <option value="in_progress">In progress</option>
-            <option value="waiting">Waiting</option>
+            <option value="in_progress">Doing</option>
+            <option value="waiting">Blocked</option>
           </NativeSelect>
         </div>
       </div>
