@@ -119,6 +119,8 @@ const workoutSchema = z.object({
   effort: optionalInt(1, 10, "Use 1 to 10"),
   notes: optionalText(2000),
   goalId: optionalUuid,
+  programId: optionalUuid,
+  programDay: z.string().trim().max(40).optional().transform((v) => v || null),
   sets: z.array(setSchema).max(100, "Up to 100 sets"),
 });
 
@@ -135,6 +137,7 @@ export async function saveWorkout(id: string | null, input: WorkoutInput): Promi
   if (v.date > today(ctx)) return futureError("date");
   const row = {
     performed_on: v.date, activity: v.activity, duration_minutes: v.duration, perceived_effort: v.effort, notes: v.notes, goal_id: v.goalId,
+    program_id: v.programId, program_day: v.programId ? v.programDay : null,
     started_at: v.time ? zonedTimeToUtc(v.date, v.time, ctx.viewer.profile.timezone).toISOString() : null,
   };
   let workoutId = id;
@@ -169,6 +172,78 @@ export async function saveWorkout(id: string | null, input: WorkoutInput): Promi
 
 export async function deleteWorkout(id: string): Promise<ActionResult> {
   return remove("workouts", id, "workout", { column: "performed_on", action: "workout.deleted" });
+}
+
+/* ------------------------------------------------------------------------ */
+/* Workout programs                                                          */
+/* ------------------------------------------------------------------------ */
+
+const programExerciseSchema = z.object({
+  day: z.string().trim().min(1, "Name the day").max(40),
+  exercise: z.string().trim().min(1, "Name the exercise").max(80),
+  sets: z.coerce.number("Use 1 to 20").int("Use 1 to 20").min(1, "Use 1 to 20").max(20, "Use 1 to 20"),
+  repsMin: optionalInt(0, 1000, "Use 0 to 1000"),
+  repsMax: optionalInt(0, 1000, "Use 0 to 1000"),
+  weight: optionalNumber(0, 2000, "Use 0 to 2000"),
+  unit: z.enum(["kg", "lb"]).default("kg"),
+  rest: optionalInt(0, 3600, "Use up to 3600 seconds"),
+});
+
+const programSchema = z.object({
+  name: z.string().trim().min(1, "Name the program").max(80),
+  description: optionalText(2000),
+  goalId: optionalUuid,
+  exercises: z.array(programExerciseSchema).min(1, "Add at least one exercise").max(200, "Up to 200 exercises"),
+});
+
+export type ProgramInput = z.input<typeof programSchema>;
+
+/** Saves a program and replaces its exercises. Positions run across the whole program, so day order is kept. */
+export async function saveProgram(id: string | null, input: ProgramInput): Promise<ActionResult<{ id: string }>> {
+  if (id !== null && !isUuid(id)) return { ok: false, error: "Invalid program." };
+  const parsed = programSchema.safeParse(input);
+  if (!parsed.success) return invalid(parsed.error);
+  const v = parsed.data;
+  const backwards = v.exercises.findIndex((e) => e.repsMin !== null && e.repsMax !== null && e.repsMax < e.repsMin);
+  if (backwards >= 0) return { ok: false, error: `${v.exercises[backwards].exercise}: the rep range runs backwards.`, fieldErrors: { exercises: ["Put the smaller number first."] } };
+  const ctx = await liveContext();
+  if (!ctx) return DEMO_RESULT;
+  const row = { name: v.name, description: v.description, goal_id: v.goalId };
+  let programId = id;
+  if (id) {
+    const { data, error } = await ctx.supabase.from("workout_programs").update(row).eq("id", id).select("id");
+    if (error) return { ok: false, error: "Couldn't save the program." };
+    if (!data?.length) return { ok: false, error: "Program not found." };
+    const { error: delErr } = await ctx.supabase.from("program_exercises").delete().eq("program_id", id);
+    if (delErr) return { ok: false, error: "Couldn't update the exercises." };
+  } else {
+    const { data, error } = await ctx.supabase.from("workout_programs").insert({ ...row, user_id: ctx.viewer.userId, source: "manual" }).select("id").single();
+    if (error) return { ok: false, error: "Couldn't save the program." };
+    programId = data.id;
+  }
+  const rows = v.exercises.map((e, i) => ({
+    user_id: ctx.viewer.userId, program_id: programId!, day_label: e.day, position: i + 1, exercise: e.exercise, target_sets: e.sets,
+    reps_min: e.repsMin, reps_max: e.repsMax, target_weight: e.weight, weight_unit: e.weight === null ? null : e.unit, rest_seconds: e.rest,
+  }));
+  const { error } = await ctx.supabase.from("program_exercises").insert(rows);
+  if (error) return { ok: false, error: "The program was saved, but its exercises weren't. Open it and try again." };
+  refresh();
+  return { ok: true, data: { id: programId! }, message: "Program saved." };
+}
+
+export async function setProgramArchived(id: string, archived: boolean): Promise<ActionResult> {
+  if (!isUuid(id)) return { ok: false, error: "Invalid program." };
+  const ctx = await liveContext();
+  if (!ctx) return DEMO_RESULT;
+  const { data, error } = await ctx.supabase.from("workout_programs").update({ archived_at: archived ? new Date().toISOString() : null }).eq("id", id).select("id");
+  if (error || !data?.length) return { ok: false, error: "Couldn't update the program." };
+  refresh();
+  return { ok: true, message: archived ? "Archived. Workouts done from it are kept." : "Restored." };
+}
+
+/** Deletes the plan only; workouts logged from it stay, with their day name. */
+export async function deleteProgram(id: string): Promise<ActionResult> {
+  return remove("workout_programs", id, "program");
 }
 
 /* ------------------------------------------------------------------------ */

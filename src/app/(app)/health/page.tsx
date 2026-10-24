@@ -5,7 +5,7 @@ import { getHealthWorkspace } from "@/server/health";
 
 export const metadata = { title: "Health & Fitness" };
 
-const TABS = new Set<string>(["today", "workouts", "sleep", "body", "trends"] satisfies HealthTab[]);
+const TABS = new Set<string>(["today", "workouts", "programs", "progress", "sleep", "body", "trends"] satisfies HealthTab[]);
 
 export default async function HealthPage({ searchParams }: PageProps<"/health">) {
   const sp = await searchParams;
