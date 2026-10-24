@@ -12,6 +12,7 @@ import { conflictIds, isSyncedEvent, layoutDay, onDay, shiftAnchor, type Calenda
 import { formatTime, localDateKey, weekdayOf } from "@/lib/dates";
 import { cn } from "@/lib/utils";
 import { EventForm, draftFor, type EventDraft } from "./event-form";
+import { QuickAdd } from "./quick-add";
 import { KIND_LABEL, taskDayKey, taskHref, type CalendarData, type CalendarEvent, type CalendarTask } from "./types";
 
 type Occ = Occurrence<CalendarEvent>;
@@ -153,6 +154,8 @@ export function CalendarScreen({ data, nowIso, startNew = false }: { data: Calen
         </div>
         <Button size="sm" onClick={() => openSlot(data.view === "day" ? data.date : data.today, "09:00")}><Plus /> New event</Button>
       </div>
+
+      <QuickAdd today={data.today} locale={data.locale} onMore={(d) => setEditing({ event: null, draft: d })} />
 
       {(data.view === "day" || data.view === "week") && (
         <TimeGrid data={data} nowIso={nowIso} conflicts={conflicts} tasksByDay={tasksByDay} onSlot={openSlot} onEvent={openEvent} dayHref={(k) => href("day", k)} />
