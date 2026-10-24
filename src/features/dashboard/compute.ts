@@ -1,4 +1,5 @@
 import { addDays, diffDays, formatShortDate, formatTime, localDateKey, weekdayOf } from "@/lib/dates";
+import { projectDeadlines as deadlinesFor, type ProjectDeadline } from "@/features/work/deadlines";
 import { formatMoney, percentOf, sumMoney, toMinor, totalsByCurrency, type Money } from "@/lib/money";
 import type {
   DataSource, RawAccount, RawEvent, RawHabit, RawHabitLog, RawLifeData, RawReview, RawTask, ViewerProfile,
@@ -51,6 +52,13 @@ export type WheelView = {
 export type ChangeItem = { id: string; tone: "neutral" | "positive" | "attention"; text: string };
 export type Suggestion = { id: string; text: string; evidence: string; href: string };
 
+/** One line of "this week so far", counted by Reports. */
+export type WeekItem = { key: string; label: string; value: string; hint?: string; href: string };
+export type WeekView = { start: string; end: string; days: number; daysWithData: number; items: WeekItem[] };
+
+export type { ProjectDeadline };
+export const DEADLINE_HORIZON_DAYS = 14;
+
 export type DashboardModel = {
   todayKey: string;
   priorities: TaskView[];
@@ -71,6 +79,9 @@ export type DashboardModel = {
     nextMilestone: { title: string; dueDate: string } | null;
     source: DataSource;
   }[];
+  projectDeadlines: ProjectDeadline[];
+  /** This week's activity from Reports; set by the server, absent in tests. */
+  week?: WeekView | null;
   finance: FinanceView | null;
   wellness: { days: { date: string; mood: number | null; energy: number | null }[]; source: DataSource } | null;
   sleep: { nights: { date: string; minutes: number; quality: number | null }[]; avgMinutes: number | null; avgQuality: number | null; source: DataSource } | null;
@@ -396,6 +407,8 @@ export function buildDashboard(d: RawLifeData, now: Date, profile: ViewerProfile
     })
     .sort((a, b) => (a.dueDate ?? "9999").localeCompare(b.dueDate ?? "9999"));
 
+  const projectDeadlines = deadlinesFor(projects.map((p) => ({ id: p.id, name: p.name, due_date: p.dueDate, open: p.open })), d.milestones ?? [], todayKey, DEADLINE_HORIZON_DAYS);
+
   const finance = computeFinance(d, todayKey);
 
   const wDays = d.wellness
@@ -429,7 +442,7 @@ export function buildDashboard(d: RawLifeData, now: Date, profile: ViewerProfile
 
   const model: DashboardModel = {
     todayKey,
-    priorities, agenda, upcoming, overdue, dueSoon, reminders, habits, goals, projects, finance, wellness, sleep, wheel,
+    priorities, agenda, upcoming, overdue, dueSoon, reminders, habits, goals, projects, projectDeadlines, finance, wellness, sleep, wheel,
     journal: [...d.journal].sort((a, b) => b.entry_date.localeCompare(a.entry_date)).slice(0, 3),
     notes: [...d.notes].sort((a, b) => b.updated_at.localeCompare(a.updated_at)).slice(0, 3),
     changes: [],
@@ -525,6 +538,11 @@ function computeBriefing(m: DashboardModel, tz: string, locale: string) {
     lines.push("No calendar events today.");
   }
   if (m.overdue.length) lines.push(`${m.overdue.length} overdue task${m.overdue.length > 1 ? "s" : ""} need a decision: do, reschedule, or drop.`);
+  const late = m.projectDeadlines.filter((x) => x.days < 0);
+  const soon = m.projectDeadlines.filter((x) => x.days >= 0 && x.days <= 7);
+  const name = (x: ProjectDeadline) => (x.project ? `${x.title} (${x.project})` : x.title);
+  if (late.length) lines.push(`Past a project deadline: ${late.slice(0, 3).map(name).join("; ")}${late.length > 3 ? ` and ${late.length - 3} more` : ""}.`);
+  if (soon.length) lines.push(`Project deadline${soon.length > 1 ? "s" : ""} this week: ${soon.slice(0, 3).map((x) => `${name(x)} ${x.days === 0 ? "today" : x.days === 1 ? "tomorrow" : formatShortDate(x.dueDate, locale)}`).join("; ")}${soon.length > 3 ? ` and ${soon.length - 3} more` : ""}.`);
   if (m.stats.habitsScheduledToday) lines.push(`${m.stats.habitsScheduledToday} habit${m.stats.habitsScheduledToday > 1 ? "s" : ""} scheduled today.`);
 
   // Realistic priorities: at most three, favouring explicit top priorities,

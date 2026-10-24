@@ -17,7 +17,7 @@ import { useServerAction } from "@/features/dashboard/use-server-action";
 import { Markdown } from "./markdown";
 import { MODELS, modelLabel } from "./models";
 
-const STARTERS = ["What's due today and what's overdue?", "Help me plan this week.", "Which habits am I keeping up?", "How did last week go?"];
+const STARTERS = ["What's due today and what's overdue?", "Which project deadlines are coming up?", "Help me plan this week.", "How did last week go?"];
 
 export function AssistantScreen({ ws }: { ws: AssistantWorkspace }) {
   if (ws.demo) return <Notice icon={CircleSlash} title="Not available in demo mode">The assistant needs your own database and an Anthropic API key. In demo mode nothing is sent anywhere.</Notice>;

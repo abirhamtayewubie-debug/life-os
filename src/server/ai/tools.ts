@@ -7,6 +7,7 @@ import { fromMinor, toMinor } from "@/lib/money";
 import type { createSupabaseServerClient } from "@/lib/supabase/server";
 import { permittedScopes, type AiScope, type AiSettings } from "@/features/assistant/models";
 import { PERIODS } from "@/features/reports/compute";
+import { projectDeadlines } from "@/features/work/deadlines";
 import { getReport } from "../reports";
 
 /**
@@ -160,28 +161,58 @@ const listGoals = read({
 
 const listProjects = read({
   name: "list_projects", scope: "work",
-  description: "List work projects with status, dates and how many open tasks each has.",
+  description: "List work projects with status, dates, open, blocked and overdue task counts, and the next open milestone. Completed projects show the day they were completed when known.",
   input: z.object({}),
   async run(ctx) {
-    const [projects, tasks] = await Promise.all([
-      ctx.supabase.from("projects").select("id, name, status, area, start_date, due_date").is("archived_at", null).limit(100),
+    const [projects, tasks, ms] = await Promise.all([
+      ctx.supabase.from("projects").select("id, name, status, area, start_date, due_date, completed_at").is("archived_at", null).limit(100),
+      ctx.supabase.from("tasks").select("project_id, status, due_date").not("project_id", "is", null).in("status", ["todo", "in_progress", "waiting"]).is("archived_at", null).limit(5000),
+      ctx.supabase.from("milestones").select("project_id, title, due_date").not("project_id", "is", null).is("completed_at", null).order("due_date", { ascending: true, nullsFirst: false }).limit(500),
+    ]);
+    const T = must(tasks, "tasks") as { project_id: string; status: string; due_date: string | null }[];
+    const M = must(ms, "milestones") as { project_id: string; title: string; due_date: string | null }[];
+    const data = (must(projects, "projects") as { id: string; name: string; status: string; area: string; start_date: string | null; due_date: string | null; completed_at: string | null }[]).map((p) => {
+      const open = T.filter((t) => t.project_id === p.id);
+      const next = M.find((m) => m.project_id === p.id);
+      return {
+        id: p.id, name: p.name, status: p.status, area: p.area, start: p.start_date ?? undefined, due: p.due_date ?? undefined,
+        completed_on: p.completed_at ? localDateKey(new Date(p.completed_at), ctx.timezone) : undefined,
+        open_tasks: open.length,
+        blocked_tasks: open.filter((t) => t.status === "waiting").length || undefined,
+        overdue_tasks: open.filter((t) => t.due_date && t.due_date < ctx.today).length || undefined,
+        next_milestone: next ? { title: next.title, due: next.due_date ?? undefined } : undefined,
+        link: `/work?project=${p.id}`,
+      };
+    });
+    return { data, count: data.length, summary: `Read ${data.length} project${data.length === 1 ? "" : "s"}` };
+  },
+});
+
+const listDeadlines = read({
+  name: "list_project_deadlines", scope: "work",
+  description: "Project due dates and open project milestones that are past or due within the next N days (default 14), soonest first. Projects with no open tasks are left out. For task due dates use list_tasks.",
+  input: z.object({ days: z.number().int().min(1).max(90).default(14) }),
+  async run(ctx, raw) {
+    const i = raw as { days: number };
+    const [projects, tasks, ms] = await Promise.all([
+      ctx.supabase.from("projects").select("id, name, due_date").in("status", ["planned", "active", "on_hold"]).is("archived_at", null).limit(200),
       ctx.supabase.from("tasks").select("project_id").not("project_id", "is", null).in("status", ["todo", "in_progress", "waiting"]).is("archived_at", null).limit(5000),
+      ctx.supabase.from("milestones").select("id, project_id, title, due_date, completed_at").not("project_id", "is", null).is("completed_at", null).lte("due_date", addDays(ctx.today, i.days)).limit(500),
     ]);
     const T = must(tasks, "tasks") as { project_id: string }[];
-    const data = (must(projects, "projects") as { id: string; name: string; status: string; area: string; start_date: string | null; due_date: string | null }[]).map((p) => ({
-      id: p.id, name: p.name, status: p.status, area: p.area, start: p.start_date ?? undefined, due: p.due_date ?? undefined,
-      open_tasks: T.filter((t) => t.project_id === p.id).length, link: `/work?project=${p.id}`,
-    }));
-    return { data, count: data.length, summary: `Read ${data.length} project${data.length === 1 ? "" : "s"}` };
+    const P = (must(projects, "projects") as { id: string; name: string; due_date: string | null }[]).map((p) => ({ ...p, open: T.filter((t) => t.project_id === p.id).length }));
+    const list = projectDeadlines(P, must(ms, "milestones") as Parameters<typeof projectDeadlines>[1], ctx.today, i.days).slice(0, 50);
+    const data = { today: ctx.today, deadlines: list.map((x) => ({ kind: x.kind, title: x.title, project: x.project ?? undefined, due: x.dueDate, days_away: x.days, overdue: x.days < 0 || undefined, link: `/work?project=${x.projectId}` })) };
+    return { data, count: list.length, summary: `Read ${list.length} project deadline${list.length === 1 ? "" : "s"}` };
   },
 });
 
 const listLearning = read({
   name: "list_learning", scope: "learning",
-  description: "List books, courses and other learning items with status and progress.",
+  description: "List books, courses and other learning items with status and progress (pages for books where noted).",
   input: z.object({}),
   async run(ctx) {
-    const rows = must(await ctx.supabase.from("learning_items").select("title, kind, author, status, progress_pct, started_on, finished_on").limit(100), "learning items") as Record<string, unknown>[];
+    const rows = must(await ctx.supabase.from("learning_items").select("title, kind, author, status, progress_pct, total_pages, current_page, started_on, finished_on").limit(100), "learning items") as Record<string, unknown>[];
     return { data: rows.map((r) => ({ ...r, link: "/learning" })), count: rows.length, summary: `Read ${rows.length} learning item${rows.length === 1 ? "" : "s"}` };
   },
 });
@@ -231,7 +262,7 @@ const searchNotes = read({
 
 const getReportTool = read({
   name: "get_report", scope: "reports",
-  description: "Counts for a day, week, month, quarter or year (tasks, habits, focus time, and health or money if shared), compared with the period before over the same number of days.",
+  description: "Counts for a day, week, month, quarter or year (tasks, habits, focus time, projects finished, milestones, study time, meditation, pages read, books finished, journal days, reviews written, and health or money if shared), compared with the period before over the same number of days. `tracked` is false for areas the person has never logged, which means not tracked rather than zero.",
   input: z.object({ period: z.enum(PERIODS.map((p) => p.v) as ["daily", "weekly", "monthly", "quarterly", "annual"]).default("weekly"), date: dateKey.optional().describe("Any date inside the period; defaults to today") }),
   async run(ctx, raw) {
     const i = raw as { period: string; date?: string };
@@ -266,15 +297,19 @@ const getWheel = read({
 
 const getReflection = read({
   name: "get_reflection", scope: "spirit",
-  description: "The person's stated values and their daily reviews (morning, evening, weekly) from the last 14 days.",
+  description: "The person's stated values, their reviews (evening and morning from the last 14 days, weekly and monthly from the last 62), and meditation practice in the last 14 days. Journal text is not included.",
   input: z.object({}),
   async run(ctx) {
-    const [values, reviews] = await Promise.all([
+    const [values, reviews, med] = await Promise.all([
       ctx.supabase.from("personal_values").select("name, description").order("sort_order").limit(30),
-      ctx.supabase.from("daily_reviews").select("review_date, kind, achievements, unfinished, tomorrow_priorities, mood, energy").gte("review_date", addDays(ctx.today, -13)).order("review_date", { ascending: false }).limit(30),
+      ctx.supabase.from("daily_reviews").select("review_date, kind, achievements, unfinished, tomorrow_priorities, mood, energy").gte("review_date", addDays(ctx.today, -61)).order("review_date", { ascending: false }).limit(60),
+      ctx.supabase.from("meditation_sessions").select("practiced_on, minutes").gte("practiced_on", addDays(ctx.today, -13)).lte("practiced_on", ctx.today).limit(500),
     ]);
-    const R = must(reviews, "reviews") as Record<string, unknown>[];
-    return { data: { values: must(values, "values"), reviews: R, link: "/reflection" }, count: R.length, summary: `Read your values and ${R.length} review${R.length === 1 ? "" : "s"}` };
+    const recent = addDays(ctx.today, -13);
+    const R = (must(reviews, "reviews") as { review_date: string; kind: string }[]).filter((r) => r.kind === "weekly" || r.kind === "monthly" || r.review_date >= recent);
+    const S = must(med, "meditation") as { practiced_on: string; minutes: number }[];
+    const meditation = { last_14_days_minutes: S.reduce((a, x) => a + x.minutes, 0), sessions: S.length, days: new Set(S.map((x) => x.practiced_on)).size };
+    return { data: { values: must(values, "values"), reviews: R, meditation, link: "/reflection" }, count: R.length, summary: `Read your values, ${R.length} review${R.length === 1 ? "" : "s"} and meditation` };
   },
 });
 
@@ -426,7 +461,7 @@ const proposeHabit = propose({
 });
 
 export const ALL_TOOLS: AnyTool[] = [
-  listTasks, listEvents, listHabits, listGoals, listProjects, listLearning, listPeople, listAdmin, searchNotes, getReportTool, getWheel, getReflection, getFinance, getHealth, listJournal,
+  listTasks, listEvents, listHabits, listGoals, listProjects, listDeadlines, listLearning, listPeople, listAdmin, searchNotes, getReportTool, getWheel, getReflection, getFinance, getHealth, listJournal,
   proposeTask, proposeComplete, proposeEvent, proposeHabit,
 ];
 
