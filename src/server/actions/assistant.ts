@@ -320,13 +320,15 @@ export async function interpretReport(input: z.input<typeof reportSchema>): Prom
 
   const { data: row } = await ctx.supabase.from("reports").select("id, period, period_start, period_end, measured").eq("period", parsed.data.period).eq("period_start", parsed.data.start).maybeSingle();
   if (!row) return { ok: false, error: "Save a snapshot of this report first; the write-up is based on the saved numbers." };
-  const m = row.measured as Measured;
+  const m = row.measured as Partial<Measured> & Pick<Measured, "health" | "money">;
   const scopes = permittedScopes(settings);
   const facts = {
     ...m,
     label: periodLabel(row.period, row.period_start, row.period_end, ctx.viewer.profile.locale),
     health: scopes.has("health") ? m.health : "not shared with the assistant",
     money: scopes.has("finance") ? m.money : "not shared with the assistant",
+    // Snapshots saved before these were counted don't have them; say so rather than imply zero.
+    ...(m.tracked ? {} : { note: "This snapshot was saved before projects, study, meditation, reading and reviews were counted, so those are unknown, not zero." }),
   };
   try {
     const out = await writeFrom(getAnthropic()!, settings.model,

@@ -66,9 +66,22 @@ export type ReportInput = {
   journalDates: string[];
   goalsAchieved: { completed_on: string; title: string }[];
   milestonesDone: string[];
-  learningFinished: { finished_on: string; title: string }[];
+  learningFinished: { finished_on: string; title: string; book?: boolean }[];
   interactions: string[];
+  /** Local completion dates of projects (only those completed since completion dates were kept). */
+  projectsCompleted?: { completed_on: string; name: string }[];
+  /** Study sessions; `book` marks reading (a session on a book or article). */
+  study?: { date: string; minutes: number; book: boolean; pages: number }[];
+  /** Local dates roadmap steps were ticked off. */
+  stepsDone?: string[];
+  meditation?: { date: string; minutes: number }[];
+  /** Weekly, monthly and evening reviews, by the date they're filed under. */
+  reviews?: { date: string; kind: string }[];
+  /** Areas with anything ever logged, so "never tracked" isn't shown as zero. */
+  tracked?: Partial<Record<TrackedArea, boolean>>;
 };
+
+export type TrackedArea = "workouts" | "sleep" | "checkins" | "water" | "money" | "journal" | "people" | "projects" | "study" | "meditation" | "reading" | "reviews";
 
 export type Measured = {
   period: ReportPeriod;
@@ -87,6 +100,15 @@ export type Measured = {
   };
   money: { currency: string; income: Money; expenses: Money; net: Money }[];
   life: { journalDays: number; goalsAchieved: string[]; milestones: number; learningFinished: string[]; interactions: number };
+  work: { projectsCompleted: string[]; milestones: number };
+  learning: { minutes: number; sessions: number; days: number; stepsDone: number; finished: string[] };
+  reflection: {
+    meditationMinutes: number; meditationSessions: number; meditationDays: number;
+    readingMinutes: number; readingDays: number; pages: number; booksFinished: string[];
+    reviews: { evening: number; weekly: number; monthly: number };
+  };
+  /** False for an area that has never had anything logged. Missing in snapshots saved before this was kept. */
+  tracked: Record<TrackedArea, boolean>;
   /** Days in the period with at least one entry of any kind, to show how complete the picture is. */
   daysWithData: number;
 };
@@ -151,6 +173,24 @@ export function computeReport(data: ReportInput, period: ReportPeriod, start: st
   const interactions = data.interactions.filter(r);
   interactions.forEach(mark);
 
+  const projectsDone = (data.projectsCompleted ?? []).filter((x) => r(x.completed_on));
+  projectsDone.forEach((x) => mark(x.completed_on));
+  const study = (data.study ?? []).filter((x) => r(x.date));
+  study.forEach((x) => mark(x.date));
+  const reading = study.filter((x) => x.book);
+  const steps = (data.stepsDone ?? []).filter(r);
+  steps.forEach(mark);
+  const med = (data.meditation ?? []).filter((x) => r(x.date));
+  med.forEach((x) => mark(x.date));
+  const reviews = (data.reviews ?? []).filter((x) => r(x.date));
+  reviews.forEach((x) => mark(x.date));
+  const finished = data.learningFinished.filter((l) => r(l.finished_on));
+  const sum = (xs: { minutes: number }[]) => Math.round(xs.reduce((a, x) => a + x.minutes, 0));
+  const days = (xs: { date: string }[]) => new Set(xs.map((x) => x.date)).size;
+  const t = data.tracked ?? {};
+  // Anything in the period counts as tracked even if the "ever" check wasn't run.
+  const tracked = (area: TrackedArea, here: boolean) => here || t[area] === true;
+
   return {
     period, start, through, days: diffDays(start, through) + 1,
     tasks: {
@@ -181,8 +221,21 @@ export function computeReport(data: ReportInput, period: ReportPeriod, start: st
       journalDays: journal.size,
       goalsAchieved: data.goalsAchieved.filter((g) => r(g.completed_on)).map((g) => g.title),
       milestones: data.milestonesDone.filter(r).length,
-      learningFinished: data.learningFinished.filter((l) => r(l.finished_on)).map((l) => l.title),
+      learningFinished: finished.map((l) => l.title),
       interactions: interactions.length,
+    },
+    work: { projectsCompleted: projectsDone.map((x) => x.name), milestones: data.milestonesDone.filter(r).length },
+    learning: { minutes: sum(study), sessions: study.length, days: days(study), stepsDone: steps.length, finished: finished.filter((l) => !l.book).map((l) => l.title) },
+    reflection: {
+      meditationMinutes: sum(med), meditationSessions: med.length, meditationDays: days(med),
+      readingMinutes: sum(reading), readingDays: days(reading), pages: reading.reduce((a, x) => a + x.pages, 0), booksFinished: finished.filter((l) => l.book).map((l) => l.title),
+      reviews: { evening: reviews.filter((x) => x.kind === "evening").length, weekly: reviews.filter((x) => x.kind === "weekly").length, monthly: reviews.filter((x) => x.kind === "monthly").length },
+    },
+    tracked: {
+      workouts: tracked("workouts", wk.sessions > 0), sleep: tracked("sleep", nights.length > 0), checkins: tracked("checkins", well.length > 0),
+      water: tracked("water", water.length > 0), money: tracked("money", money.size > 0), journal: tracked("journal", journal.size > 0),
+      people: tracked("people", interactions.length > 0), projects: tracked("projects", projectsDone.length > 0), study: tracked("study", study.length > 0),
+      meditation: tracked("meditation", med.length > 0), reading: tracked("reading", reading.length > 0 || finished.some((l) => l.book)), reviews: tracked("reviews", reviews.length > 0),
     },
     daysWithData: seen.size,
   };
