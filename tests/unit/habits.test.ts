@@ -4,7 +4,7 @@ import type { HabitRecord } from "@/features/habits/types";
 
 const habit = (p: Partial<HabitRecord>): HabitRecord => ({
   id: "h", name: "Read", cadence: "daily", schedule_days: [0, 1, 2, 3, 4, 5, 6], target_per_period: 1, time_of_day: "evening",
-  paused_at: null, archived_at: null, description: null, goal_id: null, created_at: "2026-09-01T00:00:00Z", source: "manual", ...p,
+  paused_at: null, archived_at: null, description: null, goal_id: null, scheduled_time: null, reminder: null, created_at: "2026-09-01T00:00:00Z", source: "manual", ...p,
 });
 const log = (d: string, count = 1) => ({ habit_id: "h", log_date: d, count });
 

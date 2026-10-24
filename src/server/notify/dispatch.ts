@@ -1,6 +1,7 @@
 import "server-only";
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { RETRY_MINUTES } from "@/features/notifications/endpoints";
+import { settleHabitReminders } from "./habit-reminders";
 import { sendPush, type PushPayload } from "./push";
 
 /** Channels the server sends itself; in-app alerts are shown by the open tab. */
@@ -44,8 +45,8 @@ const DEFAULT_SENDERS: Senders = {
   email: async () => ({ status: "skipped", error: "Email reminders aren't set up yet." }),
 };
 
-function linkFor(r: { task_id: string | null; event_id: string | null }) {
-  return r.task_id ? `/tasks?open=${r.task_id}` : r.event_id ? "/calendar" : "/tasks";
+function linkFor(r: { task_id: string | null; event_id: string | null; habit_id?: string | null }) {
+  return r.task_id ? `/tasks?open=${r.task_id}` : r.event_id ? "/calendar" : r.habit_id ? "/habits" : "/tasks";
 }
 
 /**
@@ -61,7 +62,7 @@ export async function dispatchDue(db: SupabaseClient, now = new Date(), senders:
 
   const { data: due, error } = await db
     .from("reminders")
-    .select("id, user_id, remind_at, snoozed_until, channels")
+    .select("id, user_id, remind_at, snoozed_until, channels, timezone, recurrence_rule, habit_id")
     .in("status", ["scheduled", "snoozed"])
     .overlaps("channels", [...OUTSIDE])
     .lte("remind_at", nowIso)
@@ -69,11 +70,13 @@ export async function dispatchDue(db: SupabaseClient, now = new Date(), senders:
     .limit(500);
   if (error) throw new Error(`Couldn't read due reminders: ${error.message}`);
 
+  // Habit reminders repeat on their own; ones whose target is already met stay quiet.
+  const quiet = await settleHabitReminders(db, (due ?? []).filter((r) => new Date(r.snoozed_until ?? r.remind_at) <= now), now);
   const rows = [];
   for (const r of due ?? []) {
     const at = r.snoozed_until ?? r.remind_at;
     const t = new Date(at).getTime();
-    if (t > now.getTime() || t < oldest) continue;
+    if (t > now.getTime() || t < oldest || quiet.has(r.id)) continue;
     for (const ch of OUTSIDE) if ((r.channels as string[]).includes(ch)) {
       rows.push({ user_id: r.user_id, reminder_id: r.id, channel: ch, status: "pending", scheduled_for: at, attempt: 0, next_attempt_at: nowIso });
     }
@@ -96,7 +99,7 @@ export async function dispatchDue(db: SupabaseClient, now = new Date(), senders:
   if (!ready?.length) return summary;
 
   const ids = [...new Set(ready.map((d) => d.reminder_id))];
-  const { data: reminders } = await db.from("reminders").select("id, title, task_id, event_id, status").in("id", ids);
+  const { data: reminders } = await db.from("reminders").select("id, title, task_id, event_id, habit_id, status").in("id", ids);
   const byId = new Map((reminders ?? []).map((r) => [r.id, r]));
 
   for (const d of ready) {
@@ -113,7 +116,7 @@ export async function dispatchDue(db: SupabaseClient, now = new Date(), senders:
     if (!r || !["scheduled", "snoozed"].includes(r.status)) out = { status: "skipped", error: "The reminder was done or removed before it was sent." };
     else {
       try {
-        out = await senders[d.channel as Outside](db, d.user_id, { title: r.title, body: "Reminder from Life OS", url: linkFor(r), tag: `reminder-${r.id}` });
+        out = await senders[d.channel as Outside](db, d.user_id, { title: r.title, body: r.habit_id ? "Habit reminder from Life OS" : "Reminder from Life OS", url: linkFor(r), tag: `reminder-${r.id}` });
       } catch {
         out = { status: "retry", error: "Unexpected error while sending." };
       }

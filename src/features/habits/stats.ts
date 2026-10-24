@@ -10,6 +10,13 @@ export type HabitStats = HabitView & {
   /** 12 weeks (Monday-start) of cells, oldest first, for the history strip. */
   history: HabitCell[][];
   total84: number;
+  /**
+   * Completion rate per week for the same 12 weeks, oldest first: scheduled
+   * days done for daily habits, times done against the target (capped) for
+   * weekly ones. Null for weeks with nothing to count (before the habit
+   * existed, or no scheduled day so far), which is not the same as 0%.
+   */
+  weekly: { start: string; pct: number | null }[];
 };
 
 const mondayOf = (k: string) => addDays(k, -((weekdayOf(k) + 6) % 7));
@@ -41,5 +48,16 @@ export function habitStats(h: HabitRecord, logs: RawHabitLog[], todayKey: string
     }
     history.push(col);
   }
-  return { ...base, week, history, total84 };
+
+  const weekly = history.map((col) => {
+    const counted = col.filter((c) => !c.future && !c.beforeStart);
+    if (h.cadence === "weekly") {
+      if (!counted.length) return { start: col[0].date, pct: null };
+      const done = counted.reduce((a, c) => a + c.count, 0);
+      return { start: col[0].date, pct: Math.round((Math.min(done, h.target_per_period) / h.target_per_period) * 100) };
+    }
+    const due = counted.filter((c) => c.scheduled);
+    return { start: col[0].date, pct: due.length ? Math.round((due.filter((c) => c.done).length / due.length) * 100) : null };
+  });
+  return { ...base, week, history, total84, weekly };
 }
