@@ -313,6 +313,19 @@ export function generateSampleSet(now: Date, tz: string, baseCurrency = "ETB", i
   const grandma = person("Grandmother", "Family", 52, 7, "Likes hearing about the kitchen project.");
   const dawit = person("Dawit", "Mentor", null, 30, null);
   const people = [hana, grandma, dawit];
+  // Personal loans (demo only: "Load sample data" doesn't write these) ------------
+  const loanAcct = (name: string, kind: string, opening: string) => ({ ...acct(name, kind, "ETB", opening), opening_date: addDays(today, -60) });
+  const lBorrowed = loanAcct("Borrowed from Dawit", "loan", "-30000.00");
+  const lLent = loanAcct("Lent to Hana", "other", "4000.00");
+  const demo_loan_accounts = [lBorrowed, lLent];
+  const demo_loan_transactions = [
+    { id: id(), account_id: lBorrowed.id, category_id: null, kind: "adjustment" as const, amount: "10000.00", currency: "ETB", occurred_on: addDays(today, -20), description: "Paid back in cash", source: S },
+    { id: id(), account_id: lLent.id, category_id: null, kind: "adjustment" as const, amount: "-1500.00", currency: "ETB", occurred_on: addDays(today, -9), description: "Paid back", source: S },
+  ];
+  const personal_loans = [
+    { id: id(), account_id: lBorrowed.id, direction: "borrowed" as const, person_name: "Dawit", person_id: dawit.id as string | null, principal: "30000.00", currency: "ETB", started_on: addDays(today, -60), due_on: addDays(today, 45) as string | null, notes: "For the studio deposit. No interest." as string | null, source: S },
+    { id: id(), account_id: lLent.id, direction: "lent" as const, person_name: "Hana", person_id: hana.id as string | null, principal: "4000.00", currency: "ETB", started_on: addDays(today, -60), due_on: addDays(today, -5) as string | null, notes: null as string | null, source: S },
+  ];
   const interactions = [
     { id: id(), person_id: hana.id, occurred_on: addDays(today, -3), kind: "message" as const, note: null as string | null, source: S },
     { id: id(), person_id: grandma.id, occurred_on: addDays(today, -9), kind: "call" as const, note: null, source: S },
@@ -443,6 +456,7 @@ export function generateSampleSet(now: Date, tz: string, baseCurrency = "ETB", i
     wellness_logs, sleep_logs, workouts, workout_sets, workout_programs, program_exercises, body_measurements, hydration_logs, journal_entries, notes, note_links, daily_reviews,
     milestones, time_entries, people, interactions, important_dates, learning_items, skills, learning_roadmaps, learning_steps, study_sessions, admin_items, personal_values,
     meditation_links, meditation_sessions, demo_reviews, demo_learning_items, demo_study_sessions,
+    demo_loan_accounts, demo_loan_transactions, personal_loans,
   };
 }
 

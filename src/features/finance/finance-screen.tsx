@@ -6,6 +6,7 @@ import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } f
 import { cn } from "@/lib/utils";
 import { AccountForm, BudgetForm, CategoryForm, PaymentForm, RateForm, RecurringForm, SavingsForm, TransactionForm, TransferForm } from "./forms";
 import { ImportPanel } from "./import-panel";
+import { LoanForm, LoanPaymentForm, LoansTab } from "./loans";
 import { Overview } from "./overview";
 import { BillsTab, BudgetsTab, SavingsTab } from "./plans";
 import { ReportTab } from "./report";
@@ -25,6 +26,8 @@ const TITLES: Record<Editor["k"], [string, string]> = {
   rate: ["New exchange rate", "Edit exchange rate"],
   savings: ["New savings goal", "Edit savings goal"],
   import: ["Import a bank statement (CSV)", ""],
+  loan: ["New personal loan", "Edit loan"],
+  loanPay: ["Loan payment", ""],
 };
 
 export function FinanceScreen({ ws, tab, startNew = false }: { ws: FinanceWorkspace; tab: FinanceTab; startNew?: boolean }) {
@@ -50,8 +53,10 @@ export function FinanceScreen({ ws, tab, startNew = false }: { ws: FinanceWorksp
   }, [ws.accounts]);
 
   const close = () => setEditor(null);
-  const isEdit = editor && "x" in editor && editor.x !== null && editor.k !== "pay";
-  const title = editor ? TITLES[editor.k][isEdit ? 1 : 0] : "";
+  const isEdit = editor && "x" in editor && editor.x !== null && editor.k !== "pay" && editor.k !== "loanPay";
+  const title = editor?.k === "loanPay" ? `${editor.x.direction === "borrowed" ? "Borrowed from" : "Lent to"} ${editor.x.person_name}`
+    : editor?.k === "loan" && !editor.x ? (editor.direction === "lent" ? "Money I lent" : "Money I borrowed")
+    : editor ? TITLES[editor.k][isEdit ? 1 : 0] : "";
 
   return (
     <FinanceContext.Provider value={ws}>
@@ -73,6 +78,7 @@ export function FinanceScreen({ ws, tab, startNew = false }: { ws: FinanceWorksp
             : tab === "budgets" ? <BudgetsTab />
             : tab === "bills" ? <BillsTab />
             : tab === "savings" ? <SavingsTab />
+            : tab === "loans" ? <LoansTab />
             : tab === "report" ? <ReportTab />
             : <SetupTab />}
 
@@ -91,6 +97,8 @@ export function FinanceScreen({ ws, tab, startNew = false }: { ws: FinanceWorksp
               {editor?.k === "pay" && <PaymentForm item={editor.x} onDone={close} onCancel={close} />}
               {editor?.k === "rate" && <RateForm rate={editor.x} onDone={close} onCancel={close} />}
               {editor?.k === "savings" && <SavingsForm goal={editor.x} onDone={close} onCancel={close} />}
+              {editor?.k === "loan" && <LoanForm loan={editor.x} direction={editor.direction} onDone={close} onCancel={close} />}
+              {editor?.k === "loanPay" && <LoanPaymentForm loan={editor.x} kind={editor.kind} onDone={close} onCancel={close} />}
               {editor?.k === "import" && <ImportPanel onDone={close} onCancel={close} />}
             </DialogContent>
           </Dialog>

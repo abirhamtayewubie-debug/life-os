@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { CalendarClock, Check, Landmark, Pencil, PiggyBank, Plus, SkipForward, Target } from "lucide-react";
+import { CalendarClock, Check, Pencil, PiggyBank, Plus, SkipForward, Target } from "lucide-react";
 import { ConfirmDelete } from "@/components/data/confirm-delete";
 import { EmptyState } from "@/components/data/empty-state";
 import { ProvenanceBadge } from "@/components/data/provenance";
@@ -188,7 +188,6 @@ export function SavingsTab() {
   const ws = useFinance();
   const { open } = useNav();
   const { run, pending } = useServerAction();
-  const debts = ws.accounts.filter((a) => a.is_liability && !a.archived_at);
 
   return (
     <div className="grid gap-6">
@@ -229,21 +228,11 @@ export function SavingsTab() {
           </div>
         )}
       </section>
-
-      <section className="grid gap-2">
-        <SectionTitle action={<Button size="sm" variant="ghost" onClick={() => open({ k: "account", x: null })}><Plus /> Card or loan</Button>}>Debt</SectionTitle>
-        {debts.length === 0 ? (
-          <Card><EmptyState compact icon={Landmark} title="No cards or loans">Add a credit card or loan account to see what you owe and a payoff estimate.</EmptyState></Card>
-        ) : (
-          <div className="grid gap-3 md:grid-cols-2">{debts.map((a) => <DebtCard key={a.id} a={a} />)}</div>
-        )}
-        <p className="text-[11px] text-muted-foreground">Pay a card or loan with a transfer from your bank account, so it&apos;s not counted as spending twice.</p>
-      </section>
     </div>
   );
 }
 
-function DebtCard({ a }: { a: Account }) {
+export function DebtCard({ a }: { a: Account }) {
   const owed = money(a.balance.startsWith("-") ? a.balance.slice(1) : "0", a.currency);
   const [payment, setPayment] = useState("");
   const apr = a.interest_rate ? Number(a.interest_rate) : null;

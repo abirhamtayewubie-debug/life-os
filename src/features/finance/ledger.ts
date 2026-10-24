@@ -420,3 +420,54 @@ export function spendIn(currency: string, items: { amount: string; currency: str
   }
   return { spent, unconverted: [...missing.values()], oldestRate, count: items.length };
 }
+
+/* ------------------------------------------------------------------------ */
+/* Personal loans                                                            */
+/* ------------------------------------------------------------------------ */
+
+export type LoanSummary = {
+  /** Still to be paid back, never below zero. */
+  outstanding: Money;
+  /** Everything borrowed or lent: the starting amount plus anything added later. */
+  total: Money;
+  repaid: Money;
+  /** More came back than was owed (shown so it can be corrected). */
+  overpaid: Money | null;
+  pct: number;
+  settled: boolean;
+  due: { state: DueState; inDays: number } | null;
+};
+
+/**
+ * Where a personal loan stands, from its account: borrowing is a negative
+ * balance, lending a positive one. Entries that move the balance away from
+ * zero added to the loan; entries toward zero paid it back.
+ */
+export function loanSummary(
+  loan: { direction: "borrowed" | "lent"; currency: string; due_on: string | null },
+  account: { opening_balance: string; balance: string },
+  entries: { amount: string }[],
+  today: string,
+): LoanSummary {
+  const c = loan.currency;
+  const sign = loan.direction === "borrowed" ? -1n : 1n; // turns "owed" into a positive number
+  const owed = toMinor(account.balance, c) * sign;
+  let total = toMinor(account.opening_balance, c) * sign;
+  if (total < 0n) total = 0n;
+  let repaid = 0n;
+  for (const e of entries) {
+    const v = toMinor(e.amount, c) * sign;
+    if (v > 0n) total += v;
+    else repaid -= v;
+  }
+  const outstanding = owed > 0n ? owed : 0n;
+  const m = (v: bigint): Money => ({ amount: fromMinor(v, c), currency: c });
+  const settled = outstanding === 0n;
+  return {
+    outstanding: m(outstanding), total: m(total), repaid: m(repaid),
+    overpaid: owed < 0n ? m(-owed) : null,
+    pct: total > 0n ? Math.min(100, Number(((total - outstanding) * 1000n) / total) / 10) : 0,
+    settled,
+    due: loan.due_on && !settled ? dueState(loan.due_on, today, 7) : null,
+  };
+}

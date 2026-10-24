@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { buildImport, parseAmount, parseCsv, parseDate, toCsv } from "@/features/finance/csv";
 import {
-  budgetStatus, convertMoney, findRate, monthlyEquivalent, monthlyReport, netWorth, nextDue, payoffMonths, periodBounds, savingsProgress, shiftMonth, spendIn,
+  budgetStatus, convertMoney, findRate, loanSummary, monthlyEquivalent, monthlyReport, netWorth, nextDue, payoffMonths, periodBounds, savingsProgress, shiftMonth, spendIn,
   type Category, type LedgerTx, type Rate,
 } from "@/features/finance/ledger";
 
@@ -173,5 +173,34 @@ describe("project spending", () => {
     expect(r.unconverted).toEqual([{ amount: "5.00", currency: "EUR" }]);
     expect(r.oldestRate).toBe("2026-10-01");
     expect(r.count).toBe(4);
+  });
+});
+
+describe("loanSummary", () => {
+  const today = "2026-10-24";
+  it("borrowed through a transfer, part repaid, with more borrowed later", () => {
+    const s = loanSummary({ direction: "borrowed", currency: "ETB", due_on: "2026-10-28" }, { opening_balance: "0", balance: "-4000.00" },
+      [{ amount: "-5000.00" }, { amount: "2000.00" }, { amount: "-1000.00" }], today);
+    expect(s.total).toEqual({ amount: "6000.00", currency: "ETB" });
+    expect(s.repaid).toEqual({ amount: "2000.00", currency: "ETB" });
+    expect(s.outstanding).toEqual({ amount: "4000.00", currency: "ETB" });
+    expect(Math.round(s.pct)).toBe(33);
+    expect(s.settled).toBe(false);
+    expect(s.due).toEqual({ state: "soon", inDays: 4 });
+  });
+  it("lent with an opening balance, paid back in full: settled and no due state", () => {
+    const s = loanSummary({ direction: "lent", currency: "ETB", due_on: "2026-10-01" }, { opening_balance: "3000", balance: "0" }, [{ amount: "-3000" }], today);
+    expect(s.total.amount).toBe("3000.00");
+    expect(s.settled).toBe(true);
+    expect(s.pct).toBe(100);
+    expect(s.due).toBeNull();
+    expect(s.overpaid).toBeNull();
+  });
+  it("flags overpayment and an overdue date", () => {
+    const s = loanSummary({ direction: "lent", currency: "USD", due_on: "2026-10-20" }, { opening_balance: "100", balance: "-10" }, [{ amount: "-110" }], today);
+    expect(s.outstanding.amount).toBe("0.00");
+    expect(s.overpaid).toEqual({ amount: "10.00", currency: "USD" });
+    const late = loanSummary({ direction: "borrowed", currency: "USD", due_on: "2026-10-20" }, { opening_balance: "-100", balance: "-100" }, [], today);
+    expect(late.due?.state).toBe("overdue");
   });
 });

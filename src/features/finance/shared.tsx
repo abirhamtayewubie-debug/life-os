@@ -4,7 +4,7 @@ import { createContext, useContext } from "react";
 import { formatShortDate } from "@/lib/dates";
 import { formatMoney, type Money } from "@/lib/money";
 import { cn } from "@/lib/utils";
-import type { Account, Budget, Category, FinanceWorkspace, Recurring, SavingsGoal, StoredRate, Transaction } from "./types";
+import type { Account, Budget, Category, FinanceWorkspace, LoanDirection, PersonalLoan, Recurring, SavingsGoal, StoredRate, Transaction } from "./types";
 
 export const FinanceContext = createContext<FinanceWorkspace | null>(null);
 export function useFinance(): FinanceWorkspace {
@@ -36,7 +36,8 @@ export const TABS = [
   { v: "transactions", label: "Transactions" },
   { v: "budgets", label: "Budgets" },
   { v: "bills", label: "Bills" },
-  { v: "savings", label: "Savings & debt" },
+  { v: "savings", label: "Savings" },
+  { v: "loans", label: "Loans & debt" },
   { v: "report", label: "Monthly report" },
   { v: "setup", label: "Accounts & setup" },
 ] as const;
@@ -52,6 +53,8 @@ export type Editor =
   | { k: "pay"; x: Recurring }
   | { k: "rate"; x: StoredRate | null }
   | { k: "savings"; x: SavingsGoal | null }
+  | { k: "loan"; x: PersonalLoan | null; direction?: LoanDirection }
+  | { k: "loanPay"; x: PersonalLoan; kind: "repay" | "add" }
   | { k: "import" };
 
 type Nav = { open: (e: Editor) => void; go: (params: Record<string, string | null>) => void };

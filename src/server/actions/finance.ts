@@ -528,6 +528,156 @@ export async function deleteSavingsGoal(id: string): Promise<ActionResult> {
 }
 
 /* ------------------------------------------------------------------------ */
+/* Personal loans                                                            */
+/* ------------------------------------------------------------------------ */
+
+const loanName = (direction: "borrowed" | "lent", person: string) => `${direction === "borrowed" ? "Borrowed from" : "Lent to"} ${person}`.slice(0, 120);
+
+const loanSchema = z.object({
+  direction: z.enum(["borrowed", "lent"]),
+  personName: z.string().trim().min(1, "Who is it with?").max(120),
+  personId: optionalUuid,
+  amount: amountText,
+  currency: z.string().trim().toUpperCase().regex(/^[A-Z]{3}$/, "Pick a currency"),
+  startedOn: dateKey,
+  dueOn: optionalDate,
+  interestRate: z.union([z.literal(""), z.coerce.number().min(0, "Use 0 to 100").max(100, "Use 0 to 100")]).optional().transform((v) => (v === "" || v === undefined ? null : v)),
+  /** The account the money went into (borrowed) or came out of (lent); empty when it was cash you don't track. */
+  accountId: optionalUuid,
+  notes: optionalText(2000),
+});
+
+export type LoanInput = z.input<typeof loanSchema>;
+
+/** Records a new personal loan: its own account, plus a transfer with the account the money moved through. */
+export async function createPersonalLoan(input: LoanInput): Promise<ActionResult<{ id: string }>> {
+  const parsed = loanSchema.safeParse(input);
+  if (!parsed.success) return invalid(parsed.error);
+  const ctx = await liveContext();
+  if (!ctx) return DEMO_RESULT;
+  const v = parsed.data;
+  if (v.startedOn > today(ctx)) return { ok: false, error: "Pick today or an earlier date.", fieldErrors: { startedOn: ["Pick today or an earlier date."] } };
+  if (v.dueOn && v.dueOn < v.startedOn) return { ok: false, error: "The due date is before the start.", fieldErrors: { dueOn: ["Pick a date on or after the start."] } };
+  if (v.accountId) {
+    const cur = await accountCurrency(ctx, v.accountId);
+    if (cur !== v.currency) return { ok: false, error: `Pick an account in ${v.currency}.`, fieldErrors: { accountId: [`Pick an account in ${v.currency}, or none.`] } };
+  }
+  const amt = money(v.amount, v.currency);
+  if (amt === null) return precisionError("amount", v.currency);
+  if (toMinor(amt, v.currency) === 0n) return { ok: false, error: "The amount can't be zero.", fieldErrors: { amount: ["The amount can't be zero."] } };
+  const { data, error } = await ctx.supabase.rpc("create_personal_loan", {
+    p_direction: v.direction, p_person_name: v.personName, p_person_id: v.personId, p_amount: amt, p_currency: v.currency,
+    p_started_on: v.startedOn, p_due_on: v.dueOn, p_interest_rate: v.interestRate, p_notes: v.notes, p_via_account: v.accountId,
+  });
+  if (error) return { ok: false, error: error.code === "23514" ? error.message : "Couldn't save the loan." };
+  refresh();
+  return { ok: true, data: { id: data as string }, message: v.direction === "borrowed" ? `Loan from ${v.personName} added.` : `Loan to ${v.personName} added.` };
+}
+
+const loanEditSchema = z.object({
+  personName: z.string().trim().min(1, "Who is it with?").max(120),
+  personId: optionalUuid,
+  dueOn: optionalDate,
+  interestRate: loanSchema.shape.interestRate,
+  notes: optionalText(2000),
+});
+
+export type LoanEditInput = z.input<typeof loanEditSchema>;
+
+/** Changes who, when and notes. Amounts change through payments, so the history stays true. */
+export async function updatePersonalLoan(id: string, input: LoanEditInput): Promise<ActionResult> {
+  if (!isUuid(id)) return { ok: false, error: "Invalid loan." };
+  const parsed = loanEditSchema.safeParse(input);
+  if (!parsed.success) return invalid(parsed.error);
+  const ctx = await liveContext();
+  if (!ctx) return DEMO_RESULT;
+  const v = parsed.data;
+  const { data: loan } = await ctx.supabase.from("personal_loans").select("account_id, direction, started_on").eq("id", id).maybeSingle();
+  if (!loan) return { ok: false, error: "Loan not found." };
+  if (v.dueOn && v.dueOn < loan.started_on) return { ok: false, error: "The due date is before the start.", fieldErrors: { dueOn: ["Pick a date on or after the start."] } };
+  const { error } = await ctx.supabase.from("personal_loans").update({ person_name: v.personName, person_id: v.personId, due_on: v.dueOn, notes: v.notes }).eq("id", id);
+  if (error) return { ok: false, error: "Couldn't save the loan." };
+  await ctx.supabase.from("financial_accounts").update({ name: loanName(loan.direction, v.personName), interest_rate: v.interestRate }).eq("id", loan.account_id);
+  refresh();
+  return { ok: true, message: "Saved." };
+}
+
+const loanPaymentSchema = z.object({
+  loanId: z.uuid(),
+  /** "repay": money coming back (or going back); "add": more borrowed or lent. */
+  kind: z.enum(["repay", "add"]),
+  amount: amountText,
+  date: dateKey,
+  accountId: optionalUuid,
+  description: optionalText(300),
+});
+
+export type LoanPaymentInput = z.input<typeof loanPaymentSchema>;
+
+/**
+ * Money changing hands on a personal loan. Through one of your accounts it's
+ * a transfer; otherwise a balance correction on the loan. Neither counts as
+ * income or spending.
+ */
+export async function recordLoanPayment(input: LoanPaymentInput): Promise<ActionResult> {
+  const parsed = loanPaymentSchema.safeParse(input);
+  if (!parsed.success) return invalid(parsed.error);
+  const ctx = await liveContext();
+  if (!ctx) return DEMO_RESULT;
+  const v = parsed.data;
+  if (v.date > today(ctx)) return { ok: false, error: "Pick today or an earlier date.", fieldErrors: { date: ["Pick today or an earlier date."] } };
+  const { data: loan } = await ctx.supabase.from("personal_loans").select("account_id, direction, person_name, currency").eq("id", v.loanId).maybeSingle();
+  if (!loan) return { ok: false, error: "Loan not found." };
+  const c = loan.currency;
+  const amt = money(v.amount, c);
+  if (amt === null) return precisionError("amount", c);
+  if (toMinor(amt, c) === 0n) return { ok: false, error: "The amount can't be zero.", fieldErrors: { amount: ["The amount can't be zero."] } };
+  const { data: bal } = await ctx.supabase.from("account_balances").select("balance::text").eq("account_id", loan.account_id).maybeSingle();
+  if (!bal) return { ok: false, error: "This loan is closed. Reopen it first." };
+  const borrowed = loan.direction === "borrowed";
+  if (v.kind === "repay") {
+    const owed = toMinor(bal.balance, c) * (borrowed ? -1n : 1n);
+    if (toMinor(amt, c) > owed) {
+      const left = fromMinor(owed > 0n ? owed : 0n, c);
+      return { ok: false, error: `That's more than what's left (${left} ${c}).`, fieldErrors: { amount: [`Only ${left} ${c} is left.`] } };
+    }
+  }
+  // Does money leave the loan's account (toward you) or arrive in it?
+  const intoLoan = borrowed === (v.kind === "repay");
+  const description = v.description ?? (v.kind === "repay" ? (borrowed ? `Paid back ${loan.person_name}` : `${loan.person_name} paid back`) : (borrowed ? `Borrowed more from ${loan.person_name}` : `Lent more to ${loan.person_name}`));
+  if (v.accountId) {
+    const cur = await accountCurrency(ctx, v.accountId);
+    if (cur !== c) return { ok: false, error: `Pick an account in ${c}.`, fieldErrors: { accountId: [`Pick an account in ${c}, or none.`] } };
+    const { error } = await ctx.supabase.rpc("create_transfer", {
+      p_from_account: intoLoan ? v.accountId : loan.account_id, p_to_account: intoLoan ? loan.account_id : v.accountId,
+      p_from_amount: amt, p_to_amount: amt, p_occurred_on: v.date, p_description: description,
+    });
+    if (error) return { ok: false, error: error.code === "23514" ? error.message : "Couldn't record it." };
+  } else {
+    const { error } = await ctx.supabase.from("transactions").insert({
+      user_id: ctx.viewer.userId, account_id: loan.account_id, kind: "adjustment", amount: intoLoan ? amt : `-${amt}`, currency: c, occurred_on: v.date, description, source: "manual",
+    });
+    if (error) return { ok: false, error: "Couldn't record it." };
+  }
+  refresh();
+  return { ok: true, message: v.kind === "repay" ? "Payment recorded." : "Added to the loan." };
+}
+
+/** Deletes the loan, its account and its history; transfers come off the other account too. */
+export async function deletePersonalLoan(id: string): Promise<ActionResult> {
+  if (!isUuid(id)) return { ok: false, error: "Invalid loan." };
+  const ctx = await liveContext();
+  if (!ctx) return DEMO_RESULT;
+  const { data: loan } = await ctx.supabase.from("personal_loans").select("account_id, person_name, direction").eq("id", id).maybeSingle();
+  if (!loan) return { ok: false, error: "Loan not found." };
+  const { data, error } = await ctx.supabase.from("financial_accounts").delete().eq("id", loan.account_id).select("id");
+  if (error || !data?.length) return { ok: false, error: "Couldn't delete the loan." };
+  await audit(ctx, "personal_loan.deleted", { type: "personal_loan", id }, { person: loan.person_name, direction: loan.direction });
+  refresh();
+  return { ok: true, message: "Loan deleted." };
+}
+
+/* ------------------------------------------------------------------------ */
 /* CSV import                                                                */
 /* ------------------------------------------------------------------------ */
 

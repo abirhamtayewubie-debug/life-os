@@ -4,7 +4,8 @@ import { fromMinor, toMinor } from "@/lib/money";
 import { generateSampleSet } from "@/lib/sample-data";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 import { monthBounds, shiftMonth } from "@/features/finance/ledger";
-import type { Account, Budget, Category, FinanceWorkspace, Recurring, SavingsGoal, StoredRate, Transaction, TxFilters } from "@/features/finance/types";
+import { LIABILITY_KINDS } from "@/features/finance/types";
+import type { Account, AccountKind, Budget, Category, FinanceWorkspace, LoanEntry, PersonalLoan, Recurring, SavingsGoal, StoredRate, Transaction, TxFilters } from "@/features/finance/types";
 import { getViewer } from "./viewer";
 
 const TX_COLUMNS = "id, account_id, category_id, recurring_id, project_id, kind, amount::text, currency, occurred_on, description, payee, notes, transfer_group_id, is_pending, source";
@@ -28,6 +29,17 @@ function matches(t: Transaction, f: TxFilters) {
   if (f.category === "none" ? t.category_id !== null || t.kind === "transfer" : f.category && t.category_id !== f.category) return false;
   if (f.q && !`${t.description ?? ""} ${t.payee ?? ""} ${t.notes ?? ""}`.toLowerCase().includes(f.q.toLowerCase())) return false;
   return true;
+}
+
+/** Transactions on loan accounts, each with the account on the other side of its transfer (if any). */
+export function loanEntriesOf(txs: Transaction[], loanAccounts: string[]): LoanEntry[] {
+  const mine = new Set(loanAccounts);
+  const other = new Map<string, string>();
+  for (const t of txs) if (t.transfer_group_id && !mine.has(t.account_id)) other.set(t.transfer_group_id, t.account_id);
+  return txs
+    .filter((t) => mine.has(t.account_id))
+    .sort((a, b) => b.occurred_on.localeCompare(a.occurred_on))
+    .map((t) => ({ id: t.id, account_id: t.account_id, kind: t.kind, amount: t.amount, occurred_on: t.occurred_on, description: t.description, other_account_id: t.transfer_group_id ? other.get(t.transfer_group_id) ?? null : null }));
 }
 
 type Client = Awaited<ReturnType<typeof createSupabaseServerClient>>;
@@ -100,11 +112,11 @@ export async function getFinanceWorkspace(sp: Record<string, string | string[] |
 
   if (viewer.mode === "demo") {
     const s = generateSampleSet(now, timezone, baseCurrency);
-    const txs = s.transactions.map((t) => ({ recurring_id: null, project_id: null, payee: null, notes: null, transfer_group_id: null, is_pending: false, ...t })) as Transaction[];
-    const accounts = s.financial_accounts.map((a) => {
+    const txs = [...s.transactions, ...s.demo_loan_transactions].map((t) => ({ recurring_id: null, project_id: null, payee: null, notes: null, transfer_group_id: null, is_pending: false, ...t })) as Transaction[];
+    const accounts = [...s.financial_accounts, ...s.demo_loan_accounts].map((a) => {
       let v = toMinor(a.opening_balance, a.currency);
       for (const t of txs) if (t.account_id === a.id) v += toMinor(t.amount, a.currency);
-      return { institution: null, interest_rate: null, include_in_net_worth: true, archived_at: null, is_liability: false, ...a, balance: fromMinor(v, a.currency), last_transaction_on: txs.filter((t) => t.account_id === a.id).map((t) => t.occurred_on).sort().at(-1) ?? null };
+      return { institution: null, interest_rate: null, include_in_net_worth: true, archived_at: null, is_liability: LIABILITY_KINDS.includes(a.kind as AccountKind), ...a, balance: fromMinor(v, a.currency), last_transaction_on: txs.filter((t) => t.account_id === a.id).map((t) => t.occurred_on).sort().at(-1) ?? null };
     }) as Account[];
     const list = txs.filter((t) => matches(t, filters)).sort((a, b) => b.occurred_on.localeCompare(a.occurred_on));
     return {
@@ -116,6 +128,9 @@ export async function getFinanceWorkspace(sp: Record<string, string | string[] |
       budgets: s.budgets.map((b) => ({ ends_on: null, ...b, lines: s.budget_lines.filter((l) => l.budget_id === b.id) })) as Budget[],
       rates: s.exchange_rates as StoredRate[],
       savings: s.savings_goals as SavingsGoal[],
+      loans: s.personal_loans as PersonalLoan[],
+      loanEntries: loanEntriesOf(txs, s.personal_loans.map((l) => l.account_id)),
+      people: s.people.map(({ id, name }) => ({ id, name })),
       projects: s.projects.map(({ id, name }) => ({ id, name })),
       goals: s.goals.map(({ id, title }) => ({ id, title })),
       currencies: ["AED", "CAD", "ETB", "EUR", "GBP", "KES", "USD"],
@@ -126,7 +141,7 @@ export async function getFinanceWorkspace(sp: Record<string, string | string[] |
   const supabase = await createSupabaseServerClient();
   const listQ = filteredQuery(supabase, filters);
 
-  const [accounts, balances, categories, list, recent, recurring, budgets, rates, savings, projects, goals, currencies, profile] = await Promise.all([
+  const [accounts, balances, categories, list, recent, recurring, budgets, rates, savings, loans, people, projects, goals, currencies, profile] = await Promise.all([
     supabase.from("financial_accounts").select("id, name, kind, currency, institution, opening_balance::text, opening_date, is_liability, interest_rate::text, include_in_net_worth, source, archived_at").order("name"),
     supabase.from("account_balances").select("account_id, balance::text, last_transaction_on"),
     supabase.from("transaction_categories").select("id, parent_id, kind, name, archived_at, source").order("name"),
@@ -136,12 +151,29 @@ export async function getFinanceWorkspace(sp: Record<string, string | string[] |
     supabase.from("budgets").select("id, name, period, currency, starts_on, ends_on, source, budget_lines(id, category_id, amount::text)").is("archived_at", null).order("created_at"),
     supabase.from("exchange_rates").select("id, base, quote, rate::text, as_of, source").order("as_of", { ascending: false }).limit(2000),
     supabase.from("savings_goals").select("id, goal_id, account_id, name, target_amount::text, currency, saved_amount::text, target_date, source").is("archived_at", null).order("created_at"),
+    supabase.from("personal_loans").select("id, account_id, direction, person_name, person_id, principal::text, currency, started_on, due_on, notes, source").order("started_on", { ascending: false }),
+    supabase.from("people").select("id, name").is("archived_at", null).order("name"),
     supabase.from("projects").select("id, name").is("archived_at", null).order("name"),
     supabase.from("goals").select("id, title").in("status", ["active", "paused"]).order("title"),
     supabase.from("currencies").select("code").order("code"),
     supabase.from("profiles").select("week_starts_on").eq("id", viewer.userId).maybeSingle(),
   ]);
-  for (const r of [accounts, balances, categories, list, recent, recurring, budgets, rates, savings, projects, goals, currencies]) if (r.error) throw new Error(`Could not load finance: ${r.error.message}`);
+  for (const r of [accounts, balances, categories, list, recent, recurring, budgets, rates, savings, loans, people, projects, goals, currencies]) if (r.error) throw new Error(`Could not load finance: ${r.error.message}`);
+
+  // A loan's history is every transaction on its account, plus the other side of each transfer.
+  const loanAccounts = (loans.data ?? []).map((l) => l.account_id);
+  let loanTx: Transaction[] = [];
+  if (loanAccounts.length) {
+    const r = await supabase.from("transactions").select(TX_COLUMNS).in("account_id", loanAccounts).order("occurred_on", { ascending: false }).order("created_at", { ascending: false }).limit(5000);
+    if (r.error) throw new Error(`Could not load finance: ${r.error.message}`);
+    loanTx = r.data as Transaction[];
+    const groups = [...new Set(loanTx.map((t) => t.transfer_group_id).filter((g): g is string => !!g))];
+    for (let i = 0; i < groups.length; i += 200) {
+      const o = await supabase.from("transactions").select(TX_COLUMNS).in("transfer_group_id", groups.slice(i, i + 200)).not("account_id", "in", `(${loanAccounts.join(",")})`);
+      if (o.error) throw new Error(`Could not load finance: ${o.error.message}`);
+      loanTx.push(...(o.data as Transaction[]));
+    }
+  }
 
   const bal = new Map((balances.data ?? []).map((b) => [b.account_id, b]));
   const rows = (list.data ?? []) as Transaction[];
@@ -160,6 +192,9 @@ export async function getFinanceWorkspace(sp: Record<string, string | string[] |
     budgets: (budgets.data ?? []).map(({ budget_lines, ...b }) => ({ ...b, lines: budget_lines ?? [] })) as Budget[],
     rates: (rates.data ?? []) as StoredRate[],
     savings: (savings.data ?? []) as SavingsGoal[],
+    loans: (loans.data ?? []) as PersonalLoan[],
+    loanEntries: loanEntriesOf(loanTx, loanAccounts),
+    people: people.data ?? [],
     projects: projects.data ?? [],
     goals: goals.data ?? [],
     currencies: (currencies.data ?? []).map((c) => c.code),
