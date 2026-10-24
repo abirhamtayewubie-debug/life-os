@@ -2,7 +2,8 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
-import { BookOpen, ExternalLink, GraduationCap, Pencil, Plus } from "lucide-react";
+import { usePathname, useRouter } from "next/navigation";
+import { BookOpen, ExternalLink, GraduationCap, Pencil, Plus, Timer } from "lucide-react";
 import { ConfirmDelete } from "@/components/data/confirm-delete";
 import { EmptyState } from "@/components/data/empty-state";
 import { ProvenanceBadge } from "@/components/data/provenance";
@@ -17,14 +18,27 @@ import { cn } from "@/lib/utils";
 import { deleteLearningItem, deleteSkill, saveLearningItem, saveSkill, updateLearningProgress, type LearningItemInput, type SkillInput } from "@/server/actions/learning";
 import { useServerAction } from "@/features/dashboard/use-server-action";
 import { AREAS } from "@/features/tasks/types";
-import { LEARNING_KIND_LABEL, LEARNING_STATUS_LABEL, SKILL_LEVEL_LABEL, type LearningItem, type LearningKind, type LearningStatus, type LearningWorkspace, type Skill } from "./types";
+import { RoadmapForm, RoadmapsTab } from "./roadmaps";
+import { SessionForm, SessionsTab } from "./sessions";
+import { LEARNING_KIND_LABEL, LEARNING_STATUS_LABEL, SKILL_LEVEL_LABEL, type LearningItem, type LearningKind, type LearningStatus, type LearningWorkspace, type Roadmap, type Skill } from "./types";
 
 type Errors = Record<string, string[] | undefined>;
 const GROUPS: LearningStatus[] = ["in_progress", "planned", "completed", "dropped"];
 
-export function LearningScreen({ ws, startNew = false }: { ws: LearningWorkspace; startNew?: boolean }) {
-  const [editing, setEditing] = useState<LearningItem | "new" | null>(startNew ? "new" : null);
+export type LearningTab = "library" | "roadmaps" | "sessions";
+const TABS: { v: LearningTab; label: string }[] = [
+  { v: "library", label: "Library & skills" },
+  { v: "roadmaps", label: "Roadmaps" },
+  { v: "sessions", label: "Study log" },
+];
+
+export function LearningScreen({ ws, tab = "library", startNew = false }: { ws: LearningWorkspace; tab?: LearningTab; startNew?: boolean }) {
+  const router = useRouter();
+  const pathname = usePathname();
+  const [editing, setEditing] = useState<LearningItem | "new" | null>(startNew && tab === "library" ? "new" : null);
   const [skill, setSkill] = useState<Skill | "new" | null>(null);
+  const [roadmap, setRoadmap] = useState<Roadmap | "new" | null>(startNew && tab === "roadmaps" ? "new" : null);
+  const [logFor, setLogFor] = useState<Roadmap | "any" | null>(startNew && tab === "sessions" ? "any" : null);
   const [showDropped, setShowDropped] = useState(false);
 
   useEffect(() => {
@@ -34,14 +48,33 @@ export function LearningScreen({ ws, startNew = false }: { ws: LearningWorkspace
   }, []);
 
   return (
+    <div className="grid grid-cols-[minmax(0,1fr)] gap-5">
+      <div className="flex flex-wrap items-center gap-2">
+        <div className="-mx-1 max-w-full overflow-x-auto px-1">
+          <div role="tablist" aria-label="Learning views" className="flex w-max rounded-md bg-muted p-0.5">
+            {TABS.map((t) => (
+              <button key={t.v} role="tab" aria-selected={tab === t.v} onClick={() => router.replace(t.v === "library" ? pathname : `${pathname}?tab=${t.v}`, { scroll: false })}
+                className={cn("h-7 cursor-pointer rounded px-3 text-[13px] whitespace-nowrap text-muted-foreground", tab === t.v && "bg-surface font-medium text-foreground shadow-card")}>
+                {t.label}
+              </button>
+            ))}
+          </div>
+        </div>
+        <div className="ml-auto flex gap-2">
+          {tab === "library" ? <Button size="sm" onClick={() => setEditing("new")}><Plus /> Add</Button>
+            : tab === "roadmaps" ? <Button size="sm" onClick={() => setRoadmap("new")}><Plus /> Roadmap</Button>
+            : <Button size="sm" onClick={() => setLogFor("any")}><Timer /> Log study</Button>}
+        </div>
+      </div>
+
+      {tab === "roadmaps" ? <RoadmapsTab ws={ws} onEdit={(r) => setRoadmap(r ?? "new")} onLog={(r) => setLogFor(r)} />
+        : tab === "sessions" ? <SessionsTab ws={ws} onLog={() => setLogFor("any")} />
+        : (
     <div className="grid grid-cols-[minmax(0,1fr)] gap-5 lg:grid-cols-[minmax(0,1fr)_20rem]">
       <div className="grid min-w-0 grid-cols-[minmax(0,1fr)] content-start gap-4">
-        <div className="flex items-center gap-2">
-          <p className="text-[13px] text-muted-foreground">
-            {ws.items.filter((i) => i.status === "in_progress").length} in progress · {ws.items.filter((i) => i.status === "completed").length} finished
-          </p>
-          <Button size="sm" className="ml-auto" onClick={() => setEditing("new")}><Plus /> Add</Button>
-        </div>
+        <p className="text-[13px] text-muted-foreground">
+          {ws.items.filter((i) => i.status === "in_progress").length} in progress · {ws.items.filter((i) => i.status === "completed").length} finished
+        </p>
         {!ws.items.length ? (
           <Card>
             <EmptyState icon={BookOpen} title="Nothing on your learning list" action={<Button size="sm" onClick={() => setEditing("new")}><Plus /> Add a book or course</Button>}>
@@ -92,7 +125,27 @@ export function LearningScreen({ ws, startNew = false }: { ws: LearningWorkspace
           )}
         </CardContent>
       </Card>
+    </div>
+        )}
 
+      <Dialog open={roadmap !== null} onOpenChange={(o) => !o && setRoadmap(null)}>
+        <DialogContent className="sm:max-w-2xl">
+          <DialogHeader>
+            <DialogTitle>{roadmap === "new" ? "New roadmap" : "Edit roadmap"}</DialogTitle>
+            <DialogDescription>Steps and exercises in order, the books or courses they use, and when you&apos;ll study.</DialogDescription>
+          </DialogHeader>
+          {roadmap !== null && <RoadmapForm ws={ws} roadmap={roadmap === "new" ? null : roadmap} onDone={() => setRoadmap(null)} onCancel={() => setRoadmap(null)} />}
+        </DialogContent>
+      </Dialog>
+      <Dialog open={logFor !== null} onOpenChange={(o) => !o && setLogFor(null)}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Log study</DialogTitle>
+            <DialogDescription>Time spent studying or practising.</DialogDescription>
+          </DialogHeader>
+          {logFor !== null && <SessionForm ws={ws} roadmap={logFor === "any" ? null : logFor} onDone={() => setLogFor(null)} onCancel={() => setLogFor(null)} />}
+        </DialogContent>
+      </Dialog>
       <Dialog open={editing !== null} onOpenChange={(o) => !o && setEditing(null)}>
         <DialogContent className="sm:max-w-xl">
           <DialogHeader>

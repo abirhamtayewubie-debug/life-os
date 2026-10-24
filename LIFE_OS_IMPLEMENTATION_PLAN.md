@@ -68,9 +68,9 @@ the cron route and the Integrations page, so this work avoids those files until 
 | 3 | Habits: scheduled time, reminders via push, weekly rates | `claude/project-thread-2x6q4b-habits` | additive (`20261024000100_habit_reminders.sql`, run in production) | merged (#17) |
 | 4a | Calendar: one-line quick add (date, time, range, duration, repeat, location, reminder) with preview and "More" into the full form | `claude/project-thread-2x6q4b` | none | merged (#18) |
 | 4b | Calendar: project link on events (after Google PR #14 merges) | — | none expected | planned |
-| 5 | Health: programs (days, targets, start a day pre-filled), Progress & PRs tab (records, estimated max, charts, exercise log), record badges on workouts | `claude/project-thread-2x6q4b` | additive (`20261024000200_workout_programs.sql`) | PR open, SQL to run before merge |
+| 5 | Health: programs (days, targets, start a day pre-filled), Progress & PRs tab (records, estimated max, charts, exercise log), record badges on workouts | `claude/project-thread-2x6q4b` | additive (`20261024000200_workout_programs.sql`) | merged (#20) |
 | fix | Habit reminders reach devices (in-app check no longer advances device reminders) | `claude/project-thread-2x6q4b` | none | merged (#19) |
-| 6 | Learning: roadmaps, study plans, sessions, reminders | — | additive | planned |
+| 6 | Learning: roadmaps with ordered steps and exercises linked to books/courses, weekly study plan, study reminders (repeating, quiet once study is logged that day), study log with weekly chart and streak; tabs Library & skills / Roadmaps / Study log | `claude/project-thread-2x6q4b` | additive (`20261024000300_learning_plans.sql`) | PR open, SQL to run before merge. Calendar display of study blocks follows the Google Calendar PR |
 | 7 | Reflection: meditation links, reading + uploads, reviews | — | additive + storage | planned |
 | 8 | Reports + Assistant + Today summaries | — | none expected | planned |
 

@@ -1,7 +1,7 @@
 import "server-only";
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { addDays, localDateKey } from "@/lib/dates";
-import { habitTargetMet, nextHabitReminder } from "@/lib/habit-reminder";
+import { habitReminderRule, habitTargetMet, nextHabitReminder } from "@/lib/habit-reminder";
 
 export type DueReminder = {
   id: string;
@@ -10,6 +10,7 @@ export type DueReminder = {
   timezone: string;
   recurrence_rule: string | null;
   habit_id?: string | null;
+  roadmap_id?: string | null;
   channels?: string[];
 };
 
@@ -55,4 +56,44 @@ export async function settleHabitReminders(db: SupabaseClient, due: DueReminder[
     }
   }
   return quiet;
+}
+
+/**
+ * The same for study reminders on a learning roadmap: quiet when the roadmap
+ * is archived, its plan was cleared, a session for it is already logged that
+ * day, or the moment passed long ago; then moved to the next study day.
+ */
+export async function settleRoadmapReminders(db: SupabaseClient, due: DueReminder[], now: Date, advance: (r: DueReminder) => boolean = () => true): Promise<Set<string>> {
+  const quiet = new Set<string>();
+  const list = due.filter((r) => r.roadmap_id && r.recurrence_rule);
+  if (!list.length) return quiet;
+  const ids = [...new Set(list.map((r) => r.roadmap_id!))];
+  const oldest = list.reduce((m, r) => Math.min(m, new Date(r.snoozed_until ?? r.remind_at).getTime()), now.getTime());
+  const [roadmaps, sessions] = await Promise.all([
+    db.from("learning_roadmaps").select("id, study_days, study_time, archived_at").in("id", ids),
+    db.from("study_sessions").select("roadmap_id, studied_on").in("roadmap_id", ids).gte("studied_on", addDays(localDateKey(new Date(oldest), "UTC"), -1)),
+  ]);
+  if (roadmaps.error || sessions.error) return new Set(list.map((r) => r.id));
+  const byId = new Map((roadmaps.data ?? []).map((m) => [m.id, m]));
+
+  for (const r of list) {
+    const m = byId.get(r.roadmap_id!);
+    const at = new Date(r.snoozed_until ?? r.remind_at);
+    const day = localDateKey(at, r.timezone);
+    const studied = (sessions.data ?? []).some((x) => x.roadmap_id === r.roadmap_id && x.studied_on === day);
+    if (!m || m.archived_at || !m.study_time || !m.study_days?.length || now.getTime() - at.getTime() > STALE_MS || studied) quiet.add(r.id);
+    if (!m?.study_time || !m.study_days?.length || !advance(r)) continue;
+    const rule = habitReminderRule({ cadence: "daily", schedule_days: m.study_days });
+    const next = nextHabitReminder(rule, m.study_time, r.timezone, new Date(Math.max(now.getTime(), at.getTime())));
+    if (next) {
+      await db.from("reminders").update({ remind_at: next.toISOString(), snoozed_until: null, status: "scheduled", recurrence_rule: rule }).eq("id", r.id).eq("remind_at", r.remind_at);
+    }
+  }
+  return quiet;
+}
+
+/** Habit and study reminders together: the ids to leave unsent. */
+export async function settleRepeatingReminders(db: SupabaseClient, due: DueReminder[], now: Date, advance?: (r: DueReminder) => boolean): Promise<Set<string>> {
+  const [a, b] = await Promise.all([settleHabitReminders(db, due, now, advance), settleRoadmapReminders(db, due, now, advance)]);
+  return new Set([...a, ...b]);
 }

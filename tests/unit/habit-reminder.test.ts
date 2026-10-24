@@ -116,3 +116,33 @@ describe("settling due habit reminders", () => {
     expect(updates).toHaveLength(0);
   });
 });
+
+describe("settling due study reminders", () => {
+  const roadmap = { id: "m", study_days: [1, 3, 6], study_time: "21:00:00", archived_at: null };
+  const due = { id: "r", remind_at: "2026-10-24T18:00:00.000Z", snoozed_until: null, timezone: TZ, recurrence_rule: "FREQ=WEEKLY;BYDAY=MO,WE,SA", habit_id: null, roadmap_id: "m" };
+  const now = new Date("2026-10-24T18:00:30Z");
+
+  it("sends on a study day with nothing logged and moves to the next study day", async () => {
+    const { settleRepeatingReminders } = await import("@/server/notify/habit-reminders");
+    const { db, updates } = fakeDb({ learning_roadmaps: [roadmap], study_sessions: [], habits: [], habit_logs: [] });
+    const quiet = await settleRepeatingReminders(db, [due], now);
+    expect(quiet.has("r")).toBe(false);
+    expect(updates).toEqual([{ id: "r", prev: due.remind_at, row: expect.objectContaining({ remind_at: "2026-10-26T18:00:00.000Z" }) }]);
+  });
+
+  it("stays quiet once study is logged that day, or the roadmap is archived", async () => {
+    const { settleRoadmapReminders } = await import("@/server/notify/habit-reminders");
+    const logged = fakeDb({ learning_roadmaps: [roadmap], study_sessions: [{ roadmap_id: "m", studied_on: "2026-10-24" }] });
+    expect((await settleRoadmapReminders(logged.db, [due], now)).has("r")).toBe(true);
+    expect(logged.updates).toHaveLength(1);
+    const archived = fakeDb({ learning_roadmaps: [{ ...roadmap, archived_at: "2026-10-20T00:00:00Z" }], study_sessions: [] });
+    expect((await settleRoadmapReminders(archived.db, [due], now)).has("r")).toBe(true);
+  });
+
+  it("leaves habit and one-off reminders alone", async () => {
+    const { settleRoadmapReminders } = await import("@/server/notify/habit-reminders");
+    const { db, updates } = fakeDb({ learning_roadmaps: [], study_sessions: [] });
+    expect((await settleRoadmapReminders(db, [{ ...due, roadmap_id: null }], now)).size).toBe(0);
+    expect(updates).toHaveLength(0);
+  });
+});

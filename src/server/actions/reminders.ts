@@ -6,7 +6,7 @@ import { addDays, localDateKey, zonedTimeToUtc } from "@/lib/dates";
 import { isValidRule, nextOccurrence, parseRule, serializeRule } from "@/lib/recurrence";
 import { DEMO_RESULT, type ActionResult } from "./result";
 import { liveContext } from "./guard";
-import { settleHabitReminders } from "@/server/notify/habit-reminders";
+import { settleRepeatingReminders } from "@/server/notify/habit-reminders";
 
 const uuid = z.uuid();
 
@@ -115,7 +115,7 @@ export async function claimDueReminders(): Promise<ActionResult<{ id: string; ti
   const now = new Date().toISOString();
   const { data, error } = await ctx.supabase
     .from("reminders")
-    .select("id, title, remind_at, snoozed_until, status, timezone, recurrence_rule, habit_id, channels")
+    .select("id, title, remind_at, snoozed_until, status, timezone, recurrence_rule, habit_id, roadmap_id, channels")
     .in("status", ["scheduled", "snoozed"])
     .lte("remind_at", now)
     .order("remind_at")
@@ -124,7 +124,7 @@ export async function claimDueReminders(): Promise<ActionResult<{ id: string; ti
   const due = (data ?? []).filter((r) => (r.snoozed_until ?? r.remind_at) <= now);
   // Reminders that also go to devices are moved on by the cron sender after it
   // queues the push; moving them here first would mean the push never goes out.
-  const quiet = await settleHabitReminders(ctx.supabase, due, new Date(now), (r) => !(r.channels ?? []).some((c) => c === "web_push" || c === "email"));
+  const quiet = await settleRepeatingReminders(ctx.supabase, due, new Date(now), (r) => !(r.channels ?? []).some((c) => c === "web_push" || c === "email"));
   const out: { id: string; title: string; at: string }[] = [];
   for (const r of due) {
     if (quiet.has(r.id)) continue;

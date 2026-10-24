@@ -313,6 +313,27 @@ export function generateSampleSet(now: Date, tz: string, baseCurrency = "ETB", i
     { id: id(), name: "Brand identity design", area: "work", level: 4, target_level: 5, notes: null, source: S },
     { id: id(), name: "Structural load calculations", area: "work", level: 2, target_level: 4, notes: null, source: S },
   ];
+  // A roadmap with a weekly plan and a few logged sessions, to show how study planning works.
+  const englishCourse = learning_items[0];
+  const roadmap = {
+    id: id(), title: "Confident client presentations", description: "From course to real pitches, in English.", goal_id: gEnglish.id as string | null, skill_id: skills[0].id as string | null,
+    target_date: addDays(today, 60) as string | null, study_days: [1, 3, 5], study_time: "19:00:00" as string | null, study_minutes: 30 as number | null, archived_at: null as string | null, source: S,
+  };
+  const learning_roadmaps = [roadmap];
+  const learning_steps = ([
+    ["Finish the presentations course", false, englishCourse.id, true],
+    ["Record a 3-minute project pitch and watch it back", true, null, true],
+    ["Learn 20 phrases for handling questions", false, null, false],
+    ["Present a design review to a friend", true, null, false],
+    ["Pitch a real client in English", true, null, false],
+  ] as const).map(([title, is_exercise, learning_item_id, done], i) => ({
+    id: id(), roadmap_id: roadmap.id, position: i + 1, title, is_exercise, learning_item_id: learning_item_id as string | null, notes: null as string | null,
+    done_at: done ? at(-20 + i * 6, "20:00") : null as string | null,
+  }));
+  const study_sessions = [-26, -24, -21, -19, -17, -14, -12, -10, -7, -5, -2, -1].map((d, i) => ({
+    id: id(), studied_on: addDays(today, d), minutes: [30, 25, 40, 30, 20, 35, 30, 45, 30, 25, 30, 20][i], roadmap_id: roadmap.id as string | null,
+    learning_item_id: (i < 6 ? englishCourse.id : null) as string | null, step_id: null as string | null, notes: null as string | null, source: S,
+  }));
   const admin = (kind: "renewal" | "document" | "record", title: string, category: string, due: number | null, repeat: number | null, location: string | null) => ({
     id: id(), kind, title, category, due_on: due === null ? null : addDays(today, due), repeat_months: repeat, remind_days_before: 14,
     location, reference: null as string | null, notes: null as string | null, completed_at: null as string | null, source: S,
@@ -386,7 +407,7 @@ export function generateSampleSet(now: Date, tz: string, baseCurrency = "ETB", i
     wheel_categories, wheel_assessments, wheel_ratings, goals, projects, tasks, calendar_events, reminders,
     habits, habit_logs, financial_accounts, transaction_categories, transactions, budgets: [budget], budget_lines, exchange_rates, recurring_transactions, savings_goals,
     wellness_logs, sleep_logs, workouts, workout_sets, workout_programs, program_exercises, body_measurements, hydration_logs, journal_entries, notes, note_links, daily_reviews,
-    milestones, time_entries, people, interactions, important_dates, learning_items, skills, admin_items, personal_values,
+    milestones, time_entries, people, interactions, important_dates, learning_items, skills, learning_roadmaps, learning_steps, study_sessions, admin_items, personal_values,
   };
 }
 
