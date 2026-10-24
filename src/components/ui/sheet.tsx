@@ -17,7 +17,7 @@ const SIDE = {
 function SheetContent({ className, children, side = "left", ...props }: React.ComponentProps<typeof SheetPrimitive.Content> & { side?: keyof typeof SIDE }) {
   return (
     <SheetPrimitive.Portal>
-      <SheetPrimitive.Overlay className="fixed inset-0 z-50 bg-[rgb(11_12_15/0.45)] backdrop-blur-sm data-[state=open]:animate-fade-in" />
+      <SheetPrimitive.Overlay className="fixed inset-0 z-50 bg-[rgb(28_27_24/0.42)] backdrop-blur-sm data-[state=open]:animate-fade-in" />
       <SheetPrimitive.Content
         className={cn("fixed z-50 flex flex-col bg-sidebar shadow-raised outline-none", SIDE[side], className)}
         {...props}

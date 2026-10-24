@@ -31,9 +31,9 @@ Shape: tiles 22–24px (`rounded-3xl` = 24px), hero and big cards 28px, icon but
 Fraunces (`font-display`, weight 300–400) for headings, big numbers and list item titles, with an italic accent word (`.accent-italic` clay, `.accent-italic-sage`). Inter 400–600 for UI. Section labels use `.label-caps` (11px, uppercase, 0.2em tracking, faint). Geist Mono for codes. Numbers use `tabular-nums` (`.tabular`).
 
 ## Layout
-- Desktop-first 12-column grid (`xl`), 6 columns on tablets (`md`), single column on phones.
-- Today: hero (top three + ring + stats, `Next up` card, one suggestion), then customizable widgets S (⅓), M (½), L (⅔), Full. Briefing and Priorities widgets start hidden because the hero covers them.
-- Sidebar 256px with a white active pill, collapses to icons (`[` key, remembered in a cookie). Phones get the floating tab bar; More opens every module in a sheet.
+- **Phones (< 768px):** bottom nav fixed to the bottom (Today · Plan · + · Habits · Areas), page-colored with a 1px top line; active item is ink with a 4px clay dot. The + opens the quick-add sheet. Areas (`/areas`) replaces the old side drawer and lists every module. The top bar is search on the left, bell and avatar (account menu with Light / Night / Match device) on the right.
+- **Tablets (768–1023px):** the sidebar is a 72px icon rail with tooltips.
+- **Desktop (≥ 1024px):** 260px sidebar on the page background with a right hairline: logo, ink **+ New** (same quick add, as a centered modal), "Ask your assistant…" field, grouped Fraunces rows (active = card + clay shadow + clay dot), footer with avatar, moon/sun toggle and a ⋯ menu (settings, collapse to rail with `[`, sign out). Content max 1200px with 40px padding; the top bar shows `GROUP · PAGE` plus search and bell.
 
 ## Components (`src/components/ui`)
 Button (default ink, brand, secondary iris-tint, outline, ghost, destructive, link) · Card · Badge (incl. dashed `sample`) · Input / Textarea / NativeSelect · Label · Switch · Progress · Dialog · AlertDialog (destructive confirmations) · Sheet · DropdownMenu · Tooltip · Skeleton · Kbd · Toaster.

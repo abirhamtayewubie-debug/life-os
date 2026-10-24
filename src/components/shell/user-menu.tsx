@@ -1,29 +1,33 @@
 "use client";
 
 import Link from "next/link";
-import { LogOut, Settings, ShieldCheck } from "lucide-react";
-import { Button } from "@/components/ui/button";
+import { useTheme } from "next-themes";
+import { LogOut, Monitor, Moon, Settings, ShieldCheck, Sun } from "lucide-react";
 import {
   DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import { Avatar, initialFor } from "@/components/clay/icon-button";
 import { signOut } from "@/server/actions/auth";
 
+/** Phone account menu behind the avatar; it also holds the light / night switch. */
 export function UserMenu({ name, email, demo }: { name: string | null; email: string | null; demo: boolean }) {
-  const initials = (name ?? email ?? "You").split(/[\s@.]+/).filter(Boolean).slice(0, 2).map((s) => s[0]!.toUpperCase()).join("");
+  const { setTheme } = useTheme();
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
-        <Button variant="ghost" size="icon" className="rounded-full" aria-label="Account menu">
-          <span className="flex size-9 items-center justify-center rounded-full bg-accent text-[13px] font-semibold text-accent-foreground">
-            {demo ? "D" : initials || "Y"}
-          </span>
-        </Button>
+        <button type="button" className="rounded-[16px]" aria-label="Account menu">
+          <Avatar initial={initialFor(name, email, demo)} />
+        </button>
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end" className="w-56">
         <DropdownMenuLabel>
           <div className="truncate text-[13px] font-medium text-foreground">{demo ? "Demo visitor" : name ?? "Signed in"}</div>
           <div className="truncate">{demo ? "Nothing is saved in demo mode" : email}</div>
         </DropdownMenuLabel>
+        <DropdownMenuSeparator />
+        <DropdownMenuItem onSelect={() => setTheme("light")}><Sun /> Light</DropdownMenuItem>
+        <DropdownMenuItem onSelect={() => setTheme("dark")}><Moon /> Night</DropdownMenuItem>
+        <DropdownMenuItem onSelect={() => setTheme("system")}><Monitor /> Match device</DropdownMenuItem>
         <DropdownMenuSeparator />
         <DropdownMenuItem asChild><Link href="/settings"><Settings /> Settings</Link></DropdownMenuItem>
         <DropdownMenuItem asChild><Link href="/settings#privacy"><ShieldCheck /> Privacy & data</Link></DropdownMenuItem>
