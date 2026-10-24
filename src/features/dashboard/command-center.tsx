@@ -8,11 +8,12 @@ import { Eye, EyeOff, GripVertical, LayoutGrid, RotateCcw } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { APP_EVENTS } from "@/components/shell/command-palette";
+import { PageActions } from "@/components/shell/page-actions";
 import { cn } from "@/lib/utils";
 import { resetDashboardLayout, saveDashboardLayout } from "@/server/actions/dashboard";
 import type { DashboardModel } from "./compute";
 import { EveningReview } from "./evening-review";
-import { TodayHero } from "./today-hero";
+import { ClayToday, type HeroText } from "./clay-today";
 import { useServerAction } from "./use-server-action";
 import { DEFAULT_LAYOUT, WIDGETS, normalizeLayout, type WidgetKey, type WidgetPref, type WidgetSize } from "./widgets";
 import { AgendaWidget, BriefingWidget, DeadlinesWidget, PrioritiesWidget, RemindersWidget } from "./widgets/planning";
@@ -28,10 +29,12 @@ const SIZE_CLASS: Record<WidgetSize, string> = {
   full: "md:col-span-6 xl:col-span-12",
 };
 const COUNT_WORDS = ["Nothing", "One thing", "Two things", "Three things"];
+/** Shown above Today as fixed Clay Zen cards, so they stay out of the widget grid. */
+const FIXED_WIDGETS: WidgetKey[] = ["priorities", "agenda", "habits", "goals"];
 
-function daySummary(m: DashboardModel, now: Date): string {
+export function daySummary(m: DashboardModel, now: Date): string {
   const n = m.briefing.suggestedPriorities.length;
-  const head = n ? `${COUNT_WORDS[n] ?? `${n} things`} ${n === 1 ? "matters" : "matter"} today.` : "Nothing urgent today.";
+  const head = n ? `${COUNT_WORDS[n] ?? `${n} things`} ${n === 1 ? "matters" : "matter"} today.` : "Nothing urgent.";
   const left = m.agenda.filter((e) => !e.all_day && new Date(e.ends_at) > now).length;
   const tail = left ? ` ${left} more ${left === 1 ? "event" : "events"} on your calendar.` : " Your calendar is clear for the rest of the day.";
   return head + tail;
@@ -103,9 +106,25 @@ function SortableWidget({ pref, editing, onToggle, onSize, children }: {
   );
 }
 
+/** Desktop: in the top bar. Phones and tablets: below Today's cards. Rendered once so dialogs aren't duplicated. */
+function ResponsiveActions({ children }: { children: React.ReactNode }) {
+  const [desktop, setDesktop] = useState(false);
+  useEffect(() => {
+    const mq = window.matchMedia("(min-width: 1024px)");
+    const sync = () => setDesktop(mq.matches);
+    sync();
+    mq.addEventListener("change", sync);
+    return () => mq.removeEventListener("change", sync);
+  }, []);
+  return desktop ? <PageActions>{children}</PageActions> : <div className="order-last mt-6 flex flex-wrap items-center gap-2">{children}</div>;
+}
+
 export function CommandCenter({
-  model, initialLayout, demo, locale, greeting, longDate, nowIso,
-}: { model: DashboardModel; initialLayout: WidgetPref[]; demo: boolean; locale: string; greeting: string; longDate: string; nowIso: string }) {
+  model, initialLayout, demo, locale, hero, nowLabel, dayLabel, assistant, nowIso,
+}: {
+  model: DashboardModel; initialLayout: WidgetPref[]; demo: boolean; locale: string;
+  hero: Omit<HeroText, "summary">; nowLabel: string; dayLabel: string; assistant: boolean; nowIso: string;
+}) {
   const now = useMemo(() => new Date(nowIso), [nowIso]);
   const [layout, setLayout] = useState(initialLayout);
   const [editing, setEditing] = useState(false);
@@ -130,8 +149,8 @@ export function CommandCenter({
     return () => window.removeEventListener(APP_EVENTS.customize, onCustomize);
   });
 
-  const visible = useMemo(() => layout.filter((w) => w.visible), [layout]);
-  const hidden = useMemo(() => layout.filter((w) => !w.visible), [layout]);
+  const visible = useMemo(() => layout.filter((w) => w.visible && !FIXED_WIDGETS.includes(w.key)), [layout]);
+  const hidden = useMemo(() => layout.filter((w) => !w.visible && !FIXED_WIDGETS.includes(w.key)), [layout]);
 
   function startEditing() {
     setSnapshot(layout);
@@ -168,30 +187,22 @@ export function CommandCenter({
   const unfinishedHints = [...model.overdue, ...model.priorities].map((t) => t.title);
 
   return (
-    <div>
-      <div className="mb-7 flex flex-col gap-5 pt-2 sm:flex-row sm:items-end sm:justify-between">
-        <div>
-          <p className="text-xs font-semibold tracking-[0.1em] text-subtle-foreground uppercase">{longDate}</p>
-          <h1 className="mt-2 font-display text-[34px] leading-[1.05] font-normal tracking-[-0.028em] text-balance sm:text-[44px]">{greeting}</h1>
-          <p className="mt-2 text-[15px] text-muted-foreground">{daySummary(model, now)}</p>
+    <div className="flex flex-col">
+      {editing ? (
+        <div className="mb-4 flex flex-wrap items-center justify-end gap-2">
+          <Button variant="ghost" size="sm" onClick={reset}><RotateCcw /> Reset</Button>
+          <Button variant="outline" size="sm" onClick={cancel}>Cancel</Button>
+          <Button size="sm" onClick={save} disabled={pending}>{pending ? "Saving…" : "Save layout"}</Button>
         </div>
-        <div className="flex flex-wrap items-center gap-2">
-          {editing ? (
-            <>
-              <Button variant="ghost" size="sm" onClick={reset}><RotateCcw /> Reset</Button>
-              <Button variant="outline" size="sm" onClick={cancel}>Cancel</Button>
-              <Button size="sm" onClick={save} disabled={pending}>{pending ? "Saving…" : "Save layout"}</Button>
-            </>
-          ) : (
-            <>
-              <EveningReview existing={model.eveningReview} unfinishedHints={unfinishedHints} />
-              <Button variant="outline" size="sm" onClick={startEditing}><LayoutGrid /> Customize</Button>
-            </>
-          )}
-        </div>
-      </div>
+      ) : (
+        <ResponsiveActions>
+          <EveningReview existing={model.eveningReview} unfinishedHints={unfinishedHints} />
+          <Button variant="outline" size="sm" className="h-11" onClick={startEditing}><LayoutGrid /> Customize</Button>
+        </ResponsiveActions>
+      )}
 
-      {!editing && <TodayHero m={model} now={now} />}
+      {!editing && <ClayToday m={model} now={now} text={{ ...hero, summary: daySummary(model, now) }} nowLabel={nowLabel} dayLabel={dayLabel} assistant={assistant} />}
+      {!editing && visible.length > 0 && <h2 className="label-caps mt-9 mb-3.5 font-sans">More for today</h2>}
 
       {editing && (
         <div className="mb-5 rounded-2xl border border-dashed border-border bg-surface-2/50 p-4 text-[13px] animate-fade-in">

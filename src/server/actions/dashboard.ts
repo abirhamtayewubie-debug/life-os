@@ -100,3 +100,23 @@ export async function resetDashboardLayout(): Promise<ActionResult> {
   revalidatePath("/");
   return { ok: true, message: "Layout reset." };
 }
+
+/** Today's "How was today?" check-in: sets the mood on today's wellness check-in, creating it if needed. */
+export async function saveTodayMood(mood: number): Promise<ActionResult> {
+  if (!z.number().int().min(1).max(5).safeParse(mood).success) return { ok: false, error: "Pick a mood from 1 to 5." };
+  const ctx = await liveContext();
+  if (!ctx) return DEMO_RESULT;
+  const log_date = localDateKey(new Date(), ctx.viewer.profile.timezone);
+  const { data: existing, error: readError } = await ctx.supabase
+    .from("wellness_logs").select("id").eq("log_date", log_date).eq("source", "manual")
+    .order("logged_at", { ascending: false }).limit(1);
+  if (readError) return { ok: false, error: "Couldn't save your mood." };
+  const { error } = existing?.length
+    ? await ctx.supabase.from("wellness_logs").update({ mood }).eq("id", existing[0]!.id)
+    : await ctx.supabase.from("wellness_logs").insert({ user_id: ctx.viewer.userId, log_date, mood, source: "manual" });
+  if (error) return { ok: false, error: "Couldn't save your mood." };
+  revalidatePath("/");
+  revalidatePath("/health");
+  revalidatePath("/reports");
+  return { ok: true, message: "Mood saved for today." };
+}
