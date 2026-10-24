@@ -19,13 +19,15 @@ import { addWater, deleteCheckin, deleteMeasurements, deleteWater, deleteWorkout
 import { useServerAction } from "@/features/dashboard/use-server-action";
 import { weekStart } from "@/features/work/stats";
 import { CheckinForm, MeasurementForm, WorkoutForm } from "./forms";
+import { SleepScreen } from "./sleep-screen";
 import { averageOf, formatMinutes, hydrationByDay, metricSeries, preferredUnit, volumeByExercise, wellnessByDay, workoutSummary, type BodyMetric } from "./metrics";
 import { METRIC_LABEL, SCALE_LABEL, type HealthWorkspace, type MeasurementRow, type WellnessLog, type Workout } from "./types";
 
-export type HealthTab = "today" | "workouts" | "body" | "trends";
+export type HealthTab = "today" | "workouts" | "sleep" | "body" | "trends";
 const TABS: { v: HealthTab; label: string }[] = [
   { v: "today", label: "Today" },
   { v: "workouts", label: "Workouts" },
+  { v: "sleep", label: "Sleep & recovery" },
   { v: "body", label: "Body" },
   { v: "trends", label: "Mood & energy" },
 ];
@@ -38,7 +40,7 @@ export const axisTick = { fill: "var(--color-muted-foreground)", fontSize: 10 };
 export function HealthScreen({ ws, tab, startNew = false }: { ws: HealthWorkspace; tab: HealthTab; startNew?: boolean }) {
   const router = useRouter();
   const pathname = usePathname();
-  const [editor, setEditor] = useState<Editor | null>(startNew ? { k: tab === "workouts" ? "workout" : tab === "body" ? "measure" : "checkin", x: null } as Editor : null);
+  const [editor, setEditor] = useState<Editor | null>(startNew && tab !== "sleep" ? { k: tab === "workouts" ? "workout" : tab === "body" ? "measure" : "checkin", x: null } as Editor : null);
   const close = () => setEditor(null);
 
   useEffect(() => {
@@ -64,7 +66,7 @@ export function HealthScreen({ ws, tab, startNew = false }: { ws: HealthWorkspac
             ))}
           </div>
         </div>
-        <div className="ml-auto flex gap-2">
+        <div className={cn("ml-auto flex gap-2", tab === "sleep" && "hidden")}>
           {tab === "workouts" ? <Button size="sm" onClick={() => setEditor({ k: "workout", x: null })}><Plus /> Workout</Button>
             : tab === "body" ? <Button size="sm" onClick={() => setEditor({ k: "measure" })}><Plus /> Measurement</Button>
             : <Button size="sm" onClick={() => setEditor({ k: "checkin", x: null })}><Plus /> Check-in</Button>}
@@ -73,6 +75,7 @@ export function HealthScreen({ ws, tab, startNew = false }: { ws: HealthWorkspac
 
       {tab === "today" ? <TodayTab ws={ws} onEdit={setEditor} />
         : tab === "workouts" ? <WorkoutsTab ws={ws} onEdit={setEditor} />
+        : tab === "sleep" ? <SleepScreen ws={ws} startNew={startNew} />
         : tab === "body" ? <BodyTab ws={ws} onEdit={setEditor} />
         : <TrendsTab ws={ws} />}
 
@@ -185,7 +188,7 @@ function TodayTab({ ws, onEdit }: { ws: HealthWorkspace; onEdit: (e: Editor) => 
         </div>
         <div className="rounded-xl border border-border p-3 text-[12px] text-muted-foreground">
           {lastNight ? <>Last night: <span className="font-medium text-foreground">{formatMinutes(lastNight.duration_minutes)}</span>{lastNight.quality ? `, felt ${lastNight.quality}/5` : ""}. </> : "Last night isn't logged yet. "}
-          <Link href="/sleep" className="text-foreground underline underline-offset-2">Sleep</Link>
+          <Link href="/health?tab=sleep" className="text-foreground underline underline-offset-2">Sleep</Link>
         </div>
       </Card>
     </div>

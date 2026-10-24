@@ -1,8 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { Check, FolderKanban, Orbit, Repeat, Target } from "lucide-react";
-import { PolarAngleAxis, PolarGrid, PolarRadiusAxis, Radar, RadarChart, ResponsiveContainer, Tooltip } from "recharts";
+import { Check, FolderKanban, Repeat, Target } from "lucide-react";
 import { EmptyState } from "@/components/data/empty-state";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
@@ -145,56 +144,6 @@ export function ProjectsWidget({ m }: { m: DashboardModel }) {
         </ul>
       ) : (
         <EmptyState compact icon={FolderKanban} title="No active projects" />
-      )}
-    </WidgetCard>
-  );
-}
-
-export function WheelWidget({ m }: { m: DashboardModel }) {
-  const w = m.wheel;
-  return (
-    <WidgetCard
-      title="Life balance"
-      description={w ? `Your own ratings from ${formatShortDate(w.assessedOn)} · 1–10, subjective` : undefined}
-      href="/wheel"
-      source={w?.source}
-    >
-      {w ? (
-        <div className="grid items-center gap-4 sm:grid-cols-[1fr_auto]">
-          <div className="h-56" role="img" aria-label={`Wheel of Life ratings: ${w.ratings.map((r) => `${r.name} ${r.score}`).join(", ")}`}>
-            <ResponsiveContainer width="100%" height="100%">
-              <RadarChart data={w.ratings.map((r) => ({ ...r, short: r.name.split(" & ")[0] }))} outerRadius="72%">
-                <PolarGrid stroke="var(--color-border)" />
-                <PolarAngleAxis dataKey="short" tick={{ fill: "var(--color-muted-foreground)", fontSize: 10 }} />
-                <PolarRadiusAxis domain={[0, 10]} tickCount={6} tick={false} axisLine={false} />
-                <Radar name="Desired" dataKey="desired" stroke="var(--color-chart-5)" strokeDasharray="3 3" fill="none" />
-                {w.previousOn && <Radar name="Previous" dataKey="previous" stroke="var(--color-chart-3)" fill="none" strokeWidth={1} />}
-                <Radar name="Current" dataKey="score" stroke="var(--color-chart-1)" fill="var(--color-chart-1)" fillOpacity={0.18} strokeWidth={1.75} />
-                <Tooltip contentStyle={{ background: "var(--color-popover)", border: "1px solid var(--color-border)", borderRadius: 8, fontSize: 12 }} />
-              </RadarChart>
-            </ResponsiveContainer>
-          </div>
-          <div className="space-y-3 text-xs sm:w-40">
-            <div className="flex flex-wrap gap-x-3 gap-y-1 text-[11px] text-muted-foreground">
-              <span className="inline-flex items-center gap-1"><span className="h-0.5 w-3 bg-chart-1" /> Now</span>
-              {w.previousOn && <span className="inline-flex items-center gap-1"><span className="h-0.5 w-3 bg-chart-3" /> {formatShortDate(w.previousOn)}</span>}
-              <span className="inline-flex items-center gap-1"><span className="h-0 w-3 border-t border-dashed border-chart-5" /> Desired</span>
-            </div>
-            <div>
-              <p className="text-[11px] text-muted-foreground">Strongest</p>
-              <p className="text-[13px]">{w.highest.join(", ")}</p>
-            </div>
-            <div>
-              <p className="text-[11px] text-muted-foreground">Needs attention</p>
-              <p className="text-[13px]">{w.lowest.join(", ")}</p>
-            </div>
-            <p className="text-[11px] leading-relaxed text-subtle-foreground">A reflection tool, not a measurement. There is deliberately no overall score.</p>
-          </div>
-        </div>
-      ) : (
-        <EmptyState compact icon={Orbit} title="No assessment yet">
-          Rate each area of your life from 1 to 10. Repeat quarterly to see how your balance shifts.
-        </EmptyState>
       )}
     </WidgetCard>
   );

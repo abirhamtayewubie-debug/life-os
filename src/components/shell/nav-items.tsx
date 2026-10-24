@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { BUILT_THROUGH_PHASE, MODULES, MODULE_GROUP_LABELS, type ModuleGroup } from "@/lib/modules";
+import { BUILT_THROUGH_PHASE, NAV_MODULES, MODULE_GROUP_LABELS, type ModuleGroup } from "@/lib/modules";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { cn } from "@/lib/utils";
 
@@ -25,7 +25,7 @@ export function NavItems({
   return (
     <nav aria-label="Modules" className="flex flex-col gap-6">
       {groups.map((group) => {
-        const items = MODULES.filter((m) => m.group === group && (m.required || !hidden.includes(m.key)));
+        const items = NAV_MODULES.filter((m) => m.group === group && (m.required || !hidden.includes(m.key)));
         if (!items.length) return null;
         return (
           <div key={group} className="flex flex-col gap-0.5">

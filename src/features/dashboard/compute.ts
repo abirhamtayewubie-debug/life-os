@@ -554,22 +554,13 @@ function computeSuggestions(m: DashboardModel): Suggestion[] {
       href: "/habits",
     });
   }
-  if (m.wheel && m.wheel.lowest.length) {
-    const low = m.wheel.ratings.filter((r) => m.wheel!.lowest.includes(r.name));
-    out.push({
-      id: "wheel-low",
-      text: `${m.wheel.lowest.join(" and ")} ${m.wheel.lowest.length > 1 ? "are" : "is"} your lowest-rated area${m.wheel.lowest.length > 1 ? "s" : ""}. Consider one small, specific action this week.`,
-      evidence: low.map((r) => `${r.name} ${r.score}/10${r.desired ? ` (want ${r.desired})` : ""}`).join(", ") + ` (your own rating on ${formatShortDate(m.wheel.assessedOn)})`,
-      href: "/wheel",
-    });
-  }
   if (m.sleep?.avgMinutes && m.sleep.nights.length >= 5 && m.sleep.avgMinutes < 7 * 60) {
     const h = Math.floor(m.sleep.avgMinutes / 60);
     out.push({
       id: "sleep-short",
       text: "Your logged sleep is below the 7+ hours generally recommended for adults. An earlier, consistent bedtime is the usual first lever.",
       evidence: `Average ${h}h ${m.sleep.avgMinutes % 60}m over ${m.sleep.nights.length} logged nights`,
-      href: "/sleep",
+      href: "/health?tab=sleep",
     });
   }
   const atRisk = m.projects.filter((p) => p.risk !== "none");

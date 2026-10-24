@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { Switch } from "@/components/ui/switch";
-import { MODULES } from "@/lib/modules";
+import { NAV_MODULES } from "@/lib/modules";
 import { setModuleEnabled } from "@/server/actions/settings";
 import { useServerAction } from "@/features/dashboard/use-server-action";
 
@@ -11,7 +11,7 @@ export function ModuleToggles({ hidden }: { hidden: string[] }) {
   const { run } = useServerAction();
   return (
     <ul className="divide-y divide-border">
-      {MODULES.filter((m) => !m.required).map((m) => {
+      {NAV_MODULES.filter((m) => !m.required).map((m) => {
         const enabled = !off.has(m.key);
         return (
           <li key={m.key} className="flex items-center gap-3 py-2.5">

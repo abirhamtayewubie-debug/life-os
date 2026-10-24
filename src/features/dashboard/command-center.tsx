@@ -16,7 +16,7 @@ import { TodayHero } from "./today-hero";
 import { useServerAction } from "./use-server-action";
 import { DEFAULT_LAYOUT, WIDGETS, normalizeLayout, type WidgetKey, type WidgetPref, type WidgetSize } from "./widgets";
 import { AgendaWidget, BriefingWidget, DeadlinesWidget, PrioritiesWidget, RemindersWidget } from "./widgets/planning";
-import { GoalsWidget, HabitsWidget, ProjectsWidget, WheelWidget } from "./widgets/progress";
+import { GoalsWidget, HabitsWidget, ProjectsWidget } from "./widgets/progress";
 import { SleepWidget, WellnessWidget } from "./widgets/wellbeing";
 import { FinanceWidget } from "./widgets/money";
 import { ChangesWidget, JournalWidget, SuggestionsWidget } from "./widgets/insights";
@@ -50,7 +50,6 @@ function renderWidget(key: WidgetKey, m: DashboardModel, locale: string) {
     case "habits": return <HabitsWidget m={m} />;
     case "goals": return <GoalsWidget m={m} />;
     case "projects": return <ProjectsWidget m={m} />;
-    case "wheel": return <WheelWidget m={m} />;
     case "sleep": return <SleepWidget m={m} />;
     case "wellness": return <WellnessWidget m={m} />;
     case "finance": return <FinanceWidget m={m} locale={locale} />;

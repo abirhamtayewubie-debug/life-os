@@ -5,7 +5,7 @@ import { getHealthWorkspace } from "@/server/health";
 
 export const metadata = { title: "Health & Fitness" };
 
-const TABS = new Set<string>(["today", "workouts", "body", "trends"] satisfies HealthTab[]);
+const TABS = new Set<string>(["today", "workouts", "sleep", "body", "trends"] satisfies HealthTab[]);
 
 export default async function HealthPage({ searchParams }: PageProps<"/health">) {
   const sp = await searchParams;
@@ -15,7 +15,7 @@ export default async function HealthPage({ searchParams }: PageProps<"/health">)
     <div className="animate-rise">
       <PageHeader
         title="Health & Fitness"
-        description="Check-ins, water, workouts and body measurements, exactly as you logged them."
+        description="Check-ins, water, workouts, sleep and body measurements, exactly as you logged them."
         actions={<AppleHealthImport timeZone={ws.timezone} demo={ws.demo} />}
       />
       <HealthScreen ws={ws} tab={tab} startNew={sp.new === "1"} />

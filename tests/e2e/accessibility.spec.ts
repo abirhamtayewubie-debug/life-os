@@ -9,7 +9,7 @@ import { expect, test, type Page } from "@playwright/test";
  */
 
 const password = "correct horse battery staple";
-const PAGES = ["/", "/assistant", "/calendar", "/tasks", "/goals", "/habits", "/finance", "/health", "/sleep", "/work", "/learning", "/reflection", "/relationships", "/admin", "/wheel", "/reports", "/knowledge", "/integrations", "/settings"];
+const PAGES = ["/", "/assistant", "/calendar", "/tasks", "/goals", "/habits", "/finance", "/health", "/health?tab=sleep", "/work", "/learning", "/reflection", "/relationships", "/admin", "/wheel", "/reports", "/knowledge", "/integrations", "/settings"];
 
 async function setup(page: Page) {
   await page.goto("/signup");
