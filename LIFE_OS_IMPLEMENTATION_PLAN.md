@@ -63,10 +63,11 @@ the cron route and the Integrations page, so this work avoids those files until 
 
 | # | Increment | Branch / PR | Migration | Status |
 |---|---|---|---|---|
-| 1 | Plan + Work & Projects hub (Blocked column, all-projects board, rich cards, in-place detail, List and Calendar views) + Tasks labels + Calendar deadlines + Today milestones | `claude/project-thread-2x6q4b` | none | PR open, awaiting review |
-| 2 | Navigation: Sleep inside Health (redirect), Wheel out of nav | — | none | planned |
-| 3 | Habits: scheduled time, reminders via push, weekly rates | — | additive | planned |
-| 4 | Calendar: quick add, project link on events (after PR #14) | — | none | planned |
+| 1 | Plan + Work & Projects hub (Blocked column, all-projects board, rich cards, in-place detail, List and Calendar views) + Tasks labels + Calendar deadlines + Today milestones | `claude/project-thread-2x6q4b` | none | merged (#15) |
+| 2 | Navigation: Work & Projects into Plan, Sleep inside Health (redirect), Wheel out of nav | `claude/project-thread-2x6q4b-nav` | none | merged (#16) |
+| 3 | Habits: scheduled time, reminders via push, weekly rates | `claude/project-thread-2x6q4b-habits` | additive (`20261024000100_habit_reminders.sql`, run in production) | merged (#17) |
+| 4a | Calendar: one-line quick add (date, time, range, duration, repeat, location, reminder) with preview and "More" into the full form | `claude/project-thread-2x6q4b` | none | PR open |
+| 4b | Calendar: project link on events (after Google PR #14 merges) | — | none expected | planned |
 | 5 | Health: programs, PRs, progress charts | — | additive | planned |
 | 6 | Learning: roadmaps, study plans, sessions, reminders | — | additive | planned |
 | 7 | Reflection: meditation links, reading + uploads, reviews | — | additive + storage | planned |
