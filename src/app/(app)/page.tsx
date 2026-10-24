@@ -23,7 +23,7 @@ export default async function HomePage({ searchParams }: PageProps<"/">) {
       <div className="animate-rise">
         {notice}
         <p className="text-xs font-semibold tracking-[0.1em] text-subtle-foreground uppercase">{longDate}</p>
-        <h1 className="mt-2 font-display text-[34px] leading-[1.05] font-semibold tracking-[-0.028em] sm:text-[44px]">{greeting}</h1>
+        <h1 className="mt-2 font-display text-[34px] leading-[1.05] font-normal tracking-[-0.028em] sm:text-[44px]">{greeting}</h1>
         <div className="mt-8 rounded-3xl bg-card shadow-card">
           <EmptyState
             icon={FlaskConical}

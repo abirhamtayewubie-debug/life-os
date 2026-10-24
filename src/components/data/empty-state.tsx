@@ -22,7 +22,7 @@ export function EmptyState({
           <Icon className="size-5" />
         </div>
       )}
-      <p className="font-display text-base font-semibold tracking-[-0.015em] text-foreground">{title}</p>
+      <p className="font-display text-base font-normal tracking-[-0.01em] text-foreground">{title}</p>
       {children && <div className="max-w-sm text-[13px] leading-relaxed text-muted-foreground">{children}</div>}
       {action && <div className="mt-2">{action}</div>}
     </div>

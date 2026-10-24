@@ -246,7 +246,7 @@ function JournalTab({ ws, startNew }: { ws: ReflectionWorkspace; startNew: boole
 function Stat({ label, value }: { label: string; value: number | string }) {
   return (
     <div>
-      <p className="tabular font-display text-xl font-semibold tracking-[-0.025em]">{value}</p>
+      <p className="tabular font-display text-xl font-normal tracking-[-0.01em]">{value}</p>
       <p className="text-[11px] text-muted-foreground">{label}</p>
     </div>
   );

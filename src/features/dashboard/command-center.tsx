@@ -172,7 +172,7 @@ export function CommandCenter({
       <div className="mb-7 flex flex-col gap-5 pt-2 sm:flex-row sm:items-end sm:justify-between">
         <div>
           <p className="text-xs font-semibold tracking-[0.1em] text-subtle-foreground uppercase">{longDate}</p>
-          <h1 className="mt-2 font-display text-[34px] leading-[1.05] font-semibold tracking-[-0.028em] text-balance sm:text-[44px]">{greeting}</h1>
+          <h1 className="mt-2 font-display text-[34px] leading-[1.05] font-normal tracking-[-0.028em] text-balance sm:text-[44px]">{greeting}</h1>
           <p className="mt-2 text-[15px] text-muted-foreground">{daySummary(model, now)}</p>
         </div>
         <div className="flex flex-wrap items-center gap-2">

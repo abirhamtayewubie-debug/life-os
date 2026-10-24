@@ -114,7 +114,7 @@ function Stat({ label, value, sub }: { label: string; value: React.ReactNode; su
   return (
     <div className="grid content-start gap-0.5">
       <span className="text-[11px] text-muted-foreground">{label}</span>
-      <span className="tabular font-display text-xl font-semibold tracking-[-0.025em]">{value}</span>
+      <span className="tabular font-display text-xl font-normal tracking-[-0.01em]">{value}</span>
       {sub && <span className="text-[11px] text-muted-foreground">{sub}</span>}
     </div>
   );
@@ -336,7 +336,7 @@ function BodyTab({ ws, onEdit }: { ws: HealthWorkspace; onEdit: (e: Editor) => v
               <Button size="sm" variant="ghost" className="ml-auto" onClick={() => onEdit({ k: "measure", metric: m })}><Plus /> Add</Button>
             </div>
             <div className="flex items-baseline gap-3">
-              <span className="tabular font-display text-2xl font-semibold tracking-[-0.025em]">{s.latest}<span className="text-sm font-normal text-muted-foreground"> {unit}</span></span>
+              <span className="tabular font-display text-2xl font-normal tracking-[-0.01em]">{s.latest}<span className="text-sm font-normal text-muted-foreground"> {unit}</span></span>
               {s.change !== null && <span className="text-[12px] text-muted-foreground">{s.change > 0 ? "+" : ""}{s.change} {unit} since {formatShortDate(s.points[0].at.slice(0, 10), ws.locale)}</span>}
             </div>
             {s.points.length >= 2 && (

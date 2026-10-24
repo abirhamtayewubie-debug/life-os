@@ -19,7 +19,7 @@ export function FinanceWidget({ m, locale }: { m: DashboardModel; locale: string
             {f.netByCurrency.map((n) => (
               <div key={n.currency} className="rounded-2xl bg-surface-2 px-4 py-3">
                 <p className="text-xs text-muted-foreground">Total · {n.currency}</p>
-                <p className="tabular mt-0.5 font-display text-2xl font-semibold tracking-[-0.025em]">{formatMoney(n, locale)}</p>
+                <p className="tabular mt-0.5 font-display text-2xl font-normal tracking-[-0.01em]">{formatMoney(n, locale)}</p>
               </div>
             ))}
           </div>

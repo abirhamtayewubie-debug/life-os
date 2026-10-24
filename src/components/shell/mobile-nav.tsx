@@ -88,7 +88,7 @@ export function MobileTabBar({ hidden }: { hidden: string[] }) {
       <Sheet open={add} onOpenChange={setAdd}>
         <SheetContent side="bottom" aria-describedby={undefined} className="bg-popover">
           <div className="mx-auto mt-3 h-1.5 w-10 rounded-full bg-input" aria-hidden />
-          <SheetTitle className="px-6 pt-4 pb-3 font-display text-xl font-semibold tracking-[-0.02em]">Add something</SheetTitle>
+          <SheetTitle className="px-6 pt-4 pb-3 font-display text-xl font-normal tracking-[-0.01em]">Add something</SheetTitle>
           <div className="grid grid-cols-4 gap-2 px-4 pb-6">
             {QUICK_ADD.filter((q) => shown(q.module)).map((q) => (
               <button
