@@ -187,7 +187,7 @@ test("foundation flow: sign up, sample data, persisted changes, isolation, remov
   await expect(page.getByRole("button", { name: "Edit evening review" })).toBeVisible();
 
   // Sign out ends the session.
-  await page.getByRole("button", { name: "Account menu" }).click();
+  await page.getByRole("complementary", { name: "Sidebar" }).getByRole("button", { name: "More" }).click();
   await page.getByRole("menuitem", { name: "Sign out" }).click();
   await page.waitForURL(/\/login/);
   await page.goto("/");
