@@ -2,7 +2,7 @@ export type WidgetSize = "sm" | "md" | "lg" | "full";
 
 export type WidgetKey =
   | "briefing" | "priorities" | "agenda" | "deadlines" | "habits" | "goals" | "finance"
-  | "wellness" | "sleep" | "projects" | "journal" | "changes" | "suggestions" | "reminders";
+  | "wellness" | "sleep" | "projects" | "journal" | "changes" | "suggestions" | "reminders" | "week";
 
 export type WidgetDef = { key: WidgetKey; title: string; description: string; defaultSize: WidgetSize; sizes: WidgetSize[] };
 
@@ -12,6 +12,7 @@ export const WIDGETS: WidgetDef[] = [
   { key: "agenda", title: "Agenda", description: "Today's events and what's coming up.", defaultSize: "md", sizes: ["sm", "md", "lg"] },
   { key: "deadlines", title: "Overdue & due soon", description: "Tasks past due or due in the next three days.", defaultSize: "md", sizes: ["sm", "md", "lg"] },
   { key: "reminders", title: "Reminders", description: "Reminders due today.", defaultSize: "sm", sizes: ["sm", "md"] },
+  { key: "week", title: "This week so far", description: "Tasks, habits, workouts, study, meditation and reading this week, counted the same way as Reports.", defaultSize: "md", sizes: ["md", "lg", "full"] },
   { key: "habits", title: "Habits", description: "Today's routines and 30-day consistency.", defaultSize: "md", sizes: ["md", "lg"] },
   { key: "goals", title: "Goals", description: "Active goals and measurable progress.", defaultSize: "md", sizes: ["sm", "md", "lg"] },
   { key: "finance", title: "Money", description: "Balances by currency and budget status.", defaultSize: "md", sizes: ["md", "lg"] },
@@ -28,7 +29,7 @@ export type WidgetPref = { key: WidgetKey; size: WidgetSize; visible: boolean };
 const HIDDEN_BY_DEFAULT: WidgetKey[] = ["briefing", "priorities"];
 
 export const DEFAULT_LAYOUT: WidgetPref[] = [
-  "briefing", "priorities", "agenda", "deadlines", "suggestions", "habits", "finance", "goals",
+  "briefing", "priorities", "agenda", "deadlines", "suggestions", "week", "habits", "finance", "goals",
   "projects", "reminders", "changes", "sleep", "wellness", "journal",
 ].map((key) => {
   const def = WIDGETS.find((w) => w.key === key)!;

@@ -38,7 +38,7 @@ export const AI_MODULES = [
   { key: "knowledge", label: "Knowledge base notes" },
   { key: "reports", label: "Reports" },
   { key: "wheel", label: "Wheel of Life" },
-  { key: "spirit", label: "Reflection (values and daily reviews)" },
+  { key: "spirit", label: "Reflection (values, reviews and meditation)" },
 ] as const;
 export type AiModule = (typeof AI_MODULES)[number]["key"];
 

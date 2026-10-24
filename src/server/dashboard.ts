@@ -6,6 +6,8 @@ import { createSupabaseServerClient } from "@/lib/supabase/server";
 import { buildDashboard, type DashboardModel } from "@/features/dashboard/compute";
 import type { RawLifeData } from "@/features/dashboard/types";
 import { normalizeLayout, type WidgetPref } from "@/features/dashboard/widgets";
+import { weekView } from "@/features/dashboard/week";
+import { getReport } from "./reports";
 import { getViewer, type Viewer } from "./viewer";
 
 export type DashboardPayload = {
@@ -20,18 +22,28 @@ export async function getDashboard(now = new Date()): Promise<DashboardPayload> 
   const viewer = await getViewer();
   if (viewer.mode === "demo") {
     const raw = sampleToRaw(generateSampleSet(now, viewer.profile.timezone, viewer.profile.baseCurrency));
-    return { viewer, model: buildDashboard(raw, now, viewer.profile), layout: normalizeLayout(null), hasAnyData: true, hasSampleData: true };
+    return { viewer, model: { ...buildDashboard(raw, now, viewer.profile), week: await loadWeek(now) }, layout: normalizeLayout(null), hasAnyData: true, hasSampleData: true };
   }
 
-  const [raw, layout] = await Promise.all([loadLifeData(viewer, now), loadLayout()]);
+  const [raw, layout, week] = await Promise.all([loadLifeData(viewer, now), loadLayout(), loadWeek(now)]);
   const all = Object.values(raw).flat() as { source?: string }[];
   return {
     viewer,
-    model: buildDashboard(raw, now, viewer.profile),
+    model: { ...buildDashboard(raw, now, viewer.profile), week },
     layout,
     hasAnyData: all.length > 0,
     hasSampleData: all.some((r) => r.source === "sample"),
   };
+}
+
+/** This week so far, from the same counts as Reports. Today still loads if it fails. */
+async function loadWeek(now: Date) {
+  try {
+    const r = await getReport({ period: "weekly" }, now);
+    return weekView(r.current, r.end);
+  } catch {
+    return null;
+  }
 }
 
 async function loadLayout(): Promise<WidgetPref[]> {

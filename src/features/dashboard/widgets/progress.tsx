@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import Link from "next/link";
-import { Check, FolderKanban, Repeat, Target } from "lucide-react";
+import { BarChart3, Check, FolderKanban, Repeat, Target } from "lucide-react";
 import { EmptyState } from "@/components/data/empty-state";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
@@ -152,6 +152,30 @@ export function ProjectsWidget({ m }: { m: DashboardModel }) {
         </ul>
       ) : (
         <EmptyState compact icon={FolderKanban} title="No active projects" />
+      )}
+    </WidgetCard>
+  );
+}
+
+export function WeekWidget({ m }: { m: DashboardModel }) {
+  const w = m.week;
+  return (
+    <WidgetCard title="This week so far" href={w ? `/reports?period=weekly&date=${w.start}` : "/reports"} hrefLabel="Report"
+      description={w ? `${formatShortDate(w.start)} – ${formatShortDate(w.end)} · ${w.daysWithData} of ${w.days} day${w.days === 1 ? "" : "s"} with something logged` : undefined}>
+      {!w ? (
+        <EmptyState compact icon={BarChart3} title="Couldn't count this week">Open Reports to see the week.</EmptyState>
+      ) : (
+        <ul className="grid grid-cols-2 gap-x-4 gap-y-3 sm:grid-cols-3">
+          {w.items.map((x) => (
+            <li key={x.key} className="min-w-0">
+              <Link href={x.href} className="group grid gap-0.5">
+                <span className="truncate text-[11px] text-muted-foreground group-hover:text-foreground">{x.label}</span>
+                <span className="tabular text-[17px] leading-tight font-semibold tracking-tight">{x.value}</span>
+                {x.hint && <span className="truncate text-[11px] text-subtle-foreground">{x.hint}</span>}
+              </Link>
+            </li>
+          ))}
+        </ul>
       )}
     </WidgetCard>
   );

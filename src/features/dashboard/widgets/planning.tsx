@@ -1,9 +1,10 @@
 "use client";
 
-import { AlarmClock, CalendarPlus, CheckCircle2, Clock, ListChecks, MapPin, Sunrise } from "lucide-react";
+import Link from "next/link";
+import { AlarmClock, CalendarPlus, CheckCircle2, Clock, Flag, FolderKanban, ListChecks, MapPin, Sunrise } from "lucide-react";
 import { EmptyState } from "@/components/data/empty-state";
 import { Badge } from "@/components/ui/badge";
-import { formatShortDate } from "@/lib/dates";
+import { formatShortDate, relativeDay } from "@/lib/dates";
 import { cn } from "@/lib/utils";
 import { findConflicts, type DashboardModel, type EventView } from "../compute";
 import { TaskRow } from "./task-row";
@@ -114,8 +115,24 @@ export function AgendaWidget({ m }: { m: DashboardModel }) {
   );
 }
 
+function ProjectDeadlines({ m }: { m: DashboardModel }) {
+  return (
+    <ul className="divide-y divide-border">
+      {m.projectDeadlines.slice(0, 4).map((x) => (
+        <li key={`${x.kind}-${x.id}`} className="flex items-center gap-2.5 py-2 text-[13px]">
+          {x.kind === "project" ? <FolderKanban className="size-3.5 shrink-0 text-muted-foreground" aria-label="Project" /> : <Flag className="size-3.5 shrink-0 text-muted-foreground" aria-label="Milestone" />}
+          <Link href={`/work?tab=board&project=${x.projectId}`} className="min-w-0 flex-1 truncate hover:underline">
+            {x.title}{x.project && <span className="text-muted-foreground"> · {x.project}</span>}
+          </Link>
+          <span className={cn("shrink-0 text-xs", x.days < 0 ? "text-destructive" : "text-muted-foreground")}>{x.days < 0 ? `${-x.days}d late` : relativeDay(x.dueDate, m.todayKey)}</span>
+        </li>
+      ))}
+    </ul>
+  );
+}
+
 export function DeadlinesWidget({ m }: { m: DashboardModel }) {
-  const empty = !m.overdue.length && !m.dueSoon.length;
+  const empty = !m.overdue.length && !m.dueSoon.length && !m.projectDeadlines.length;
   return (
     <WidgetCard
       title="Overdue & due soon"
@@ -124,7 +141,7 @@ export function DeadlinesWidget({ m }: { m: DashboardModel }) {
       actions={m.overdue.length ? <Badge variant="danger">{m.overdue.length} overdue</Badge> : undefined}
     >
       {empty ? (
-        <EmptyState compact icon={CheckCircle2} title="You're clear">No overdue tasks and nothing due in the next three days.</EmptyState>
+        <EmptyState compact icon={CheckCircle2} title="You're clear">No overdue tasks, nothing due in the next three days and no project dates in the next two weeks.</EmptyState>
       ) : (
         <div className="space-y-3">
           {m.overdue.length > 0 && (
@@ -134,6 +151,12 @@ export function DeadlinesWidget({ m }: { m: DashboardModel }) {
             <div className={cn(m.overdue.length > 0 && "border-t border-border pt-2")}>
               <p className="mb-0.5 text-[11px] font-medium tracking-wide text-muted-foreground uppercase">Due in the next 3 days</p>
               <ul className="divide-y divide-border">{m.dueSoon.slice(0, 4).map((t) => <TaskRow key={t.id} task={t} />)}</ul>
+            </div>
+          )}
+          {m.projectDeadlines.length > 0 && (
+            <div className={cn((m.overdue.length > 0 || m.dueSoon.length > 0) && "border-t border-border pt-2")}>
+              <p className="mb-0.5 text-[11px] font-medium tracking-wide text-muted-foreground uppercase">Project dates, next 2 weeks</p>
+              <ProjectDeadlines m={m} />
             </div>
           )}
         </div>
