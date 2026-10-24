@@ -244,7 +244,7 @@ export function DebtCard({ a }: { a: Account }) {
         <span className="flex flex-wrap items-center gap-1.5 text-[14px] font-medium">{a.name} <ProvenanceBadge source={a.source} /></span>
         <span className="text-[11px] text-muted-foreground">{apr !== null ? `${apr}% a year` : "No interest rate entered"}</span>
       </div>
-      <p className="text-[13px]"><Amount m={owed} className="font-display text-xl font-semibold tracking-[-0.025em]" /> <span className="text-muted-foreground">owed</span></p>
+      <p className="text-[13px]"><Amount m={owed} className="font-display text-xl font-normal tracking-[-0.01em]" /> <span className="text-muted-foreground">owed</span></p>
       {apr === null ? (
         <p className="text-[12px] text-muted-foreground">Add the interest rate to the account to estimate a payoff date.</p>
       ) : (

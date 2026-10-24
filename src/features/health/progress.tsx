@@ -17,7 +17,7 @@ function RecordTile({ label, best, unit, locale }: { label: string; best: Best |
   return (
     <div className="grid content-start gap-0.5 rounded-xl border border-border p-3">
       <span className="text-[11px] text-muted-foreground">{label}</span>
-      <span className="tabular font-display text-xl font-semibold tracking-[-0.025em]">
+      <span className="tabular font-display text-xl font-normal tracking-[-0.01em]">
         {best ? <>{best.value.toLocaleString(locale)}<span className="text-sm font-normal text-muted-foreground"> {unit}</span></> : "–"}
       </span>
       {best && <span className="text-[11px] text-muted-foreground">{[best.detail, formatShortDate(best.date, locale)].filter(Boolean).join(" · ")}</span>}

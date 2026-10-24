@@ -19,11 +19,11 @@ export function SleepWidget({ m }: { m: DashboardModel }) {
         <>
           <div className="mb-3 flex gap-6">
             <div>
-              <p className="tabular font-display text-xl font-semibold tracking-[-0.025em]">{s.avgMinutes ? fmtDur(s.avgMinutes) : "–"}</p>
+              <p className="tabular font-display text-xl font-normal tracking-[-0.01em]">{s.avgMinutes ? fmtDur(s.avgMinutes) : "–"}</p>
               <p className="text-[11px] text-muted-foreground">{s.avgMinutes ? `avg over ${s.nights.length} nights` : "need 3+ nights for an average"}</p>
             </div>
             <div>
-              <p className="tabular font-display text-xl font-semibold tracking-[-0.025em]">{s.avgQuality ?? "–"}<span className="text-sm font-normal text-muted-foreground">/5</span></p>
+              <p className="tabular font-display text-xl font-normal tracking-[-0.01em]">{s.avgQuality ?? "–"}<span className="text-sm font-normal text-muted-foreground">/5</span></p>
               <p className="text-[11px] text-muted-foreground">avg quality</p>
             </div>
           </div>

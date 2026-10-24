@@ -19,7 +19,7 @@ export default async function LoginPage({ searchParams }: PageProps<"/login">) {
 function DemoNotice() {
   return (
     <div>
-      <h1 className="font-display text-[32px] leading-tight font-semibold tracking-[-0.028em]">Demo mode</h1>
+      <h1 className="font-display text-[32px] leading-tight font-normal tracking-[-0.028em]">Demo mode</h1>
       <p className="mt-2 text-sm text-muted-foreground">
         No database is connected yet, so there are no accounts. Add your Supabase URL and publishable key to <code className="font-mono text-xs">.env.local</code> to enable sign-in.
       </p>

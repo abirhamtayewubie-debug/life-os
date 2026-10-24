@@ -28,7 +28,7 @@ function Stat({ label, value, hint }: { label: string; value: string; hint?: str
   return (
     <Card className="grid content-start gap-0.5 p-4">
       <span className="text-[12px] text-muted-foreground">{label}</span>
-      <span className="tabular font-display text-xl font-semibold tracking-[-0.025em]">{value}</span>
+      <span className="tabular font-display text-xl font-normal tracking-[-0.01em]">{value}</span>
       {hint && <span className="text-[11px] text-muted-foreground">{hint}</span>}
     </Card>
   );

@@ -1,34 +1,34 @@
-# Design system
+# Design system: Clay Zen
 
-Calm, confident, made for one person. Porcelain and ink carry the interface; one accent (iris) marks progress and what you can tap.
+Calm, warm, made for one person. Paper and ink carry the interface; clay marks what is active, sage marks growth and done, gold is the warm third. Night mode ("candlelight") keeps every layout and switches to deep, muted tones.
 
 ## Principles
-1. **Fewer, bigger things.** Today leads with the top three, a progress ring and what's next; everything else is one tap away.
-2. **Thumb first.** On phones a floating tab bar (Today, Plan, +, Habits, More) and 44px+ targets. The + opens a quick-add sheet.
-3. **Numbers you feel.** Large tabular figures in the display face, rings and bars instead of small tables.
+1. **Fewer, bigger things.** Tinted tiles with one big number each; everything else is one tap away.
+2. **Thumb first.** On phones a bottom nav and 44px+ targets. The + opens a quick-add sheet.
+3. **Numbers you feel.** Large figures in Fraunces, thin bars and dots instead of small tables.
 4. **Honest labels.** Provenance badges (`Sample`, `Device`, `Estimate`, `AI-suggested`…) sit beside the data they describe.
 5. **Respectful.** Streaks are secondary to consistency rates; no punitive copy; goals can be paused or let go.
+6. **No emoji, no gloss.** Thin line icons (lucide, stroke ~1.6) and a soft flat "clay" shadow.
 
 ## Tokens (`src/app/globals.css`)
-| Token | Light | Dark | Use |
-|---|---|---|---|
-| `background` | porcelain `#f6f6f4` | night `#0b0c0f` | page, sidebar |
-| `surface` / `card` | white | `#15171c` | cards, inputs |
-| `surface-2` | `#f4f4f1` | `#1c1f26` | stat tiles, inset panels |
-| `foreground` / `primary` | ink `#111318` | `#f2f3f5` | text, primary buttons |
-| `muted-foreground` / `subtle-foreground` | slate | slate | secondary / tertiary text |
-| `brand` | iris `#4f46e5` | `#8b8cff` | focus, progress, done states, active nav |
-| `accent` | iris tint | deep iris | soft buttons, icon tiles, "worth a look" |
-| `inverse` | ink | indigo night | the one dark "Next up" card, sign-in panel |
-| `success` / `warning` / `destructive` | green / amber / brick | lifted | status only |
-| `chart-1…5` | iris, teal, amber, plum, slate | lifted | categorical series |
-| radius | cards 22px (`rounded-3xl`), controls 12px | | |
-| `shadow-card` / `shadow-raised` | hairline ring + soft drop | ring | cards / overlays |
+Raw palette (decoration, tiles, illustration):
 
-Every text pairing meets WCAG AA in both themes (checked with axe on every screen).
+| Token | Light (paper) | Dark (candlelight) |
+|---|---|---|
+| `paper` / `background` | `#f3efe6` | `#1c1b18` |
+| `surface` / `card` | `#fbf8f1` | `#24231f` |
+| `ink` / `foreground` / `primary` | `#2b2a26` | `#ece6d8` |
+| `border` (lines) | `#e1d9c7` | `#2f2d28` |
+| `clay` · `sage` · `gold` · `stone` | `#c2734f` · `#7d8f6e` · `#d6a15f` · `#b8ab8f` | same |
+| `tint-clay` · `tint-sage` · `tint-sand` · `tint-mist` | `#f2e0d4` · `#e2e7da` · `#ede4d0` · `#e6e2da` | `#352820` · `#283026` · `#302b22` · `#2a2925` |
+| `hero-*` | sky `#efe6d6 → #ead7c6`, hills `#a9b59c` / `#7d8f6e`, clay sun | dusk sky, deep hills, gold sun |
+
+Semantic text tokens are nudged darker than the raw greys so small text meets WCAG AA: `muted-foreground` `#6b6658` / `#a39d8c`, `subtle-foreground` (faint) `#736e60` / `#948d7e`, `brand` (clay text, links, active) `#a3542f` / `#d38360`. `inverse` is the ink card (balance, assistant), which turns cream in night mode. `chart-1…5`: clay, sage, gold, stone, muted.
+
+Shape: tiles 22–24px (`rounded-3xl` = 24px), hero and big cards 28px, icon buttons 16px squircles, chips fully rounded. Depth: `shadow-clay` = `0 3px 0 rgb(80 60 30 / .08)` (dark `rgb(0 0 0 / .35)`), used by `shadow-card`.
 
 ## Type
-Inter for UI and Inter Tight (`font-display`) for headings and big numbers, both via `next/font`. Geist Mono for codes. Page titles 32–44px with tight tracking; card titles 15px semibold; body 14–15px; meta 12–13px. Numbers use `tabular-nums` (`.tabular`).
+Fraunces (`font-display`, weight 300–400) for headings, big numbers and list item titles, with an italic accent word (`.accent-italic` clay, `.accent-italic-sage`). Inter 400–600 for UI. Section labels use `.label-caps` (11px, uppercase, 0.2em tracking, faint). Geist Mono for codes. Numbers use `tabular-nums` (`.tabular`).
 
 ## Layout
 - Desktop-first 12-column grid (`xl`), 6 columns on tablets (`md`), single column on phones.

@@ -35,7 +35,7 @@ function DayRing({ done, total }: { done: number; total: number }) {
         )}
       </svg>
       <div className="absolute inset-0 flex flex-col items-center justify-center" aria-hidden>
-        <span className="tabular font-display text-[30px] leading-none font-semibold tracking-[-0.03em]">{done}/{total}</span>
+        <span className="tabular font-display text-[30px] leading-none font-normal tracking-[-0.01em]">{done}/{total}</span>
         <span className="mt-1 text-xs text-muted-foreground">done today</span>
       </div>
     </div>
@@ -46,7 +46,7 @@ function Stat({ label, value, href, tone }: { label: string; value: React.ReactN
   const body = (
     <>
       <span className={cn("text-xs text-muted-foreground", tone && "text-[color-mix(in_oklch,var(--warning)_75%,var(--foreground))]")}>{label}</span>
-      <span className="tabular font-display text-xl font-semibold tracking-[-0.02em]">{value}</span>
+      <span className="tabular font-display text-xl font-normal tracking-[-0.01em]">{value}</span>
     </>
   );
   const cls = cn("flex flex-col gap-0.5 rounded-2xl bg-surface-2 px-4 py-3", tone && "bg-warning/12", href && "transition-colors hover:bg-muted");
@@ -69,7 +69,7 @@ export function TodayHero({ m, now }: { m: DashboardModel; now: Date }) {
           <div className="hidden sm:block"><DayRing done={m.stats.doneToday} total={total} /></div>
           <div className="min-w-0 flex-1">
             <div className="flex items-center gap-2">
-              <h2 className="font-display text-lg font-semibold tracking-[-0.02em]">Your top three</h2>
+              <h2 className="font-display text-lg font-normal tracking-[-0.01em]">Your top three</h2>
               {focus[0] && <ProvenanceBadge source={focus[0].source} />}
               <span className="tabular ml-auto text-[13px] text-muted-foreground sm:hidden">{m.stats.doneToday} of {total} done</span>
             </div>
@@ -100,10 +100,10 @@ export function TodayHero({ m, now }: { m: DashboardModel; now: Date }) {
           <>
             <div className="flex items-center justify-between gap-3">
               <span className="text-xs font-semibold tracking-[0.1em] text-inverse-accent uppercase">{startsIn(next, now)}</span>
-              {conflictIds.has(next.id) && <span className="text-xs font-medium text-[#ffb86b]">Overlaps</span>}
+              {conflictIds.has(next.id) && <span className="text-xs font-medium text-inverse-accent">Overlaps</span>}
             </div>
             <div>
-              <h2 className="font-display text-2xl leading-tight font-semibold tracking-[-0.025em]">{next.title}</h2>
+              <h2 className="font-display text-2xl leading-tight font-normal tracking-[-0.01em]">{next.title}</h2>
               <p className="tabular mt-1.5 text-sm text-inverse-muted">
                 {next.timeLabel}
                 {next.location && ` · ${next.location}`}
@@ -116,7 +116,7 @@ export function TodayHero({ m, now }: { m: DashboardModel; now: Date }) {
                     <span className="tabular w-[4.5rem] shrink-0 text-inverse-muted">{e.timeLabel.split(" – ")[0]}</span>
                     <span className="min-w-0">
                       <span className="block truncate">{e.title}</span>
-                      {conflictIds.has(e.id) && <span className="text-xs text-[#ffb86b]">Overlaps another event</span>}
+                      {conflictIds.has(e.id) && <span className="text-xs text-inverse-accent">Overlaps another event</span>}
                     </span>
                   </li>
                 ))}
@@ -127,7 +127,7 @@ export function TodayHero({ m, now }: { m: DashboardModel; now: Date }) {
           <>
             <CalendarCheck2 className="size-7 text-inverse-accent" strokeWidth={1.6} aria-hidden />
             <div>
-              <h2 className="font-display text-2xl leading-tight font-semibold tracking-[-0.025em]">The rest of today is clear</h2>
+              <h2 className="font-display text-2xl leading-tight font-normal tracking-[-0.01em]">The rest of today is clear</h2>
               <p className="mt-1.5 text-sm text-inverse-muted">
                 {tomorrow ? <>Next: {tomorrow.title}, {formatShortDate(tomorrow.dateKey)}{!tomorrow.all_day && ` at ${tomorrow.timeLabel.split(" – ")[0]}`}.</> : "Nothing on your calendar this week."}
               </p>

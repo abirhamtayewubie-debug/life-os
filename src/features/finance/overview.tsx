@@ -45,7 +45,7 @@ export function Overview() {
             <RateNote asOf={nw.oldestRate} className="ml-auto" />
           </div>
           {nw.total ? (
-            <p className="font-display text-[32px] leading-none sm:text-[40px] font-semibold tracking-[-0.035em]"><Amount m={nw.total} /></p>
+            <p className="font-display text-[32px] leading-none sm:text-[40px] font-normal tracking-[-0.01em]"><Amount m={nw.total} /></p>
           ) : (
             <p className="text-[13px] text-muted-foreground">No total yet. Add an exchange rate to {ws.baseCurrency} to combine your currencies.</p>
           )}

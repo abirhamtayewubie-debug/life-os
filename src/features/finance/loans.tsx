@@ -90,10 +90,10 @@ function Total({ label, items, count }: { label: string; items: { amount: string
     <Card className="grid content-start gap-1 p-4">
       <span className="text-[12px] text-muted-foreground">{label}</span>
       {items.length === 0 ? (
-        <span className="font-display text-xl font-semibold tracking-[-0.025em] text-muted-foreground">Nothing</span>
+        <span className="font-display text-xl font-normal tracking-[-0.01em] text-muted-foreground">Nothing</span>
       ) : (
         <div className="flex flex-wrap gap-x-4 gap-y-1">
-          {items.map((m) => <Amount key={m.currency} m={m} className="font-display text-xl font-semibold tracking-[-0.025em]" />)}
+          {items.map((m) => <Amount key={m.currency} m={m} className="font-display text-xl font-normal tracking-[-0.01em]" />)}
         </div>
       )}
       <span className="text-[11px] text-muted-foreground">{count === 0 ? "No open loans" : `${count} open loan${count === 1 ? "" : "s"}`}{items.length > 1 ? " · each currency shown on its own" : ""}</span>
@@ -153,7 +153,7 @@ function LoanCard({ r }: { r: Row }) {
       </div>
 
       <p className="text-[13px]">
-        <Amount m={s.outstanding} className="font-display text-xl font-semibold tracking-[-0.025em]" />{" "}
+        <Amount m={s.outstanding} className="font-display text-xl font-normal tracking-[-0.01em]" />{" "}
         <span className="text-muted-foreground">{s.settled ? "left" : borrowed ? "left to pay back" : "still owed to you"}</span>
       </p>
       <div className="grid gap-1.5">

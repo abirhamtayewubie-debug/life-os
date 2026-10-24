@@ -19,7 +19,7 @@ export default function AuthLayout({ children }: LayoutProps<"/">) {
         <div className="relative flex h-full flex-col justify-between p-12">
           <div className="ml-auto w-full max-w-sm rounded-[28px] bg-white/6 p-6 shadow-[inset_0_0_0_1px_rgb(255_255_255/0.08)] backdrop-blur">
             <p className="text-xs font-semibold tracking-[0.1em] text-inverse-accent uppercase">Today</p>
-            <p className="mt-2 font-display text-2xl font-semibold tracking-[-0.025em]">Your top three</p>
+            <p className="mt-2 font-display text-2xl font-normal tracking-[-0.01em]">Your top three</p>
             <ul className="mt-4 grid gap-3">
               {PREVIEW.map((p) => (
                 <li key={p.title} className="flex items-center gap-3">
@@ -33,7 +33,7 @@ export default function AuthLayout({ children }: LayoutProps<"/">) {
             </ul>
           </div>
           <div>
-            <p className="max-w-lg font-display text-[40px] leading-[1.08] font-semibold tracking-[-0.03em] text-balance">
+            <p className="max-w-lg font-display text-[40px] leading-[1.08] font-normal tracking-[-0.01em] text-balance">
               Understand your life, prioritise what matters, and turn goals into consistent action.
             </p>
             <div className="mt-8 flex gap-6 text-sm text-inverse-muted">

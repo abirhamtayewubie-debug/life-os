@@ -55,7 +55,7 @@ function DialogFooter({ className, ...props }: React.ComponentProps<"div">) {
 }
 
 function DialogTitle({ className, ...props }: React.ComponentProps<typeof DialogPrimitive.Title>) {
-  return <DialogPrimitive.Title className={cn("font-display text-lg font-semibold tracking-[-0.02em]", className)} {...props} />;
+  return <DialogPrimitive.Title className={cn("font-display text-lg font-normal tracking-[-0.01em]", className)} {...props} />;
 }
 
 function DialogDescription({ className, ...props }: React.ComponentProps<typeof DialogPrimitive.Description>) {

@@ -3,100 +3,110 @@
 @custom-variant dark (&:where(.dark, .dark *));
 
 /*
- * Life OS design tokens. See docs/DESIGN_SYSTEM.md.
- * Porcelain and ink carry the interface; one accent (iris) marks progress,
- * focus and what you can tap. Amber only when something needs attention.
+ * Life OS design tokens: "Clay Zen". See docs/DESIGN_SYSTEM.md.
+ * Paper and ink carry the interface; clay marks what is active, sage marks
+ * growth and done, gold is the warm third. Night mode is "candlelight".
+ * The raw palette (--clay, --tint-*) is for illustration and tiles; text uses
+ * the semantic tokens, which are nudged darker where needed for AA contrast.
  */
 :root {
-  --background: #f6f6f4;
-  --foreground: #111318;
-  --surface: #ffffff;
-  --surface-2: #f4f4f1;
+  --paper: #f3efe6;
+  --ink: #2b2a26;
+  --clay: #c2734f;
+  --sage: #7d8f6e;
+  --gold: #d6a15f;
+  --stone: #b8ab8f;
+  --tint-clay: #f2e0d4;
+  --tint-sage: #e2e7da;
+  --tint-sand: #ede4d0;
+  --tint-mist: #e6e2da;
+  --hero-sky-top: #efe6d6;
+  --hero-sky-bottom: #ead7c6;
+  --hero-hill-back: #a9b59c;
+  --hero-hill-front: #7d8f6e;
+  --hero-sun: #c2734f;
+
+  --background: var(--paper);
+  --foreground: var(--ink);
+  --surface: #fbf8f1;
+  --surface-2: #f0eadd;
   --card: var(--surface);
   --card-foreground: var(--foreground);
-  --popover: #ffffff;
+  --popover: var(--surface);
   --popover-foreground: var(--foreground);
-  --primary: #111318;
-  --primary-foreground: #ffffff;
-  --secondary: #efefec;
-  --secondary-foreground: #111318;
-  --muted: #efefec;
-  --muted-foreground: #565b68;
-  --subtle-foreground: #646978;
-  --accent: #eeeeff;
-  --accent-foreground: #3730a3;
-  --brand: #4f46e5;
-  --brand-foreground: #ffffff;
-  --destructive: #b42318;
-  --destructive-foreground: #ffffff;
-  --success: #0f7a55;
-  --warning: #b45309;
+  --primary: var(--ink);
+  --primary-foreground: #fbf8f1;
+  --secondary: var(--tint-mist);
+  --secondary-foreground: var(--ink);
+  --muted: var(--tint-mist);
+  --muted-foreground: #6b6658;
+  --subtle-foreground: #736e60;
+  --accent: var(--tint-clay);
+  --accent-foreground: #9c5232;
+  --brand: #a3542f;
+  --brand-foreground: #fbf8f1;
+  --destructive: #a8432a;
+  --destructive-foreground: #fbf8f1;
+  --success: #56684a;
+  --warning: #92601f;
   --info: var(--brand);
-  --border: #e6e6e1;
-  --input: #d9d9d3;
-  --ring: #4f46e5;
-  --chart-1: #4f46e5;
-  --chart-2: #0e8a8a;
-  --chart-3: #d08a1e;
-  --chart-4: #b5468c;
-  --chart-5: #8a8f9c;
+  --border: #e1d9c7;
+  --input: #d6ccb6;
+  --ring: var(--clay);
+  --chart-1: var(--clay);
+  --chart-2: var(--sage);
+  --chart-3: var(--gold);
+  --chart-4: var(--stone);
+  --chart-5: #8a8475;
   --sidebar: var(--background);
-  --sidebar-foreground: #4a4f5c;
-  --sidebar-accent: #ecece8;
-  --sidebar-active: #ffffff;
-  --sidebar-border: #e6e6e1;
-  --inverse: #111318;
-  --inverse-foreground: #f2f3f5;
-  --inverse-muted: #b4b8c4;
-  --inverse-accent: #a5a6ff;
-  --radius: 0.75rem;
-  --shadow-card: 0 0 0 1px rgb(16 18 24 / 0.05), 0 1px 2px rgb(16 18 24 / 0.04), 0 10px 28px -18px rgb(16 18 24 / 0.16);
-  --shadow-raised: 0 0 0 1px rgb(16 18 24 / 0.06), 0 12px 32px -12px rgb(16 18 24 / 0.22);
+  --sidebar-foreground: var(--ink);
+  --sidebar-accent: var(--tint-mist);
+  --sidebar-active: var(--surface);
+  --sidebar-border: var(--border);
+  --inverse: var(--ink);
+  --inverse-foreground: #f3efe6;
+  --inverse-muted: #bdb6a6;
+  --inverse-accent: #e0a585;
+  --radius: 0.875rem;
+  --shadow-clay: 0 3px 0 rgb(80 60 30 / 0.08);
+  --shadow-card: var(--shadow-clay);
+  --shadow-raised: 0 3px 0 rgb(80 60 30 / 0.08), 0 18px 40px -16px rgb(80 60 30 / 0.28);
 }
 
 .dark {
-  --background: #0b0c0f;
-  --foreground: #f2f3f5;
-  --surface: #15171c;
-  --surface-2: #1c1f26;
-  --card: var(--surface);
-  --card-foreground: var(--foreground);
-  --popover: #1a1c22;
-  --popover-foreground: var(--foreground);
-  --primary: #f2f3f5;
-  --primary-foreground: #0b0c0f;
-  --secondary: #1f222a;
-  --secondary-foreground: #f2f3f5;
-  --muted: #1f222a;
-  --muted-foreground: #a3a8b5;
-  --subtle-foreground: #8f94a1;
-  --accent: #23244a;
-  --accent-foreground: #c7c8ff;
-  --brand: #8b8cff;
-  --brand-foreground: #0b0c0f;
-  --destructive: #f0705a;
-  --destructive-foreground: #0b0c0f;
-  --success: #5cc99a;
-  --warning: #f5b454;
-  --border: #24262d;
-  --input: #2f323b;
-  --ring: #8b8cff;
-  --chart-1: #8b8cff;
-  --chart-2: #4fc4c0;
-  --chart-3: #f0b45a;
-  --chart-4: #e07ab8;
-  --chart-5: #8f94a1;
-  --sidebar: var(--background);
-  --sidebar-foreground: #a3a8b5;
-  --sidebar-accent: #17191e;
-  --sidebar-active: #1c1f26;
-  --sidebar-border: #1c1e24;
-  --inverse: #1d1e38;
-  --inverse-foreground: #f2f3f5;
-  --inverse-muted: #b4b8c4;
-  --inverse-accent: #a5a6ff;
-  --shadow-card: 0 0 0 1px rgb(255 255 255 / 0.06), 0 1px 2px rgb(0 0 0 / 0.3);
-  --shadow-raised: 0 0 0 1px rgb(255 255 255 / 0.08), 0 16px 36px -12px rgb(0 0 0 / 0.6);
+  --paper: #1c1b18;
+  --ink: #ece6d8;
+  --tint-clay: #352820;
+  --tint-sage: #283026;
+  --tint-sand: #302b22;
+  --tint-mist: #2a2925;
+  --hero-sky-top: #2a231d;
+  --hero-sky-bottom: #33271f;
+  --hero-hill-back: #3a4334;
+  --hero-hill-front: #283026;
+  --hero-sun: var(--gold);
+
+  --surface: #24231f;
+  --surface-2: #2a2925;
+  --primary-foreground: #1c1b18;
+  --muted-foreground: #a39d8c;
+  --subtle-foreground: #948d7e;
+  --accent-foreground: #e0a585;
+  --brand: #d38360;
+  --brand-foreground: #1c1b18;
+  --destructive: #e07a5a;
+  --destructive-foreground: #1c1b18;
+  --success: #a3b493;
+  --warning: #d6a15f;
+  --border: #2f2d28;
+  --input: #3b3832;
+  --chart-5: #8f887a;
+  --inverse: #ece6d8;
+  --inverse-foreground: #1c1b18;
+  --inverse-muted: #5c5649;
+  --inverse-accent: #a3542f;
+  --shadow-clay: 0 3px 0 rgb(0 0 0 / 0.35);
+  --shadow-raised: 0 3px 0 rgb(0 0 0 / 0.35), 0 18px 40px -12px rgb(0 0 0 / 0.6);
 }
 
 @theme inline {
@@ -141,8 +151,16 @@
   --color-inverse-foreground: var(--inverse-foreground);
   --color-inverse-muted: var(--inverse-muted);
   --color-inverse-accent: var(--inverse-accent);
+  --color-clay: var(--clay);
+  --color-sage: var(--sage);
+  --color-gold: var(--gold);
+  --color-stone: var(--stone);
+  --color-tint-clay: var(--tint-clay);
+  --color-tint-sage: var(--tint-sage);
+  --color-tint-sand: var(--tint-sand);
+  --color-tint-mist: var(--tint-mist);
   --font-sans: var(--font-inter), ui-sans-serif, system-ui, sans-serif;
-  --font-display: var(--font-inter-tight), var(--font-inter), ui-sans-serif, system-ui, sans-serif;
+  --font-display: var(--font-fraunces), ui-serif, Georgia, serif;
   --font-mono: var(--font-geist-mono), ui-monospace, monospace;
   --radius-sm: calc(var(--radius) - 4px);
   --radius-md: calc(var(--radius) - 2px);
@@ -151,6 +169,7 @@
   --radius-2xl: calc(var(--radius) + 8px);
   --radius-3xl: calc(var(--radius) + 10px);
   --shadow-card: var(--shadow-card);
+  --shadow-clay: var(--shadow-clay);
   --shadow-raised: var(--shadow-raised);
   --animate-fade-in: fade-in 220ms cubic-bezier(0.2, 0, 0, 1);
   --animate-rise: rise 360ms cubic-bezier(0.2, 0, 0, 1) both;
@@ -199,7 +218,8 @@
   }
   h1, h2, h3 {
     font-family: var(--font-display);
-    letter-spacing: -0.015em;
+    font-weight: 400;
+    letter-spacing: -0.01em;
   }
   :focus-visible {
     outline: 2px solid var(--ring);
@@ -213,6 +233,25 @@
 @layer utilities {
   .tabular {
     font-variant-numeric: tabular-nums;
+  }
+  /* Small uppercase section label: OVERVIEW, PLAN, RECENT. */
+  .label-caps {
+    font-size: 11px;
+    font-weight: 500;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    color: var(--subtle-foreground);
+  }
+  /* The italic accent word in a Fraunces heading: "Life *areas*". */
+  .accent-italic {
+    font-style: italic;
+    font-weight: 300;
+    color: var(--brand);
+  }
+  .accent-italic-sage {
+    font-style: italic;
+    font-weight: 300;
+    color: var(--success);
   }
 }
 
@@ -231,8 +270,8 @@
     align-items: center;
     justify-content: center;
     gap: 22px;
-    background: #111318;
-    color: #f2f3f5;
+    background: #2b2a26;
+    color: #f3efe6;
     pointer-events: none;
     animation: launch-out 420ms cubic-bezier(0.4, 0, 0.2, 1) 1500ms forwards;
   }
