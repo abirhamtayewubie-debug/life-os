@@ -10,6 +10,7 @@ export type DueReminder = {
   timezone: string;
   recurrence_rule: string | null;
   habit_id?: string | null;
+  channels?: string[];
 };
 
 /** A habit reminder found more than this late was missed; showing it now would only confuse. */
@@ -23,8 +24,12 @@ const STALE_MS = 2 * 3600_000;
  * so the cron sender and an open tab can both run this safely.
  * Returns the ids to leave unsent. Works with either the service client or
  * a user's RLS-scoped client.
+ *
+ * `advance` limits which reminders this caller may move on. The in-app check
+ * must leave device reminders where they are, or the cron sender would find
+ * nothing due and the push would never go out.
  */
-export async function settleHabitReminders(db: SupabaseClient, due: DueReminder[], now: Date): Promise<Set<string>> {
+export async function settleHabitReminders(db: SupabaseClient, due: DueReminder[], now: Date, advance: (r: DueReminder) => boolean = () => true): Promise<Set<string>> {
   const quiet = new Set<string>();
   const list = due.filter((r) => r.habit_id && r.recurrence_rule);
   if (!list.length) return quiet;
@@ -43,7 +48,7 @@ export async function settleHabitReminders(db: SupabaseClient, due: DueReminder[
     const day = localDateKey(at, r.timezone);
     const mine = (logs.data ?? []).filter((l) => l.habit_id === r.habit_id);
     if (!h || h.paused_at || h.archived_at || now.getTime() - at.getTime() > STALE_MS || habitTargetMet(h, mine, day)) quiet.add(r.id);
-    if (!h?.scheduled_time) continue;
+    if (!h?.scheduled_time || !advance(r)) continue;
     const next = nextHabitReminder(r.recurrence_rule!, h.scheduled_time, r.timezone, new Date(Math.max(now.getTime(), at.getTime())));
     if (next) {
       await db.from("reminders").update({ remind_at: next.toISOString(), snoozed_until: null, status: "scheduled" }).eq("id", r.id).eq("remind_at", r.remind_at);
