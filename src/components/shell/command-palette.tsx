@@ -4,10 +4,10 @@ import { useEffect, useRef, useState } from "react";
 import { usePathname, useRouter } from "next/navigation";
 import { Command } from "cmdk";
 import { useTheme } from "next-themes";
-import { BookHeart, Briefcase, CalendarDays, CalendarPlus, FilePlus, FileText, LayoutGrid, ListChecks, ListPlus, Monitor, Moon, Orbit, Repeat, Search, Sun, Sunset, Target, UserPlus, Users, Wallet, Smile, Dumbbell, BedDouble } from "lucide-react";
+import { BookHeart, Briefcase, CalendarDays, CalendarPlus, FilePlus, FileText, LayoutGrid, ListChecks, ListPlus, Monitor, Moon, Repeat, Search, Sun, Sunset, Target, UserPlus, Users, Wallet, Smile, Dumbbell, BedDouble } from "lucide-react";
 import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
 import { Kbd } from "@/components/ui/kbd";
-import { BUILT_THROUGH_PHASE, MODULES } from "@/lib/modules";
+import { BUILT_THROUGH_PHASE, NAV_MODULES } from "@/lib/modules";
 import { searchRecords, type SearchHit } from "@/server/actions/search";
 
 /** Fire app-wide actions without prop drilling (e.g. open the evening review). */
@@ -135,12 +135,11 @@ export function CommandPalette({ hidden }: { hidden: string[] }) {
               <Command.Item className={item} onSelect={() => goAndFire("/work", APP_EVENTS.newProject)}><Briefcase /> New project</Command.Item>
               <Command.Item className={item} onSelect={() => goAndFire("/knowledge", APP_EVENTS.newNote)}><FilePlus /> New note</Command.Item>
               <Command.Item className={item} onSelect={() => goAndFire("/reflection", APP_EVENTS.newJournal)}><BookHeart /> New journal entry</Command.Item>
-              <Command.Item className={item} onSelect={() => goAndFire("/wheel", APP_EVENTS.newAssessment)}><Orbit /> Wheel of Life check-in</Command.Item>
               <Command.Item className={item} onSelect={() => goAndFire("/relationships", APP_EVENTS.newPerson)}><UserPlus /> Add a person</Command.Item>
               <Command.Item className={item} onSelect={() => goAndFire("/finance", APP_EVENTS.newTransaction)}><Wallet /> New transaction</Command.Item>
               <Command.Item className={item} onSelect={() => goAndFire("/health", APP_EVENTS.newCheckin)}><Smile /> Mood &amp; energy check-in</Command.Item>
               <Command.Item className={item} onSelect={() => run(() => (pathname === "/health" ? window.dispatchEvent(new Event(APP_EVENTS.newWorkout)) : router.push("/health?tab=workouts&new=1")))}><Dumbbell /> Log a workout</Command.Item>
-              <Command.Item className={item} onSelect={() => goAndFire("/sleep", APP_EVENTS.newSleep)}><BedDouble /> Log sleep</Command.Item>
+              <Command.Item className={item} onSelect={() => run(() => { router.push("/health?tab=sleep&new=1"); setTimeout(() => window.dispatchEvent(new Event(APP_EVENTS.newSleep)), 150); })}><BedDouble /> Log sleep</Command.Item>
               <Command.Item className={item} onSelect={() => run(() => { router.push("/"); setTimeout(() => window.dispatchEvent(new Event(APP_EVENTS.eveningReview)), 150); })}>
                 <Sunset /> Start evening review
               </Command.Item>
@@ -149,7 +148,7 @@ export function CommandPalette({ hidden }: { hidden: string[] }) {
               </Command.Item>
             </Command.Group>
             <Command.Group heading="Go to" className={heading}>
-              {MODULES.filter((m) => m.required || !hidden.includes(m.key)).map((m) => (
+              {NAV_MODULES.filter((m) => m.required || !hidden.includes(m.key)).map((m) => (
                 <Command.Item key={m.key} value={`${m.label} ${m.summary}`} className={item} onSelect={() => run(() => router.push(m.href))}>
                   <m.icon /> {m.label}
                   {m.phase > BUILT_THROUGH_PHASE && <span className="ml-auto text-[11px] text-subtle-foreground">Phase {m.phase}</span>}

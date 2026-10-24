@@ -2,7 +2,7 @@ export type WidgetSize = "sm" | "md" | "lg" | "full";
 
 export type WidgetKey =
   | "briefing" | "priorities" | "agenda" | "deadlines" | "habits" | "goals" | "finance"
-  | "wellness" | "sleep" | "projects" | "wheel" | "journal" | "changes" | "suggestions" | "reminders";
+  | "wellness" | "sleep" | "projects" | "journal" | "changes" | "suggestions" | "reminders";
 
 export type WidgetDef = { key: WidgetKey; title: string; description: string; defaultSize: WidgetSize; sizes: WidgetSize[] };
 
@@ -18,7 +18,6 @@ export const WIDGETS: WidgetDef[] = [
   { key: "projects", title: "Projects", description: "Active projects, progress and deadline risk.", defaultSize: "md", sizes: ["sm", "md", "lg"] },
   { key: "wellness", title: "Mood & energy", description: "Your self-reported check-ins this week.", defaultSize: "sm", sizes: ["sm", "md"] },
   { key: "sleep", title: "Sleep", description: "Logged sleep for the last seven nights.", defaultSize: "sm", sizes: ["sm", "md"] },
-  { key: "wheel", title: "Life balance", description: "Your latest Wheel of Life ratings.", defaultSize: "md", sizes: ["md", "lg"] },
   { key: "changes", title: "Since yesterday", description: "What changed since yesterday.", defaultSize: "sm", sizes: ["sm", "md"] },
   { key: "suggestions", title: "Suggestions", description: "Rule-based suggestions with the evidence behind them.", defaultSize: "md", sizes: ["md", "lg"] },
   { key: "journal", title: "Notes & journal", description: "Recent notes and journal entries.", defaultSize: "sm", sizes: ["sm", "md"] },
@@ -30,7 +29,7 @@ const HIDDEN_BY_DEFAULT: WidgetKey[] = ["briefing", "priorities"];
 
 export const DEFAULT_LAYOUT: WidgetPref[] = [
   "briefing", "priorities", "agenda", "deadlines", "suggestions", "habits", "finance", "goals",
-  "projects", "wheel", "reminders", "changes", "sleep", "wellness", "journal",
+  "projects", "reminders", "changes", "sleep", "wellness", "journal",
 ].map((key) => {
   const def = WIDGETS.find((w) => w.key === key)!;
   // The Today hero already shows the top three, so these two start hidden.

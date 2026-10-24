@@ -14,7 +14,7 @@ const fmtDur = (min: number) => `${Math.floor(min / 60)}h ${String(min % 60).pad
 export function SleepWidget({ m }: { m: DashboardModel }) {
   const s = m.sleep;
   return (
-    <WidgetCard title="Sleep" description={s ? "Last 7 nights · self-reported quality" : undefined} href="/sleep" source={s?.source}>
+    <WidgetCard title="Sleep" description={s ? "Last 7 nights · self-reported quality" : undefined} href="/health?tab=sleep" source={s?.source}>
       {s ? (
         <>
           <div className="mb-3 flex gap-6">

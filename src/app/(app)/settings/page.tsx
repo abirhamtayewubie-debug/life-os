@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { Check, Lock, X } from "lucide-react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { PageHeader } from "@/components/shell/page-header";
@@ -94,6 +95,9 @@ export default async function SettingsPage() {
             <SampleDataControls hasSample={hasSample} demo={demo} />
             {demo ? <p className="text-sm text-muted-foreground">Export and account deletion work once a database is connected; demo mode stores nothing of yours.</p>
               : <><DataExport /><DeleteAccount /></>}
+            <p className="text-[13px] text-muted-foreground">
+              Wheel of Life is no longer in the menu. Your past check-ins are kept and included in exports; you can still <Link href="/wheel" className="text-foreground underline underline-offset-2">open them</Link>.
+            </p>
           </div>
         </Section>
         <Section id="privacy" title="Privacy & security" description="What is true about your data right now.">

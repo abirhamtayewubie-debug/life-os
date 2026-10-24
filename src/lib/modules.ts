@@ -18,6 +18,11 @@ export type ModuleDef = {
   summary: string;
   /** Module cannot be hidden from navigation. */
   required?: boolean;
+  /**
+   * Kept for its data, settings and old links but not listed in navigation:
+   * Sleep lives inside Health & Fitness, Wheel of Life was retired from the menu.
+   */
+  inNav?: false;
   /** What the module will let you do, shown on its page until it ships. */
   capabilities: string[];
 };
@@ -35,6 +40,9 @@ export const MODULES: ModuleDef[] = [
   { key: "tasks", label: "Tasks & Reminders", href: "/tasks", icon: ListChecks, group: "plan", phase: 2,
     summary: "Priorities, due dates, subtasks, dependencies, recurring tasks and reminders.",
     capabilities: ["Priorities, tags, due dates and saved views", "Subtasks and dependencies", "Recurring tasks and reminders with snooze", "Links to goals and projects"] },
+  { key: "work", label: "Work & Projects", href: "/work", icon: Briefcase, group: "plan", phase: 3,
+    summary: "Projects, milestones, Kanban, time tracking and weekly productivity.",
+    capabilities: ["Projects with milestones and deadlines", "Kanban and timeline views", "Time tracking", "Project budgets linked to Finance"] },
   { key: "goals", label: "Goals & Vision", href: "/goals", icon: Target, group: "plan", phase: 3,
     summary: "Life vision down to quarterly objectives, milestones and daily actions.",
     capabilities: ["Vision → long-term → annual → quarterly hierarchy", "Milestones and progress metrics", "Pause, revise or let go of goals without penalty", "AI help breaking ambitions into steps (Phase 6)"] },
@@ -47,12 +55,9 @@ export const MODULES: ModuleDef[] = [
   { key: "health", label: "Health & Fitness", href: "/health", icon: HeartPulse, group: "life", phase: 5,
     summary: "Workouts, measurements, nutrition and how you feel, manual or device-recorded.",
     capabilities: ["Workout plans, sets, reps and weights", "Body measurements and trends", "Mood, energy and wellness check-ins", "Manual vs device data always labelled"] },
-  { key: "sleep", label: "Sleep & Recovery", href: "/sleep", icon: Moon, group: "life", phase: 5,
+  { key: "sleep", label: "Sleep & Recovery", href: "/health?tab=sleep", icon: Moon, group: "life", phase: 5, inNav: false,
     summary: "Bedtime, wake time, duration and quality, with consistency trends.",
     capabilities: ["Bedtime, wake time and subjective quality", "Routine consistency", "Optional device imports", "Trends alongside your own mood and energy logs"] },
-  { key: "work", label: "Work & Projects", href: "/work", icon: Briefcase, group: "life", phase: 3,
-    summary: "Projects, milestones, Kanban, time tracking and weekly productivity.",
-    capabilities: ["Projects with milestones and deadlines", "Kanban and timeline views", "Time tracking", "Project budgets linked to Finance"] },
   { key: "learning", label: "Learning", href: "/learning", icon: GraduationCap, group: "life", phase: 3,
     summary: "Books, courses and skills, with learning plans tied to your goals.",
     capabilities: ["Books, courses and resources", "Skills with current and target levels", "Learning plans linked to goals", "Notes and reflections"] },
@@ -65,7 +70,7 @@ export const MODULES: ModuleDef[] = [
   { key: "admin", label: "Home & Admin", href: "/admin", icon: House, group: "life", phase: 3,
     summary: "Household tasks, renewals, documents and life admin.",
     capabilities: ["Household routines and chores", "Renewals and expiry dates", "Important documents and records", "Links to Finance bills"] },
-  { key: "wheel", label: "Wheel of Life", href: "/wheel", icon: Orbit, group: "reflect", phase: 3,
+  { key: "wheel", label: "Wheel of Life", href: "/wheel", icon: Orbit, group: "reflect", phase: 3, inNav: false,
     summary: "Subjective 1–10 ratings across life areas, compared over time.",
     capabilities: ["Customisable categories", "Current and desired ratings", "Quarterly reassessment and history", "Improvement goals linked to categories"] },
   { key: "reports", label: "Reports", href: "/reports", icon: BarChart3, group: "reflect", phase: 5,
@@ -89,6 +94,9 @@ export const MODULE_GROUP_LABELS: Record<ModuleGroup, string> = {
   reflect: "Reflect",
   system: "System",
 };
+
+/** Modules listed in the sidebar, phone menu, ⌘K and the visibility toggles. */
+export const NAV_MODULES = MODULES.filter((m) => m.inNav !== false);
 
 export function getModule(key: string): ModuleDef {
   const m = MODULES.find((mod) => mod.key === key);
