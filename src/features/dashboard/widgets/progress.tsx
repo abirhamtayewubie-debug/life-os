@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import Link from "next/link";
 import { Check, FolderKanban, Repeat, Target } from "lucide-react";
 import { EmptyState } from "@/components/data/empty-state";
 import { Badge } from "@/components/ui/badge";
@@ -124,7 +125,7 @@ export function ProjectsWidget({ m }: { m: DashboardModel }) {
           {m.projects.map((p) => (
             <li key={p.id}>
               <div className="flex items-center justify-between gap-3">
-                <p className="min-w-0 truncate text-[13px]">{p.name}</p>
+                <Link href={`/work?tab=board&project=${p.id}`} className="min-w-0 truncate text-[13px] hover:underline">{p.name}</Link>
                 {p.risk === "late" && <Badge variant="danger">Past due</Badge>}
                 {p.risk === "watch" && <Badge variant="warning">At risk</Badge>}
               </div>
@@ -138,7 +139,14 @@ export function ProjectsWidget({ m }: { m: DashboardModel }) {
                 <span className="tabular">{p.done}/{p.done + p.open}</span> tasks done
                 {p.dueDate && <> · due {relativeDay(p.dueDate, m.todayKey)}</>}
                 <span className="capitalize"> · {p.area}</span>
+                {p.blocked > 0 && <span className="text-warning"> · {p.blocked} blocked</span>}
+                {p.overdue > 0 && <span className="text-destructive"> · {p.overdue} overdue</span>}
               </p>
+              {p.nextMilestone && (
+                <p className="mt-0.5 truncate text-[11px] text-subtle-foreground">
+                  Next milestone: <span className="text-muted-foreground">{p.nextMilestone.title}</span> · {relativeDay(p.nextMilestone.dueDate, m.todayKey)}
+                </p>
+              )}
             </li>
           ))}
         </ul>

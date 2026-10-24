@@ -76,8 +76,8 @@ export function TaskItem({ task, all, now, tz, locale, onOpen }: { task: TaskRec
             <span className="inline-flex items-center gap-1"><ListTree className="size-3" aria-hidden />{subtasks.filter((s) => s.status === "done").length}/{subtasks.length}</span>
           )}
           {blockers.length > 0 && <Badge variant="warning"><Link2 aria-hidden />Waiting on {blockers.length}</Badge>}
-          {task.status === "in_progress" && <Badge variant="brand">In progress</Badge>}
-          {task.status === "waiting" && <Badge variant="outline">Waiting</Badge>}
+          {task.status === "in_progress" && <Badge variant="brand">Doing</Badge>}
+          {task.status === "waiting" && <Badge variant="warning">Blocked</Badge>}
           <span className="capitalize">{task.area}</span>
           {task.tags.map((g) => <span key={g.id} className="rounded bg-muted px-1.5 py-px text-[10px]">#{g.name}</span>)}
           <ProvenanceBadge source={task.source} />

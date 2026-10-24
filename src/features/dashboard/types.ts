@@ -79,6 +79,8 @@ export type RawProject = {
   source: DataSource;
 };
 
+export type RawMilestone = { id: string; project_id: string | null; title: string; due_date: string | null; completed_at: string | null };
+
 export type RawAccount = {
   id: string;
   name: string;
@@ -153,6 +155,8 @@ export type RawLifeData = {
   habitLogs: RawHabitLog[];
   goals: RawGoal[];
   projects: RawProject[];
+  /** Project milestones; optional so older callers and tests stay valid. */
+  milestones?: RawMilestone[];
   accounts: RawAccount[];
   categories: RawCategory[];
   budgets: RawBudget[];

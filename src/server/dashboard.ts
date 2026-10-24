@@ -85,11 +85,15 @@ async function loadLifeData(viewer: Extract<Viewer, { mode: "live" }>, now: Date
 
   const activeProjects = must(projects, "projects") as RawLifeData["projects"];
   let projectTasks: RawLifeData["tasks"] = [];
+  let milestones: NonNullable<RawLifeData["milestones"]> = [];
   if (activeProjects.length) {
-    projectTasks = must(
-      await supabase.from("tasks").select(taskCols).is("archived_at", null).in("project_id", activeProjects.map((p) => p.id)).limit(2000),
-      "project tasks",
-    ) as RawLifeData["tasks"];
+    const ids = activeProjects.map((p) => p.id);
+    const [pt, ms] = await Promise.all([
+      supabase.from("tasks").select(taskCols).is("archived_at", null).in("project_id", ids).limit(2000),
+      supabase.from("milestones").select("id, project_id, title, due_date, completed_at").in("project_id", ids).is("completed_at", null).limit(500),
+    ]);
+    projectTasks = must(pt, "project tasks") as RawLifeData["tasks"];
+    milestones = must(ms, "milestones") as NonNullable<RawLifeData["milestones"]>;
   }
   const taskMap = new Map<string, RawLifeData["tasks"][number]>();
   for (const t of [...(must(openTasks, "tasks") as RawLifeData["tasks"]), ...(must(recentDone, "tasks") as RawLifeData["tasks"]), ...projectTasks]) taskMap.set(t.id, t);
@@ -108,6 +112,7 @@ async function loadLifeData(viewer: Extract<Viewer, { mode: "live" }>, now: Date
     habitLogs: must(habitLogs, "habit logs") as RawLifeData["habitLogs"],
     goals: must(goals, "goals") as RawLifeData["goals"],
     projects: activeProjects,
+    milestones,
     accounts: (must(balances, "balances") as BalanceRow[])
       .filter((b) => accountMeta.get(b.account_id)?.include_in_net_worth !== false)
       .map((b) => ({ id: b.account_id, name: b.name, kind: b.kind, currency: b.currency, is_liability: b.is_liability, balance: String(b.balance), source: accountMeta.get(b.account_id)?.source ?? "manual" })),

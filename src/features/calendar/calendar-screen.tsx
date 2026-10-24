@@ -3,7 +3,7 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
-import { ChevronLeft, ChevronRight, CircleDot, MapPin, Plus, Repeat, TriangleAlert, X } from "lucide-react";
+import { ChevronLeft, ChevronRight, CircleDot, Diamond, Flag, MapPin, Plus, Repeat, TriangleAlert, X } from "lucide-react";
 import { EmptyState } from "@/components/data/empty-state";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -12,7 +12,7 @@ import { conflictIds, isSyncedEvent, layoutDay, onDay, shiftAnchor, type Calenda
 import { formatTime, localDateKey, weekdayOf } from "@/lib/dates";
 import { cn } from "@/lib/utils";
 import { EventForm, draftFor, type EventDraft } from "./event-form";
-import { KIND_LABEL, taskDayKey, type CalendarData, type CalendarEvent, type CalendarTask } from "./types";
+import { KIND_LABEL, taskDayKey, taskHref, type CalendarData, type CalendarEvent, type CalendarTask } from "./types";
 
 type Occ = Occurrence<CalendarEvent>;
 
@@ -209,10 +209,16 @@ function EventChip({ o, conflict, tz, locale, onClick, compact }: { o: Occ; conf
   );
 }
 
+function TaskMark({ t, className }: { t: CalendarTask; className?: string }) {
+  if (t.kind === "milestone") return <Diamond className={cn("size-3 shrink-0 text-warning", className)} aria-label="Milestone" />;
+  if (t.kind === "project_due") return <Flag className={cn("size-3 shrink-0 text-brand", className)} aria-label="Project due" />;
+  return <span className={cn("size-2.5 shrink-0 rounded-[3px] border border-current", className)} aria-hidden />;
+}
+
 function TaskChip({ t }: { t: CalendarTask }) {
   return (
-    <Link href={`/tasks?view=all&open=${t.id}`} className="flex min-w-0 items-center gap-1.5 truncate rounded px-1.5 text-[12px] leading-5 text-muted-foreground hover:bg-muted hover:text-foreground">
-      <span className="size-2.5 shrink-0 rounded-[3px] border border-current" aria-hidden />
+    <Link href={taskHref(t)} className="flex min-w-0 items-center gap-1.5 truncate rounded px-1.5 text-[12px] leading-5 text-muted-foreground hover:bg-muted hover:text-foreground">
+      <TaskMark t={t} />
       <span className="truncate">{t.title}</span>
     </Link>
   );
@@ -415,10 +421,10 @@ function Agenda({
             ))}
             {(tasksByDay.get(k) ?? []).map((t) => (
               <li key={t.id} className="px-3 py-2 text-[13px]">
-                <Link href={`/tasks?view=all&open=${t.id}`} className="flex min-w-0 items-center gap-3 text-muted-foreground hover:text-foreground">
+                <Link href={taskHref(t)} className="flex min-w-0 items-center gap-3 text-muted-foreground hover:text-foreground">
                   <span className="h-8 w-1 shrink-0" aria-hidden />
-                  <span className="w-20 shrink-0 text-[12px] sm:w-24">{t.due_at ? formatTime(t.due_at, tz, data.locale) : "Task due"}</span>
-                  <span className="size-3 shrink-0 rounded-[3px] border border-current" aria-hidden />
+                  <span className="w-20 shrink-0 text-[12px] sm:w-24">{t.due_at ? formatTime(t.due_at, tz, data.locale) : t.kind === "milestone" ? "Milestone" : t.kind === "project_due" ? "Project due" : "Task due"}</span>
+                  <TaskMark t={t} className="size-3" />
                   <span className="min-w-0 truncate">{t.title}</span>
                 </Link>
               </li>

@@ -395,6 +395,7 @@ export function sampleToRaw(s: SampleSet): RawLifeData {
     habitLogs: s.habit_logs,
     goals: s.goals.map((g) => ({ ...g, updated_at: g.target_date ?? "" })),
     projects: s.projects,
+    milestones: s.milestones,
     accounts: s.financial_accounts.map((a) => ({
       id: a.id, name: a.name, kind: a.kind, currency: a.currency, is_liability: false,
       balance: balance(a.id, a.currency, a.opening_balance), source: a.source,

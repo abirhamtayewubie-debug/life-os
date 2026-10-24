@@ -61,7 +61,16 @@ export type DashboardModel = {
   reminders: { id: string; title: string; at: string; timeLabel: string; snoozed: boolean; source: DataSource }[];
   habits: HabitView[];
   goals: (RawLifeData["goals"][number] & { pct: number | null })[];
-  projects: { id: string; name: string; area: string; status: string; dueDate: string | null; open: number; done: number; pct: number | null; risk: "none" | "watch" | "late"; source: DataSource }[];
+  projects: {
+    id: string; name: string; area: string; status: string; dueDate: string | null; open: number; done: number; pct: number | null;
+    risk: "none" | "watch" | "late";
+    /** Open top-level tasks marked Blocked (the `waiting` status). */
+    blocked: number;
+    /** Open tasks past their deadline. */
+    overdue: number;
+    nextMilestone: { title: string; dueDate: string } | null;
+    source: DataSource;
+  }[];
   finance: FinanceView | null;
   wellness: { days: { date: string; mood: number | null; energy: number | null }[]; source: DataSource } | null;
   sleep: { nights: { date: string; minutes: number; quality: number | null }[]; avgMinutes: number | null; avgQuality: number | null; source: DataSource } | null;
@@ -375,7 +384,15 @@ export function buildDashboard(d: RawLifeData, now: Date, profile: ViewerProfile
         if (days < 0 && openCount > 0) risk = "late";
         else if (days <= 7 && (pct ?? 0) < 70) risk = "watch";
       }
-      return { id: p.id, name: p.name, area: p.area, status: p.status, dueDate: p.due_date, open: openCount, done, pct, risk, source: p.source };
+      const blocked = pt.filter((t) => t.status === "waiting").length;
+      const overdue = pt.filter((t) => OPEN.includes(t.status) && ((t.due_date && t.due_date < todayKey) || (t.due_at && new Date(t.due_at) < now))).length;
+      const nextMs = (d.milestones ?? [])
+        .filter((m) => m.project_id === p.id && !m.completed_at && m.due_date)
+        .sort((a, b) => a.due_date!.localeCompare(b.due_date!))[0];
+      return {
+        id: p.id, name: p.name, area: p.area, status: p.status, dueDate: p.due_date, open: openCount, done, pct, risk, blocked, overdue,
+        nextMilestone: nextMs ? { title: nextMs.title, dueDate: nextMs.due_date! } : null, source: p.source,
+      };
     })
     .sort((a, b) => (a.dueDate ?? "9999").localeCompare(b.dueDate ?? "9999"));
 
@@ -570,6 +587,16 @@ function computeSuggestions(m: DashboardModel): Suggestion[] {
       text: `${atRisk.map((p) => p.name).join(", ")} ${atRisk.length > 1 ? "are" : "is"} at risk of missing ${atRisk.length > 1 ? "their" : "its"} deadline.`,
       evidence: atRisk.map((p) => `${p.name}: ${p.pct ?? 0}% of tasks done, due ${p.dueDate ? formatShortDate(p.dueDate) : "–"}`).join("; "),
       href: "/work",
+    });
+  }
+  const blocked = m.projects.filter((p) => p.blocked > 0);
+  if (blocked.length) {
+    const n = blocked.reduce((a, p) => a + p.blocked, 0);
+    out.push({
+      id: "projects-blocked",
+      text: `${n} project task${n > 1 ? "s are" : " is"} blocked. Clearing what ${n > 1 ? "they wait" : "it waits"} on may unlock more than starting something new.`,
+      evidence: blocked.map((p) => `${p.name}: ${p.blocked} blocked`).join("; "),
+      href: "/work?tab=board",
     });
   }
   return out.slice(0, 5);
