@@ -363,6 +363,16 @@ export function generateSampleSet(now: Date, tz: string, baseCurrency = "ETB", i
       }
     }
   }
+  // A program to show how plans work; workouts above stay unlinked so loading sample data needs no program rows.
+  const program = { id: id(), name: "Full body, 3 days", description: "Squat, push and pull each session. Add 2.5 kg when every set hits the top of the range.", goal_id: gHealth.id as string | null, archived_at: null as string | null, source: S };
+  const workout_programs = [program];
+  const program_exercises = ([
+    ["Day A", "Squat", 3, 6, 8, "62.5", 120], ["Day A", "Push-up", 3, 10, 15, null, 60], ["Day A", "Dumbbell row", 3, 8, 12, "16", 90],
+    ["Day B", "Deadlift", 3, 5, 5, "80", 150], ["Day B", "Overhead press", 3, 6, 8, "30", 120], ["Day B", "Plank", 3, null, null, null, 60],
+  ] as const).map(([day_label, exercise, target_sets, reps_min, reps_max, kg, rest_seconds], i) => ({
+    id: id(), program_id: program.id, day_label, position: i + 1, exercise, target_sets, reps_min: reps_min as number | null, reps_max: reps_max as number | null,
+    target_weight: kg as string | null, weight_unit: (kg === null ? null : "kg") as "kg" | null, rest_seconds, notes: null as string | null,
+  }));
   const body_measurements = [
     ...[82.4, 82.1, 81.9, 81.8, 81.4, 81.3, 81.0, 80.9].map((v, i) => ({ id: id(), measured_at: at(-49 + i * 7, "06:45"), metric: "weight" as const, value: v.toFixed(1), unit: "kg", source: S })),
     ...[64, 62, 61].map((v, i) => ({ id: id(), measured_at: at(-42 + i * 21, "06:50"), metric: "resting_hr" as const, value: String(v), unit: "bpm", source: S })),
@@ -375,7 +385,7 @@ export function generateSampleSet(now: Date, tz: string, baseCurrency = "ETB", i
   return {
     wheel_categories, wheel_assessments, wheel_ratings, goals, projects, tasks, calendar_events, reminders,
     habits, habit_logs, financial_accounts, transaction_categories, transactions, budgets: [budget], budget_lines, exchange_rates, recurring_transactions, savings_goals,
-    wellness_logs, sleep_logs, workouts, workout_sets, body_measurements, hydration_logs, journal_entries, notes, note_links, daily_reviews,
+    wellness_logs, sleep_logs, workouts, workout_sets, workout_programs, program_exercises, body_measurements, hydration_logs, journal_entries, notes, note_links, daily_reviews,
     milestones, time_entries, people, interactions, important_dates, learning_items, skills, admin_items, personal_values,
   };
 }

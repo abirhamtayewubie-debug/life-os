@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { useEffect, useState } from "react";
 import { usePathname, useRouter } from "next/navigation";
-import { Activity, Droplets, HeartPulse, Pencil, Plus, Ruler, Smile } from "lucide-react";
+import { Activity, Droplets, HeartPulse, Pencil, Plus, Ruler, Smile, Trophy } from "lucide-react";
 import { Bar, BarChart, CartesianGrid, Line, LineChart, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
 import { ConfirmDelete } from "@/components/data/confirm-delete";
 import { EmptyState } from "@/components/data/empty-state";
@@ -18,21 +18,26 @@ import { cn } from "@/lib/utils";
 import { addWater, deleteCheckin, deleteMeasurements, deleteWater, deleteWorkout } from "@/server/actions/health";
 import { useServerAction } from "@/features/dashboard/use-server-action";
 import { weekStart } from "@/features/work/stats";
-import { CheckinForm, MeasurementForm, WorkoutForm } from "./forms";
+import { CheckinForm, MeasurementForm, WorkoutForm, type WorkoutStart } from "./forms";
+import { ProgramForm, ProgramsTab } from "./programs";
+import { ProgressTab } from "./progress";
+import { recordsByWorkout } from "./records";
 import { SleepScreen } from "./sleep-screen";
 import { averageOf, formatMinutes, hydrationByDay, metricSeries, preferredUnit, volumeByExercise, wellnessByDay, workoutSummary, type BodyMetric } from "./metrics";
-import { METRIC_LABEL, SCALE_LABEL, type HealthWorkspace, type MeasurementRow, type WellnessLog, type Workout } from "./types";
+import { METRIC_LABEL, SCALE_LABEL, type HealthWorkspace, type MeasurementRow, type WellnessLog, type Workout, type WorkoutProgram } from "./types";
 
-export type HealthTab = "today" | "workouts" | "sleep" | "body" | "trends";
+export type HealthTab = "today" | "workouts" | "programs" | "progress" | "sleep" | "body" | "trends";
 const TABS: { v: HealthTab; label: string }[] = [
   { v: "today", label: "Today" },
   { v: "workouts", label: "Workouts" },
+  { v: "programs", label: "Programs" },
+  { v: "progress", label: "Progress & PRs" },
   { v: "sleep", label: "Sleep & recovery" },
   { v: "body", label: "Body" },
   { v: "trends", label: "Mood & energy" },
 ];
 
-type Editor = { k: "checkin"; x: WellnessLog | null } | { k: "workout"; x: Workout | null } | { k: "measure"; metric?: BodyMetric | "blood_pressure" };
+type Editor = { k: "checkin"; x: WellnessLog | null } | { k: "workout"; x: Workout | null; start?: WorkoutStart } | { k: "measure"; metric?: BodyMetric | "blood_pressure" } | { k: "program"; x: WorkoutProgram | null };
 
 export const tooltipStyle = { background: "var(--color-popover)", border: "1px solid var(--color-border)", borderRadius: 8, fontSize: 12 };
 export const axisTick = { fill: "var(--color-muted-foreground)", fontSize: 10 };
@@ -40,7 +45,7 @@ export const axisTick = { fill: "var(--color-muted-foreground)", fontSize: 10 };
 export function HealthScreen({ ws, tab, startNew = false }: { ws: HealthWorkspace; tab: HealthTab; startNew?: boolean }) {
   const router = useRouter();
   const pathname = usePathname();
-  const [editor, setEditor] = useState<Editor | null>(startNew && tab !== "sleep" ? { k: tab === "workouts" ? "workout" : tab === "body" ? "measure" : "checkin", x: null } as Editor : null);
+  const [editor, setEditor] = useState<Editor | null>(startNew && tab !== "sleep" && tab !== "progress" ? { k: tab === "workouts" ? "workout" : tab === "programs" ? "program" : tab === "body" ? "measure" : "checkin", x: null } as Editor : null);
   const close = () => setEditor(null);
 
   useEffect(() => {
@@ -51,7 +56,10 @@ export function HealthScreen({ ws, tab, startNew = false }: { ws: HealthWorkspac
     return () => { window.removeEventListener("lifeos:new-checkin", onCheckin); window.removeEventListener("lifeos:new-workout", onWorkout); };
   }, []);
 
-  const title = editor?.k === "checkin" ? (editor.x ? "Edit check-in" : "How are you?") : editor?.k === "workout" ? (editor.x ? "Edit workout" : "Log a workout") : "Add a measurement";
+  const title = editor?.k === "checkin" ? (editor.x ? "Edit check-in" : "How are you?")
+    : editor?.k === "workout" ? (editor.x ? "Edit workout" : editor.start ? editor.start.activity : "Log a workout")
+    : editor?.k === "program" ? (editor.x ? "Edit program" : "New program")
+    : "Add a measurement";
 
   return (
     <div className="grid grid-cols-[minmax(0,1fr)] gap-5">
@@ -66,8 +74,9 @@ export function HealthScreen({ ws, tab, startNew = false }: { ws: HealthWorkspac
             ))}
           </div>
         </div>
-        <div className={cn("ml-auto flex gap-2", tab === "sleep" && "hidden")}>
+        <div className={cn("ml-auto flex gap-2", (tab === "sleep" || tab === "progress") && "hidden")}>
           {tab === "workouts" ? <Button size="sm" onClick={() => setEditor({ k: "workout", x: null })}><Plus /> Workout</Button>
+            : tab === "programs" ? <Button size="sm" onClick={() => setEditor({ k: "program", x: null })}><Plus /> Program</Button>
             : tab === "body" ? <Button size="sm" onClick={() => setEditor({ k: "measure" })}><Plus /> Measurement</Button>
             : <Button size="sm" onClick={() => setEditor({ k: "checkin", x: null })}><Plus /> Check-in</Button>}
         </div>
@@ -75,6 +84,8 @@ export function HealthScreen({ ws, tab, startNew = false }: { ws: HealthWorkspac
 
       {tab === "today" ? <TodayTab ws={ws} onEdit={setEditor} />
         : tab === "workouts" ? <WorkoutsTab ws={ws} onEdit={setEditor} />
+        : tab === "programs" ? <ProgramsTab ws={ws} onStart={(start) => setEditor({ k: "workout", x: null, start })} onEdit={(x) => setEditor({ k: "program", x })} />
+        : tab === "progress" ? <ProgressTab ws={ws} />
         : tab === "sleep" ? <SleepScreen ws={ws} startNew={startNew} />
         : tab === "body" ? <BodyTab ws={ws} onEdit={setEditor} />
         : <TrendsTab ws={ws} />}
@@ -82,13 +93,14 @@ export function HealthScreen({ ws, tab, startNew = false }: { ws: HealthWorkspac
       <p className="text-[11px] text-muted-foreground">Health entries are private to you. They&apos;re summaries of what you logged, not medical advice, and nothing here diagnoses anything.</p>
 
       <Dialog open={!!editor} onOpenChange={(o) => !o && close()}>
-        <DialogContent className="max-w-xl">
+        <DialogContent className={editor?.k === "program" ? "max-w-2xl" : "max-w-xl"}>
           <DialogHeader>
             <DialogTitle>{title}</DialogTitle>
             <DialogDescription className="sr-only">{title}</DialogDescription>
           </DialogHeader>
           {editor?.k === "checkin" && <CheckinForm ws={ws} log={editor.x} onDone={close} onCancel={close} />}
-          {editor?.k === "workout" && <WorkoutForm ws={ws} workout={editor.x} onDone={close} onCancel={close} />}
+          {editor?.k === "workout" && <WorkoutForm ws={ws} workout={editor.x} start={editor.start} onDone={close} onCancel={close} />}
+          {editor?.k === "program" && <ProgramForm ws={ws} program={editor.x} onDone={close} onCancel={close} />}
           {editor?.k === "measure" && <MeasurementForm ws={ws} initial={editor.metric} onDone={close} onCancel={close} />}
         </DialogContent>
       </Dialog>
@@ -206,6 +218,7 @@ function WorkoutsTab({ ws, onEdit }: { ws: HealthWorkspace; onEdit: (e: Editor) 
     return { start, label: formatShortDate(start, ws.locale), minutes: s.minutes, sessions: s.sessions };
   });
   const unit = ws.system === "imperial" ? "lb" : "kg";
+  const prs = recordsByWorkout(ws.exerciseLog, unit);
 
   if (!ws.workouts.length) {
     return (
@@ -268,6 +281,11 @@ function WorkoutsTab({ ws, onEdit }: { ws: HealthWorkspace; onEdit: (e: Editor) 
                 {vol.length > 0 && (
                   <span className="text-[12px] text-muted-foreground">
                     {vol.map((x) => `${x.exercise} ${x.sets}×${x.volume ? ` (${x.volume.toLocaleString(ws.locale)} ${unit} moved)` : ""}`).join(" · ")}
+                  </span>
+                )}
+                {prs.get(w.id) && (
+                  <span className="flex flex-wrap items-center gap-1 text-[12px] font-medium text-brand">
+                    <Trophy className="size-3.5" aria-hidden /> New record{prs.get(w.id)!.length > 1 ? "s" : ""}: {prs.get(w.id)!.join(", ")}
                   </span>
                 )}
                 {w.notes && <span className="text-[12px] text-muted-foreground">{w.notes}</span>}

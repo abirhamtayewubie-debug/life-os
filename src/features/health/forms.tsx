@@ -54,20 +54,24 @@ export function CheckinForm({ ws, log, onDone, onCancel }: { ws: HealthWorkspace
 
 /* ------------------------------------------------------------------------ */
 
-type SetRow = { exercise: string; reps: string; weight: string; unit: "kg" | "lb"; seconds: string; km: string };
+export type SetRow = { exercise: string; reps: string; weight: string; unit: "kg" | "lb"; seconds: string; km: string };
+/** A workout started from a program day: pre-filled, and remembered as coming from it. */
+export type WorkoutStart = { programId: string; day: string; activity: string; goalId: string | null; sets: SetRow[] };
 const PRESETS = ["Run", "Walk", "Strength", "Cycling", "Swimming", "Football", "Yoga", "Stretching"];
 
-export function WorkoutForm({ ws, workout, onDone, onCancel }: { ws: HealthWorkspace; workout: Workout | null; onDone: () => void; onCancel: () => void }) {
+export function WorkoutForm({ ws, workout, start, onDone, onCancel }: { ws: HealthWorkspace; workout: Workout | null; start?: WorkoutStart; onDone: () => void; onCancel: () => void }) {
   const unit = ws.system === "imperial" ? "lb" : "kg";
   const { v, set, err, pending, submit } = useActionForm(() => ({
     date: workout?.performed_on ?? ws.today,
     time: workout?.started_at ? clock(localMinutes(workout.started_at, ws.timezone)) : "",
-    activity: workout?.activity ?? "",
+    activity: workout?.activity ?? start?.activity ?? "",
     duration: workout?.duration_minutes?.toString() ?? "",
     effort: workout?.perceived_effort?.toString() ?? "",
     notes: workout?.notes ?? "",
-    goalId: workout?.goal_id ?? "",
-    sets: (workout?.sets ?? []).map((s): SetRow => ({
+    goalId: workout?.goal_id ?? start?.goalId ?? "",
+    programId: workout?.program_id ?? start?.programId ?? "",
+    programDay: workout?.program_day ?? start?.day ?? "",
+    sets: start && !workout ? start.sets : (workout?.sets ?? []).map((s): SetRow => ({
       exercise: s.exercise, reps: s.reps?.toString() ?? "", weight: s.weight ? String(Number(s.weight)) : "", unit: s.weight_unit ?? unit,
       seconds: s.duration_seconds?.toString() ?? "", km: s.distance_m ? String(Number(s.distance_m) / 1000) : "",
     })),
