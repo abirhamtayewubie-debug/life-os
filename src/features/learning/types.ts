@@ -16,8 +16,16 @@ export type LearningItem = {
   started_on: string | null;
   finished_on: string | null;
   notes: string | null;
+  /** Reading: pages, and an uploaded file (kept privately in Storage; opened through /api/files/reading/[id]). */
+  total_pages: number | null;
+  current_page: number | null;
+  file_name: string | null;
+  file_size: number | null;
+  file_type: string | null;
   source: DataSource;
 };
+
+export const LEARNING_ITEM_COLUMNS = "id, goal_id, kind, title, author, url, status, progress_pct, started_on, finished_on, notes, total_pages, current_page, file_name, file_size, file_type, source";
 
 export type Skill = {
   id: string;
@@ -52,8 +60,13 @@ export type Roadmap = {
 };
 
 export type StudySession = {
-  id: string; studied_on: string; minutes: number; roadmap_id: string | null; learning_item_id: string | null; step_id: string | null; notes: string | null; source: DataSource;
+  id: string; studied_on: string; minutes: number; roadmap_id: string | null; learning_item_id: string | null; step_id: string | null; notes: string | null;
+  /** Pages read in this session, when it was reading. */
+  page_from: number | null; page_to: number | null;
+  source: DataSource;
 };
+
+export const STUDY_SESSION_COLUMNS = "id, studied_on, minutes, roadmap_id, learning_item_id, step_id, notes, page_from, page_to, source";
 
 export type LearningWorkspace = {
   items: LearningItem[];
@@ -69,6 +82,10 @@ export type LearningWorkspace = {
 };
 
 export const SESSION_HISTORY_DAYS = 120;
+
+/** What the private `reading` bucket accepts (the bucket enforces the same list and size). */
+export const BOOK_FILE_TYPES = ["application/pdf", "application/epub+zip", "text/plain", "text/markdown", "image/jpeg", "image/png", "image/webp"] as const;
+export const MAX_BOOK_FILE_BYTES = 50 * 1024 * 1024;
 
 export const LEARNING_KIND_LABEL: Record<LearningKind, string> = { book: "Book", course: "Course", article: "Article", video: "Video", podcast: "Podcast", practice: "Practice" };
 export const LEARNING_STATUS_LABEL: Record<LearningStatus, string> = { planned: "Planned", in_progress: "In progress", completed: "Finished", dropped: "Dropped" };

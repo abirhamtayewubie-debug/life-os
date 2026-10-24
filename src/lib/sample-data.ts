@@ -353,6 +353,21 @@ export function generateSampleSet(now: Date, tz: string, baseCurrency = "ETB", i
     id: id(), studied_on: addDays(today, d), minutes: [30, 25, 40, 30, 20, 35, 30, 45, 30, 25, 30, 20][i], roadmap_id: roadmap.id as string | null,
     learning_item_id: (i < 6 ? englishCourse.id : null) as string | null, step_id: null as string | null, notes: null as string | null, source: S,
   }));
+  // Demo-only reading details (not seeded into real accounts): pages on the books and a few reading sessions.
+  const noFile = { file_name: null as string | null, file_size: null as number | null, file_type: null as string | null };
+  const demo_learning_items = learning_items.map((it, i) => ({
+    ...it, ...noFile,
+    total_pages: ([null, 304, 456, null] as (number | null)[])[i], current_page: ([null, 106, 456, null] as (number | null)[])[i],
+    ...(i === 1 ? { file_name: "Thinking with Type (sample).pdf", file_size: 8_400_000, file_type: "application/pdf" } : {}),
+  }));
+  const typeBook = learning_items[1];
+  const demo_study_sessions = [
+    ...study_sessions.map((x) => ({ ...x, page_from: null as number | null, page_to: null as number | null })),
+    ...([[-9, 25, 61, 78], [-6, 30, 79, 90], [-4, 20, 91, 98], [-1, 15, 99, 106]] as const).map(([d, minutes, from, to]) => ({
+      id: id(), studied_on: addDays(today, d), minutes, roadmap_id: null as string | null, learning_item_id: typeBook.id as string | null, step_id: null as string | null,
+      notes: null as string | null, page_from: from as number | null, page_to: to as number | null, source: S,
+    })),
+  ];
   const admin = (kind: "renewal" | "document" | "record", title: string, category: string, due: number | null, repeat: number | null, location: string | null) => ({
     id: id(), kind, title, category, due_on: due === null ? null : addDays(today, due), repeat_months: repeat, remind_days_before: 14,
     location, reference: null as string | null, notes: null as string | null, completed_at: null as string | null, source: S,
@@ -427,7 +442,7 @@ export function generateSampleSet(now: Date, tz: string, baseCurrency = "ETB", i
     habits, habit_logs, financial_accounts, transaction_categories, transactions, budgets: [budget], budget_lines, exchange_rates, recurring_transactions, savings_goals,
     wellness_logs, sleep_logs, workouts, workout_sets, workout_programs, program_exercises, body_measurements, hydration_logs, journal_entries, notes, note_links, daily_reviews,
     milestones, time_entries, people, interactions, important_dates, learning_items, skills, learning_roadmaps, learning_steps, study_sessions, admin_items, personal_values,
-    meditation_links, meditation_sessions, demo_reviews,
+    meditation_links, meditation_sessions, demo_reviews, demo_learning_items, demo_study_sessions,
   };
 }
 

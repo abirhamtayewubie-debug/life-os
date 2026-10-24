@@ -4,6 +4,7 @@ import { revalidatePath } from "next/cache";
 import { z } from "zod";
 import { addDays, localDateKey } from "@/lib/dates";
 import { habitReminderRule, nextHabitReminder } from "@/lib/habit-reminder";
+import { BOOK_FILE_TYPES, MAX_BOOK_FILE_BYTES } from "@/features/learning/types";
 import { AREAS } from "@/features/tasks/types";
 import { DEMO_RESULT, type ActionResult } from "./result";
 import { liveContext } from "./guard";
@@ -24,8 +25,12 @@ const itemSchema = z
     finishedOn: optionalDate,
     goalId: optionalUuid,
     notes: optionalText(10000),
+    /** Left out (undefined) keeps the stored value, so forms without page fields don't clear them. */
+    totalPages: z.union([z.literal(""), z.coerce.number().int("Whole pages").min(1, "At least 1 page").max(20000, "Up to 20,000 pages")]).optional(),
+    currentPage: z.union([z.literal(""), z.coerce.number().int("Whole pages").min(0, "0 or more").max(20000, "Up to 20,000 pages")]).optional(),
   })
-  .refine((v) => !v.startedOn || !v.finishedOn || v.finishedOn >= v.startedOn, { path: ["finishedOn"], message: "Finish can't be before start" });
+  .refine((v) => !v.startedOn || !v.finishedOn || v.finishedOn >= v.startedOn, { path: ["finishedOn"], message: "Finish can't be before start" })
+  .refine((v) => typeof v.totalPages !== "number" || typeof v.currentPage !== "number" || v.currentPage <= v.totalPages, { path: ["currentPage"], message: "Past the last page" });
 
 export type LearningItemInput = z.input<typeof itemSchema>;
 
@@ -33,6 +38,7 @@ function refresh() {
   revalidatePath("/learning");
   revalidatePath("/goals");
   revalidatePath("/reports");
+  revalidatePath("/reflection");
 }
 
 type Ctx = NonNullable<Awaited<ReturnType<typeof liveContext>>>;
@@ -54,6 +60,13 @@ export async function saveLearningItem(id: string | null, input: LearningItemInp
     finished_on: finished ? v.finishedOn ?? today : v.finishedOn,
   };
   if (row.started_on && row.finished_on && row.finished_on < row.started_on) row.started_on = row.finished_on;
+  const pages: { total_pages?: number | null; current_page?: number | null } = {};
+  if (v.totalPages !== undefined) pages.total_pages = v.totalPages === "" ? null : v.totalPages;
+  if (v.currentPage !== undefined) pages.current_page = v.currentPage === "" ? null : v.currentPage;
+  // With both page numbers known, progress follows the page you're on.
+  if (typeof pages.total_pages === "number" && typeof pages.current_page === "number" && !finished) row.progress_pct = Math.round((pages.current_page / pages.total_pages) * 100);
+  if (finished && typeof pages.total_pages === "number") pages.current_page = pages.total_pages;
+  Object.assign(row, pages);
   if (id) {
     const { data, error } = await ctx.supabase.from("learning_items").update(row).eq("id", id).select("id");
     if (error) return { ok: false, error: "Couldn't save." };
@@ -82,10 +95,86 @@ export async function deleteLearningItem(id: string): Promise<ActionResult> {
   if (!isUuid(id)) return { ok: false, error: "Invalid item." };
   const ctx = await liveContext();
   if (!ctx) return DEMO_RESULT;
-  const { error } = await ctx.supabase.from("learning_items").delete().eq("id", id);
+  const { data, error } = await ctx.supabase.from("learning_items").delete().eq("id", id).select("file_path");
   if (error) return { ok: false, error: "Couldn't delete." };
+  // Its uploaded file goes with it.
+  const path = data?.[0]?.file_path;
+  if (path) await ctx.supabase.storage.from(READING_BUCKET).remove([path]);
   refresh();
   return { ok: true, message: "Deleted." };
+}
+
+/* ------------------------------------------------------------------------ */
+/* Book files (private Storage bucket, one file per item)                    */
+/* ------------------------------------------------------------------------ */
+
+const READING_BUCKET = "reading";
+
+const fileSchema = z.object({
+  name: z.string().trim().min(1).max(255),
+  size: z.number().int().min(1, "That file is empty.").max(MAX_BOOK_FILE_BYTES, "Files can be up to 50 MB."),
+  type: z.enum(BOOK_FILE_TYPES, "Upload a PDF, EPUB, text file or image."),
+});
+
+/** A storage-safe file name: letters, digits, dot, dash, underscore. */
+const safeName = (name: string) => name.normalize("NFKD").replace(/[^\w.-]+/g, "-").replace(/-+/g, "-").replace(/^[-.]+/, "").slice(-120) || "file";
+
+/**
+ * Step 1 of an upload: a one-time signed upload link for a path inside the
+ * person's own folder. The browser sends the file straight to Storage with it.
+ */
+export async function prepareBookUpload(itemId: string, file: { name: string; size: number; type: string }): Promise<ActionResult<{ path: string; token: string }>> {
+  if (!isUuid(itemId)) return { ok: false, error: "Invalid item." };
+  const parsed = fileSchema.safeParse(file);
+  if (!parsed.success) return { ok: false, error: parsed.error.issues[0]?.message ?? "That file can't be uploaded." };
+  const ctx = await liveContext();
+  if (!ctx) return { ok: false, error: "Uploads need your own account. Demo mode doesn't save anything." };
+  const { data: item } = await ctx.supabase.from("learning_items").select("id").eq("id", itemId).maybeSingle();
+  if (!item) return { ok: false, error: "Item not found." };
+  const path = `${ctx.viewer.userId}/${itemId}/${crypto.randomUUID().slice(0, 8)}-${safeName(parsed.data.name)}`;
+  const { data, error } = await ctx.supabase.storage.from(READING_BUCKET).createSignedUploadUrl(path);
+  if (error || !data) return { ok: false, error: "Couldn't start the upload. Has the reading storage been set up?" };
+  return { ok: true, data: { path: data.path, token: data.token } };
+}
+
+/** Step 2: link the uploaded file to the item, and remove the file it replaces. */
+export async function attachBookFile(itemId: string, path: string, file: { name: string; size: number; type: string }): Promise<ActionResult> {
+  if (!isUuid(itemId) || typeof path !== "string") return { ok: false, error: "Invalid item." };
+  const parsed = fileSchema.safeParse(file);
+  if (!parsed.success) return { ok: false, error: parsed.error.issues[0]?.message ?? "That file can't be attached." };
+  const ctx = await liveContext();
+  if (!ctx) return DEMO_RESULT;
+  const folder = `${ctx.viewer.userId}/${itemId}`;
+  if (!path.startsWith(`${folder}/`) || path.slice(folder.length + 1).includes("/")) return { ok: false, error: "That file isn't in your folder." };
+  const { data: listed } = await ctx.supabase.storage.from(READING_BUCKET).list(folder, { search: path.slice(folder.length + 1) });
+  if (!listed?.some((o) => `${folder}/${o.name}` === path)) return { ok: false, error: "The upload didn't finish. Try again." };
+  const { data: before } = await ctx.supabase.from("learning_items").select("file_path").eq("id", itemId).maybeSingle();
+  const { data, error } = await ctx.supabase.from("learning_items")
+    .update({ file_path: path, file_name: parsed.data.name, file_size: parsed.data.size, file_type: parsed.data.type }).eq("id", itemId).select("id");
+  if (error || !data?.length) {
+    await ctx.supabase.storage.from(READING_BUCKET).remove([path]);
+    return { ok: false, error: "Couldn't attach the file." };
+  }
+  if (before?.file_path && before.file_path !== path) await ctx.supabase.storage.from(READING_BUCKET).remove([before.file_path]);
+  refresh();
+  revalidatePath("/reflection");
+  return { ok: true, message: "File uploaded. Only you can open it." };
+}
+
+export async function removeBookFile(itemId: string): Promise<ActionResult> {
+  if (!isUuid(itemId)) return { ok: false, error: "Invalid item." };
+  const ctx = await liveContext();
+  if (!ctx) return DEMO_RESULT;
+  const { data: item } = await ctx.supabase.from("learning_items").select("file_path").eq("id", itemId).maybeSingle();
+  if (!item) return { ok: false, error: "Item not found." };
+  if (item.file_path) {
+    const { error } = await ctx.supabase.storage.from(READING_BUCKET).remove([item.file_path]);
+    if (error) return { ok: false, error: "Couldn't remove the file." };
+  }
+  await ctx.supabase.from("learning_items").update({ file_path: null, file_name: null, file_size: null, file_type: null }).eq("id", itemId);
+  refresh();
+  revalidatePath("/reflection");
+  return { ok: true, message: "File removed." };
 }
 
 const skillSchema = z.object({
@@ -264,7 +353,9 @@ const sessionSchema = z.object({
   stepId: optionalUuid,
   markStepDone: z.boolean().default(false),
   notes: optionalText(2000),
-});
+  pageFrom: optionalInt(1, 20000, "Use a page number"),
+  pageTo: optionalInt(1, 20000, "Use a page number"),
+}).refine((v) => v.pageFrom === null || v.pageTo === null || v.pageTo >= v.pageFrom, { path: ["pageTo"], message: "Ends before it starts" });
 
 export type StudySessionInput = z.input<typeof sessionSchema>;
 
@@ -278,12 +369,31 @@ export async function logStudySession(input: StudySessionInput): Promise<ActionR
   if (v.date > today) return { ok: false, error: "That date is in the future.", fieldErrors: { date: ["Pick today or an earlier date."] } };
   if (v.date < addDays(today, -366)) return { ok: false, error: "That day is too far back.", fieldErrors: { date: ["Pick a date in the last year."] } };
   const { error } = await ctx.supabase.from("study_sessions").insert({
-    user_id: ctx.viewer.userId, studied_on: v.date, minutes: v.minutes, roadmap_id: v.roadmapId, learning_item_id: v.itemId, step_id: v.stepId, notes: v.notes, source: "manual",
+    user_id: ctx.viewer.userId, studied_on: v.date, minutes: v.minutes, roadmap_id: v.roadmapId, learning_item_id: v.itemId, step_id: v.stepId, notes: v.notes,
+    page_from: v.pageFrom, page_to: v.pageTo, source: "manual",
   });
   if (error) return { ok: false, error: "Couldn't log the session." };
+  if (v.itemId && v.pageTo !== null) await advanceReading(ctx, v.itemId, v.pageTo, v.date);
   if (v.stepId && v.markStepDone) await ctx.supabase.from("learning_steps").update({ done_at: new Date().toISOString() }).eq("id", v.stepId).is("done_at", null);
   refresh();
   return { ok: true, message: `Logged ${v.minutes} minutes.` };
+}
+
+/**
+ * Reading moves the book along: the page you reached (never backwards),
+ * progress from pages, started when first read, finished on the last page.
+ */
+async function advanceReading(ctx: Ctx, itemId: string, pageTo: number, date: string) {
+  const { data: it } = await ctx.supabase.from("learning_items").select("status, total_pages, current_page, started_on").eq("id", itemId).maybeSingle();
+  if (!it) return;
+  const page = Math.max(it.current_page ?? 0, it.total_pages ? Math.min(pageTo, it.total_pages) : pageTo);
+  const done = !!it.total_pages && page >= it.total_pages;
+  const patch: Record<string, unknown> = { current_page: page };
+  if (it.total_pages) patch.progress_pct = Math.round((page / it.total_pages) * 100);
+  if (it.status === "planned" || it.status === "dropped") patch.status = "in_progress";
+  if (!it.started_on) patch.started_on = date;
+  if (done && it.status !== "completed") Object.assign(patch, { status: "completed", finished_on: date, progress_pct: 100 });
+  await ctx.supabase.from("learning_items").update(patch).eq("id", itemId);
 }
 
 export async function deleteStudySession(id: string): Promise<ActionResult> {

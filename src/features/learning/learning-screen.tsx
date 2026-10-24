@@ -18,6 +18,7 @@ import { cn } from "@/lib/utils";
 import { deleteLearningItem, deleteSkill, saveLearningItem, saveSkill, updateLearningProgress, type LearningItemInput, type SkillInput } from "@/server/actions/learning";
 import { useServerAction } from "@/features/dashboard/use-server-action";
 import { AREAS } from "@/features/tasks/types";
+import { BookFile } from "./book-file";
 import { RoadmapForm, RoadmapsTab } from "./roadmaps";
 import { SessionForm, SessionsTab } from "./sessions";
 import { LEARNING_KIND_LABEL, LEARNING_STATUS_LABEL, SKILL_LEVEL_LABEL, type LearningItem, type LearningKind, type LearningStatus, type LearningWorkspace, type Roadmap, type Skill } from "./types";
@@ -197,6 +198,7 @@ function ItemRow({ item, ws, onEdit }: { item: LearningItem; ws: LearningWorkspa
               <span>{LEARNING_KIND_LABEL[item.kind]}</span>
               {item.author && <span>{item.author}</span>}
               {item.finished_on ? <span>Finished {formatShortDate(item.finished_on, ws.locale)}</span> : item.started_on && <span>Started {formatShortDate(item.started_on, ws.locale)}</span>}
+              {item.total_pages && <span className="tabular">{item.current_page ? `p. ${item.current_page} of ${item.total_pages}` : `${item.total_pages} pages`}</span>}
               {goal && <Link href="/goals" className="hover:underline">Goal: {goal.title}</Link>}
             </p>
           </div>
@@ -213,16 +215,19 @@ function ItemRow({ item, ws, onEdit }: { item: LearningItem; ws: LearningWorkspa
           </form>
         )}
         {item.notes && <p className="mt-2 line-clamp-3 text-[12px] whitespace-pre-wrap text-muted-foreground">{item.notes}</p>}
+        {(item.file_name || item.kind === "book" || item.kind === "article") && <div className="mt-2.5 flex"><BookFile item={item} demo={ws.demo} /></div>}
       </Card>
     </li>
   );
 }
 
-function ItemForm({ item, ws, onDone }: { item: LearningItem | null; ws: LearningWorkspace; onDone: () => void }) {
+export function ItemForm({ item, ws, onDone, defaultKind = "book" }: { item: LearningItem | null; ws: Pick<LearningWorkspace, "goals" | "today">; onDone: () => void; defaultKind?: LearningKind }) {
   const [v, setV] = useState<LearningItemInput>(() => ({
-    kind: item?.kind ?? "book", title: item?.title ?? "", author: item?.author ?? "", url: item?.url ?? "", status: item?.status ?? "planned",
+    kind: item?.kind ?? defaultKind, title: item?.title ?? "", author: item?.author ?? "", url: item?.url ?? "", status: item?.status ?? "planned",
     progress: item?.progress_pct ?? "", startedOn: item?.started_on ?? "", finishedOn: item?.finished_on ?? "", goalId: item?.goal_id ?? "", notes: item?.notes ?? "",
+    totalPages: item?.total_pages ?? "", currentPage: item?.current_page ?? "",
   }));
+  const paged = v.kind === "book" || v.kind === "article";
   const [errors, setErrors] = useState<Errors>({});
   const { pending, run } = useServerAction();
   const set = <K extends keyof LearningItemInput>(k: K, val: LearningItemInput[K]) => setV((s) => ({ ...s, [k]: val }));
@@ -232,7 +237,7 @@ function ItemForm({ item, ws, onDone }: { item: LearningItem | null; ws: Learnin
       e.preventDefault();
       setErrors({});
       run(async () => {
-        const r = await saveLearningItem(item?.id ?? null, v);
+        const r = await saveLearningItem(item?.id ?? null, paged ? v : { ...v, totalPages: undefined, currentPage: undefined });
         if (!r.ok && r.fieldErrors) setErrors(r.fieldErrors);
         return r;
       }, { onSuccess: onDone });
@@ -255,6 +260,16 @@ function ItemForm({ item, ws, onDone }: { item: LearningItem | null; ws: Learnin
           <Input id="learn-progress" inputMode="numeric" value={String(v.progress ?? "")} onChange={(e) => set("progress", e.target.value)} aria-invalid={!!err("progress")} />
         </Field>
       </div>
+      {paged && (
+        <div className="grid gap-4 sm:grid-cols-2">
+          <Field id="learn-pages" label="Pages" optional error={err("totalPages")}>
+            <Input id="learn-pages" inputMode="numeric" value={String(v.totalPages ?? "")} onChange={(e) => set("totalPages", e.target.value.replace(/\D/g, "").slice(0, 5))} aria-invalid={!!err("totalPages")} />
+          </Field>
+          <Field id="learn-page" label="On page" optional error={err("currentPage")}>
+            <Input id="learn-page" inputMode="numeric" value={String(v.currentPage ?? "")} onChange={(e) => set("currentPage", e.target.value.replace(/\D/g, "").slice(0, 5))} aria-invalid={!!err("currentPage")} />
+          </Field>
+        </div>
+      )}
       <div className="grid gap-4 sm:grid-cols-2">
         <Field id="learn-author" label="Author or teacher" optional>
           <Input id="learn-author" value={v.author ?? ""} maxLength={200} onChange={(e) => set("author", e.target.value)} />
