@@ -6,6 +6,7 @@ import { addDays, localDateKey, zonedTimeToUtc } from "@/lib/dates";
 import { isValidRule, nextOccurrence, parseRule, serializeRule } from "@/lib/recurrence";
 import { DEMO_RESULT, type ActionResult } from "./result";
 import { liveContext } from "./guard";
+import { settleHabitReminders } from "@/server/notify/habit-reminders";
 
 const uuid = z.uuid();
 
@@ -114,15 +115,17 @@ export async function claimDueReminders(): Promise<ActionResult<{ id: string; ti
   const now = new Date().toISOString();
   const { data, error } = await ctx.supabase
     .from("reminders")
-    .select("id, title, remind_at, snoozed_until, status")
+    .select("id, title, remind_at, snoozed_until, status, timezone, recurrence_rule, habit_id")
     .in("status", ["scheduled", "snoozed"])
     .lte("remind_at", now)
     .order("remind_at")
     .limit(20);
   if (error) return { ok: false, error: "Couldn't check reminders." };
   const due = (data ?? []).filter((r) => (r.snoozed_until ?? r.remind_at) <= now);
+  const quiet = await settleHabitReminders(ctx.supabase, due, new Date(now));
   const out: { id: string; title: string; at: string }[] = [];
   for (const r of due) {
+    if (quiet.has(r.id)) continue;
     const at = r.snoozed_until ?? r.remind_at;
     // unique (reminder_id, channel, scheduled_for) makes this idempotent across tabs.
     const { error: insErr } = await ctx.supabase.from("reminder_deliveries").insert({

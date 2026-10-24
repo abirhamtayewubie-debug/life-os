@@ -4,6 +4,10 @@ export type HabitRecord = RawHabit & {
   description: string | null;
   archived_at: string | null;
   goal_id: string | null;
+  /** Planned local time ("HH:MM:SS"), if the habit has one. */
+  scheduled_time: string | null;
+  /** The habit's active repeating reminder, if any. */
+  reminder: { channels: string[]; next: string } | null;
 };
 
 export type HabitWorkspace = {

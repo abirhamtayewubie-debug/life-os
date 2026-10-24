@@ -4,6 +4,7 @@ import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input, NativeSelect, Textarea } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Switch } from "@/components/ui/switch";
 import { cn } from "@/lib/utils";
 import { createHabit, updateHabit, type HabitInput } from "@/server/actions/habits";
 import { useServerAction } from "@/features/dashboard/use-server-action";
@@ -23,8 +24,11 @@ export function HabitForm({ habit, goals = [], onDone, onCancel }: { habit: Habi
           targetPerPeriod: habit.target_per_period,
           timeOfDay: habit.time_of_day ?? "anytime",
           goalId: habit.goal_id ?? "",
+          scheduledTime: habit.scheduled_time?.slice(0, 5) ?? "",
+          remind: !!habit.reminder,
+          notifyDevices: habit.reminder ? habit.reminder.channels.includes("web_push") : true,
         }
-      : { name: "", description: "", cadence: "daily", scheduleDays: [0, 1, 2, 3, 4, 5, 6], targetPerPeriod: 1, timeOfDay: "anytime", goalId: "" },
+      : { name: "", description: "", cadence: "daily", scheduleDays: [0, 1, 2, 3, 4, 5, 6], targetPerPeriod: 1, timeOfDay: "anytime", goalId: "", scheduledTime: "", remind: false, notifyDevices: true },
   );
   const [errors, setErrors] = useState<Errors>({});
   const { pending, run } = useServerAction();
@@ -115,6 +119,29 @@ export function HabitForm({ habit, goals = [], onDone, onCancel }: { habit: Habi
             {Object.entries(TIME_OF_DAY_LABEL).map(([k, l]) => <option key={k} value={k}>{l}</option>)}
           </NativeSelect>
         </div>
+      </div>
+
+      <div className="grid gap-3 rounded-2xl border border-border p-3">
+        <div className="grid gap-1.5 sm:max-w-48">
+          <Label htmlFor="habit-at">At <span className="font-normal text-muted-foreground">(optional)</span></Label>
+          <Input id="habit-at" type="time" value={v.scheduledTime ?? ""} onChange={(e) => set("scheduledTime", e.target.value)} aria-invalid={!!err("scheduledTime")} />
+          {err("scheduledTime") && <p className="text-xs text-destructive">{err("scheduledTime")}</p>}
+        </div>
+        <label className="flex items-center justify-between gap-3 text-[13px]">
+          <span>
+            Remind me at this time
+            <span className="block text-[11px] text-muted-foreground">
+              {v.cadence === "daily" ? "On the days above." : "Every day until the week's target is met."} Skipped once you&apos;ve logged it.
+            </span>
+          </span>
+          <Switch checked={!!v.remind} onCheckedChange={(c) => set("remind", c)} aria-label="Remind me at this time" />
+        </label>
+        {v.remind && (
+          <label className="flex items-center gap-2 text-[13px]">
+            <input type="checkbox" checked={v.notifyDevices ?? true} onChange={(e) => set("notifyDevices", e.target.checked)} className="size-4 accent-[var(--brand)]" />
+            Also notify my devices
+          </label>
+        )}
       </div>
 
       {goals.length > 0 && (

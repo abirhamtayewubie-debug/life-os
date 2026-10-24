@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
-import { Archive, ArchiveRestore, Check, Flame, MoreHorizontal, Pause, Pencil, Play, Plus, Repeat, Trash2 } from "lucide-react";
+import { Archive, ArchiveRestore, Bell, Check, Clock, Flame, MoreHorizontal, Pause, Pencil, Play, Plus, Repeat, Trash2 } from "lucide-react";
 import { EmptyState } from "@/components/data/empty-state";
 import { ProvenanceBadge } from "@/components/data/provenance";
 import { Badge } from "@/components/ui/badge";
@@ -12,7 +12,7 @@ import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSepara
 import {
   AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
-import { formatShortDate, localDateKey } from "@/lib/dates";
+import { formatShortDate, formatTime, localDateKey, zonedTimeToUtc } from "@/lib/dates";
 import { cn } from "@/lib/utils";
 import { deleteHabit, logHabit, setHabitArchived, setHabitPaused } from "@/server/actions/habits";
 import { useServerAction } from "@/features/dashboard/use-server-action";
@@ -54,6 +54,9 @@ export function HabitsScreen({ ws, startNew = false }: { ws: HabitWorkspace; sta
   const archived = ws.habits.filter((h) => h.archived_at);
   const dueToday = active.filter((h) => stats.get(h.id)!.scheduledToday && h.cadence === "daily");
   const doneToday = dueToday.filter((h) => stats.get(h.id)!.doneToday);
+  // Average of this week's completion across active habits that had something to count.
+  const weekRates = active.map((h) => stats.get(h.id)!.weekly.at(-1)!.pct).filter((p): p is number => p !== null);
+  const weekRate = weekRates.length ? Math.round(weekRates.reduce((a, b) => a + b, 0) / weekRates.length) : null;
 
   const card = (h: HabitRecord) => (
     <HabitCard
@@ -80,6 +83,11 @@ export function HabitsScreen({ ws, startNew = false }: { ws: HabitWorkspace; sta
         ) : (
           <p className="text-[13px] text-muted-foreground">{active.length ? "Nothing scheduled today." : ""}</p>
         )}
+        {weekRate !== null && (
+          <p className="text-[13px] text-muted-foreground" title="Average completion this week across your active habits">
+            · <span className="tabular font-medium text-foreground">{weekRate}%</span> this week
+          </p>
+        )}
         <Button size="sm" className="ml-auto" onClick={() => setEditing("new")}><Plus /> New habit</Button>
       </div>
 
@@ -92,7 +100,7 @@ export function HabitsScreen({ ws, startNew = false }: { ws: HabitWorkspace; sta
       )}
 
       {ORDER.map((t) => {
-        const group = active.filter((h) => (h.time_of_day ?? "anytime") === t);
+        const group = active.filter((h) => (h.time_of_day ?? "anytime") === t).sort((a, b) => (a.scheduled_time ?? "99").localeCompare(b.scheduled_time ?? "99"));
         if (!group.length) return null;
         return (
           <section key={t} aria-label={TIME_OF_DAY_LABEL[t]} className="grid gap-2">
@@ -174,7 +182,20 @@ function HabitCard({
             <ProvenanceBadge source={h.source} />
             {isPaused && <Badge variant="outline"><Pause /> Paused</Badge>}
           </h3>
-          <p className="text-[12px] text-muted-foreground">{scheduleText(h)}</p>
+          <p className="flex flex-wrap items-center gap-x-2 text-[12px] text-muted-foreground">
+            <span>{scheduleText(h)}</span>
+            {h.scheduled_time && (
+              <span className="inline-flex items-center gap-1">
+                <Clock className="size-3" aria-hidden />
+                <span className="tabular">{formatTime(zonedTimeToUtc(ws.today, h.scheduled_time.slice(0, 5), ws.timezone), ws.timezone, ws.locale)}</span>
+              </span>
+            )}
+            {h.reminder && (
+              <span className="inline-flex items-center gap-1" title={h.reminder.channels.includes("web_push") ? "Reminds you here and on your devices" : "Reminds you inside Life OS"}>
+                <Bell className="size-3" aria-hidden /> Reminder on
+              </span>
+            )}
+          </p>
         </div>
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
@@ -242,6 +263,20 @@ function HabitCard({
 
       <details className="group">
         <summary className="cursor-pointer text-[12px] text-muted-foreground hover:text-foreground">12-week history</summary>
+        <div className="mt-2 grid gap-1">
+          <p className="text-[11px] text-muted-foreground">Weekly completion</p>
+          <ol className="flex h-12 items-end gap-[3px]" aria-label="Weekly completion, oldest first">
+            {s.weekly.map((w) => (
+              <li
+                key={w.start}
+                title={`Week of ${formatShortDate(w.start, ws.locale)}: ${w.pct === null ? "nothing to count" : `${w.pct}%`}`}
+                aria-label={`Week of ${formatShortDate(w.start, ws.locale)}: ${w.pct === null ? "nothing to count" : `${w.pct}%`}`}
+                className={cn("w-3 rounded-t-[3px]", w.pct === null ? "h-px bg-border" : w.pct >= 80 ? "bg-success" : w.pct > 0 ? "bg-success/50" : "h-px bg-destructive/40")}
+                style={w.pct ? { height: `${Math.max(8, w.pct)}%` } : undefined}
+              />
+            ))}
+          </ol>
+        </div>
         <div className="mt-2 flex gap-[3px]" role="img" aria-label={`${s.total84} completions in the last 12 weeks`}>
           {s.history.map((col, i) => (
             <div key={i} className="grid gap-[3px]">

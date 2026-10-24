@@ -3,6 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { z } from "zod";
 import { addDays, localDateKey } from "@/lib/dates";
+import { habitReminderRule, nextHabitReminder } from "@/lib/habit-reminder";
 import { DEMO_RESULT, type ActionResult } from "./result";
 import { audit, liveContext } from "./guard";
 
@@ -18,8 +19,13 @@ const habitSchema = z
     targetPerPeriod: z.coerce.number().int().min(1, "At least once").max(50),
     timeOfDay: z.enum(["morning", "afternoon", "evening", "anytime"]).default("anytime"),
     goalId: z.uuid().optional().or(z.literal("")),
+    /** Planned local time, "HH:MM"; empty when the habit has no set time. */
+    scheduledTime: z.string().regex(/^([01]\d|2[0-3]):[0-5]\d$/, "Pick a time").optional().or(z.literal("")).default(""),
+    remind: z.boolean().default(false),
+    notifyDevices: z.boolean().default(true),
   })
   .superRefine((v, ctx) => {
+    if (v.remind && !v.scheduledTime) ctx.addIssue({ code: "custom", path: ["scheduledTime"], message: "Pick a time to be reminded at" });
     if (v.cadence === "daily" && v.scheduleDays.length === 0) ctx.addIssue({ code: "custom", path: ["scheduleDays"], message: "Pick at least one day" });
     if (v.cadence === "weekly" && v.targetPerPeriod > 7 * 10) ctx.addIssue({ code: "custom", path: ["targetPerPeriod"], message: "That's a lot per week" });
   });
@@ -45,7 +51,35 @@ function toRow(v: z.output<typeof habitSchema>) {
     target_per_period: v.targetPerPeriod,
     time_of_day: v.timeOfDay,
     goal_id: v.goalId || null,
+    scheduled_time: v.scheduledTime || null,
   };
+}
+
+type Ctx = NonNullable<Awaited<ReturnType<typeof liveContext>>>;
+
+/**
+ * Keeps one repeating reminder per habit in step with its schedule, or
+ * cancels it. Delivery is the normal reminder pipeline (in-app, plus push
+ * when the person asked for their devices).
+ */
+async function syncHabitReminder(ctx: Ctx, habitId: string, v: z.output<typeof habitSchema>): Promise<string | null> {
+  const { data: current } = await ctx.supabase.from("reminders").select("id").eq("habit_id", habitId).in("status", ["scheduled", "snoozed"]);
+  if (!v.remind || !v.scheduledTime) {
+    if (current?.length) await ctx.supabase.from("reminders").update({ status: "cancelled", snoozed_until: null }).eq("habit_id", habitId).in("status", ["scheduled", "snoozed"]);
+    return null;
+  }
+  const tz = ctx.viewer.profile.timezone;
+  const rule = habitReminderRule({ cadence: v.cadence, schedule_days: v.scheduleDays });
+  const next = nextHabitReminder(rule, v.scheduledTime, tz, new Date());
+  if (!next) return "Couldn't work out when to remind you.";
+  const row = {
+    title: v.name, remind_at: next.toISOString(), timezone: tz, recurrence_rule: rule, status: "scheduled" as const, snoozed_until: null,
+    channels: v.notifyDevices ? ["in_app", "web_push"] : ["in_app"],
+  };
+  const { error } = current?.length
+    ? await ctx.supabase.from("reminders").update(row).eq("id", current[0].id)
+    : await ctx.supabase.from("reminders").insert({ ...row, user_id: ctx.viewer.userId, habit_id: habitId, source: "manual" });
+  return error ? "The habit was saved, but its reminder couldn't be set." : null;
 }
 
 export async function createHabit(input: HabitInput): Promise<ActionResult<{ id: string }>> {
@@ -55,8 +89,9 @@ export async function createHabit(input: HabitInput): Promise<ActionResult<{ id:
   if (!ctx) return DEMO_RESULT;
   const { data, error } = await ctx.supabase.from("habits").insert({ ...toRow(parsed.data), user_id: ctx.viewer.userId, source: "manual" }).select("id").single();
   if (error) return { ok: false, error: "Couldn't save the habit." };
+  const remindErr = await syncHabitReminder(ctx, data.id, parsed.data);
   refresh();
-  return { ok: true, data: { id: data.id }, message: "Habit added." };
+  return remindErr ? { ok: false, error: remindErr } : { ok: true, data: { id: data.id }, message: parsed.data.remind ? "Habit added with a reminder." : "Habit added." };
 }
 
 export async function updateHabit(id: string, input: HabitInput): Promise<ActionResult> {
@@ -68,8 +103,9 @@ export async function updateHabit(id: string, input: HabitInput): Promise<Action
   const { data, error } = await ctx.supabase.from("habits").update(toRow(parsed.data)).eq("id", id).select("id");
   if (error) return { ok: false, error: "Couldn't save the habit." };
   if (!data?.length) return { ok: false, error: "Habit not found." };
+  const remindErr = await syncHabitReminder(ctx, id, parsed.data);
   refresh();
-  return { ok: true, message: "Habit updated." };
+  return remindErr ? { ok: false, error: remindErr } : { ok: true, message: "Habit updated." };
 }
 
 /**
