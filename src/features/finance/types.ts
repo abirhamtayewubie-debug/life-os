@@ -67,6 +67,26 @@ export type SavingsGoal = { id: string; goal_id: string | null; account_id: stri
 
 export type StoredRate = Rate & { id: string; source: DataSource };
 
+export type LoanDirection = "borrowed" | "lent";
+
+/** Money borrowed from or lent to a person. The balance lives on its account (`account_id`); this adds who and when. */
+export type PersonalLoan = {
+  id: string;
+  account_id: string;
+  direction: LoanDirection;
+  person_name: string;
+  person_id: string | null;
+  principal: string;
+  currency: string;
+  started_on: string;
+  due_on: string | null;
+  notes: string | null;
+  source: DataSource;
+};
+
+/** A transaction on a loan's account, with the account on the other side of a transfer. */
+export type LoanEntry = { id: string; account_id: string; kind: TxKind; amount: string; occurred_on: string; description: string | null; other_account_id: string | null };
+
 export type TxFilters = { month: string; account?: string; category?: string; q?: string };
 
 export type FinanceWorkspace = {
@@ -81,6 +101,9 @@ export type FinanceWorkspace = {
   budgets: Budget[];
   rates: StoredRate[];
   savings: SavingsGoal[];
+  loans: PersonalLoan[];
+  loanEntries: LoanEntry[];
+  people: { id: string; name: string }[];
   projects: { id: string; name: string }[];
   goals: { id: string; title: string }[];
   currencies: string[];

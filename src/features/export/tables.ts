@@ -14,7 +14,7 @@ export const EXPORT_GROUPS: { key: string; label: string; tables: string[] }[] =
   { key: "habits", label: "Habits", tables: ["habits", "habit_logs"] },
   { key: "goals", label: "Goals", tables: ["goals", "goal_progress_entries", "milestones"] },
   { key: "work", label: "Work & projects", tables: ["projects", "time_entries"] },
-  { key: "finance", label: "Finance", tables: ["financial_accounts", "transactions", "transaction_categories", "account_balance_snapshots", "budgets", "budget_lines", "recurring_transactions", "savings_goals", "exchange_rates"] },
+  { key: "finance", label: "Finance", tables: ["financial_accounts", "transactions", "transaction_categories", "account_balance_snapshots", "budgets", "budget_lines", "recurring_transactions", "savings_goals", "personal_loans", "exchange_rates"] },
   { key: "health", label: "Health & sleep", tables: ["wellness_logs", "hydration_logs", "workouts", "workout_sets", "workout_programs", "program_exercises", "body_measurements", "sleep_logs"] },
   { key: "learning", label: "Learning", tables: ["learning_items", "skills", "learning_roadmaps", "learning_steps", "study_sessions"] },
   { key: "reflection", label: "Reflection", tables: ["journal_entries", "daily_reviews", "personal_values", "meditation_links", "meditation_sessions"] },

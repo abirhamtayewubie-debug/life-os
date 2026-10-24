@@ -6,7 +6,7 @@ import { getFinanceWorkspace } from "@/server/finance";
 export const metadata = { title: "Finance" };
 
 // Mirrors TABS in shared.tsx (a client module, so it can't be read here).
-const VALID = new Set<string>(["overview", "transactions", "budgets", "bills", "savings", "report", "setup"] satisfies FinanceTab[]);
+const VALID = new Set<string>(["overview", "transactions", "budgets", "bills", "savings", "loans", "report", "setup"] satisfies FinanceTab[]);
 
 export default async function FinancePage({ searchParams }: PageProps<"/finance">) {
   const sp = await searchParams;
@@ -14,7 +14,7 @@ export default async function FinancePage({ searchParams }: PageProps<"/finance"
   const tab = (typeof sp.tab === "string" && VALID.has(sp.tab) ? sp.tab : "overview") as FinanceTab;
   return (
     <div className="animate-rise">
-      <PageHeader title="Finance" description="Accounts, spending, budgets and bills, in each currency you use. Nothing is converted without your own rate." />
+      <PageHeader title="Finance" description="Accounts, spending, budgets, bills and loans, in each currency you use. Nothing is converted without your own rate." />
       <FinanceScreen ws={ws} tab={tab} startNew={sp.new === "1"} />
     </div>
   );
