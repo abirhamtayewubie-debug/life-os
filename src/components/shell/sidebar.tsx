@@ -21,7 +21,7 @@ export const SIDEBAR_COOKIE = "lifeos_sidebar";
 type Account = { name: string | null; email: string | null; demo: boolean };
 
 /** Desktop sidebar (260px) that becomes a 72px icon rail on tablets, or on desktop with `[`. */
-export function Sidebar({ hidden, initialCollapsed, account }: { hidden: string[]; initialCollapsed: boolean; account: Account }) {
+export function Sidebar({ hidden, initialCollapsed, account, counts }: { hidden: string[]; initialCollapsed: boolean; account: Account; counts: Record<string, string> }) {
   const [collapsed, setCollapsed] = useState(initialCollapsed);
 
   function toggle() {
@@ -88,7 +88,7 @@ export function Sidebar({ hidden, initialCollapsed, account }: { hidden: string[
       </div>
 
       <div className={cn("flex-1 overflow-y-auto px-4 pb-4", collapsed ? "px-3" : "max-lg:px-3")}>
-        <NavItems hidden={hidden} collapsed={collapsed} />
+        <NavItems hidden={hidden} collapsed={collapsed} counts={counts} />
       </div>
 
       <SidebarFooter account={account} collapsed={collapsed} onToggleCollapse={toggle} />
