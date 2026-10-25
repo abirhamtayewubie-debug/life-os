@@ -5,6 +5,7 @@ import { Archive, ArchiveRestore, Bell, Check, Clock, Flame, MoreHorizontal, Pau
 import { EmptyState } from "@/components/data/empty-state";
 import { ProvenanceBadge } from "@/components/data/provenance";
 import { Badge } from "@/components/ui/badge";
+import { StatTile } from "@/components/clay/stat-tile";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
@@ -57,6 +58,7 @@ export function HabitsScreen({ ws, startNew = false }: { ws: HabitWorkspace; sta
   // Average of this week's completion across active habits that had something to count.
   const weekRates = active.map((h) => stats.get(h.id)!.weekly.at(-1)!.pct).filter((p): p is number => p !== null);
   const weekRate = weekRates.length ? Math.round(weekRates.reduce((a, b) => a + b, 0) / weekRates.length) : null;
+  const bestStreak = Math.max(0, ...active.map((h) => stats.get(h.id)!.streak));
 
   const card = (h: HabitRecord) => (
     <HabitCard
@@ -75,20 +77,15 @@ export function HabitsScreen({ ws, startNew = false }: { ws: HabitWorkspace; sta
 
   return (
     <div className="grid grid-cols-[minmax(0,1fr)] gap-6">
-      <div className="flex flex-wrap items-center gap-3">
-        {dueToday.length > 0 ? (
-          <p className="text-[13px] text-muted-foreground">
-            <span className="tabular font-medium text-foreground">{doneToday.length} of {dueToday.length}</span> done today
-          </p>
-        ) : (
-          <p className="text-[13px] text-muted-foreground">{active.length ? "Nothing scheduled today." : ""}</p>
-        )}
-        {weekRate !== null && (
-          <p className="text-[13px] text-muted-foreground" title="Average completion this week across your active habits">
-            · <span className="tabular font-medium text-foreground">{weekRate}%</span> this week
-          </p>
-        )}
-        <Button size="sm" className="ml-auto" onClick={() => setEditing("new")}><Plus /> New habit</Button>
+      {active.length > 0 && (
+        <div className="grid grid-cols-3 gap-3 lg:max-w-2xl">
+          <StatTile tint="sage" label="Today" value={dueToday.length ? `${doneToday.length} / ${dueToday.length}` : "–"} hint={dueToday.length ? "done" : "Nothing scheduled"} />
+          <StatTile tint="sand" label="Week" value={weekRate !== null ? `${weekRate}%` : "–"} hint="average" />
+          <StatTile tint="clay" label="Streak" value={bestStreak} hint={bestStreak === 1 ? "day, best" : "days, best"} />
+        </div>
+      )}
+      <div className="flex">
+        <Button className="ml-auto h-11" onClick={() => setEditing("new")}><Plus /> New habit</Button>
       </div>
 
       {ws.habits.length === 0 && (
@@ -104,7 +101,7 @@ export function HabitsScreen({ ws, startNew = false }: { ws: HabitWorkspace; sta
         if (!group.length) return null;
         return (
           <section key={t} aria-label={TIME_OF_DAY_LABEL[t]} className="grid gap-2">
-            <h2 className="text-[11px] font-medium tracking-wide text-subtle-foreground uppercase">{TIME_OF_DAY_LABEL[t]}</h2>
+            <h2 className="label-caps">{TIME_OF_DAY_LABEL[t]}</h2>
             <div className="grid gap-3 lg:grid-cols-2">{group.map(card)}</div>
           </section>
         );
@@ -112,7 +109,7 @@ export function HabitsScreen({ ws, startNew = false }: { ws: HabitWorkspace; sta
 
       {paused.length > 0 && (
         <section aria-label="Paused" className="grid gap-2">
-          <h2 className="text-[11px] font-medium tracking-wide text-subtle-foreground uppercase">Paused</h2>
+          <h2 className="label-caps">Paused</h2>
           <div className="grid gap-3 lg:grid-cols-2">{paused.map(card)}</div>
         </section>
       )}

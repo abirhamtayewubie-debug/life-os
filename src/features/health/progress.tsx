@@ -78,7 +78,7 @@ export function ProgressTab({ ws }: { ws: HealthWorkspace }) {
         </Card>
 
         <Card className="grid content-start gap-2 p-5">
-          <h2 className="text-[13px] font-medium">{weighted ? "Top set and estimated max" : "Reps per session"}</h2>
+          <h2 className="label-caps">{weighted ? "Top set and estimated max" : "Reps per session"}</h2>
           {points.length < 2 ? (
             <p className="text-[13px] text-muted-foreground">Log {rec.name} in another workout to see a trend.</p>
           ) : (
@@ -112,7 +112,7 @@ export function ProgressTab({ ws }: { ws: HealthWorkspace }) {
 
       <div className="grid gap-5 lg:grid-cols-2">
         <Card className="grid content-start gap-2 p-5">
-          <h2 className="text-[13px] font-medium">{rec.name} log</h2>
+          <h2 className="label-caps">{rec.name} log</h2>
           <ul className="divide-y divide-border text-[12px]">
             {history.slice(0, 30).map((p, i) => (
               <li key={`${p.date}-${i}`} className="flex flex-wrap gap-x-3 gap-y-0.5 py-1.5">
@@ -124,7 +124,7 @@ export function ProgressTab({ ws }: { ws: HealthWorkspace }) {
           </ul>
         </Card>
         <Card className="grid content-start gap-2 p-5">
-          <h2 className="text-[13px] font-medium">All personal records</h2>
+          <h2 className="label-caps">All personal records</h2>
           <ul className="divide-y divide-border text-[12px]">
             {allBests.map((r) => (
               <li key={r.key}>

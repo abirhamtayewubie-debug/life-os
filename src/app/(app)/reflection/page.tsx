@@ -1,4 +1,4 @@
-import { PageHeader } from "@/components/shell/page-header";
+import { ScreenHeader } from "@/components/shell/screen-header";
 import { ReflectionScreen, type ReflectionTab } from "@/features/reflection/reflection-screen";
 import { getReflectionWorkspace } from "@/server/reflection";
 
@@ -13,7 +13,7 @@ export default async function ReflectionPage({ searchParams }: PageProps<"/refle
   const tab = (typeof sp.tab === "string" && TABS.has(sp.tab) ? sp.tab : "journal") as ReflectionTab;
   return (
     <div className="animate-rise">
-      <PageHeader title="Reflection" description="Your private journal, meditation, reading, weekly and monthly reviews, and the values you want to live by." />
+      <ScreenHeader title="Quiet" accent="reflection" phoneTitle="Reflection" description="Your private journal, meditation, reading, weekly and monthly reviews, and the values you want to live by." />
       <ReflectionScreen key={ws.query ?? ""} ws={ws} tab={tab} startNew={sp.new === "1"} />
     </div>
   );

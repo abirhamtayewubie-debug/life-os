@@ -8,6 +8,7 @@ import { EmptyState } from "@/components/data/empty-state";
 import { FormActions, useActionForm } from "@/components/data/action-form";
 import { ProvenanceBadge } from "@/components/data/provenance";
 import { Badge } from "@/components/ui/badge";
+import { StatTile } from "@/components/clay/stat-tile";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Field } from "@/components/ui/field";
@@ -21,16 +22,6 @@ import { minutesBetween, mondayOf, studyStreak } from "@/features/learning/plan"
 import { LEARNING_STATUS_LABEL, type LearningItem } from "@/features/learning/types";
 import { bookPercent, finishedIn, nextPage, pagesBetween, pagesIn } from "./reading";
 import type { ReflectionWorkspace } from "./types";
-
-function Stat({ label, value, hint }: { label: string; value: string; hint?: string }) {
-  return (
-    <Card className="grid content-start gap-0.5 p-4">
-      <span className="text-[12px] text-muted-foreground">{label}</span>
-      <span className="tabular font-display text-xl font-normal tracking-[-0.01em]">{value}</span>
-      {hint && <span className="text-[11px] text-muted-foreground">{hint}</span>}
-    </Card>
-  );
-}
 
 function BookCard({ b, ws, onEdit, onLog }: { b: LearningItem; ws: ReflectionWorkspace; onEdit: () => void; onLog: () => void }) {
   const pct = bookPercent(b);
@@ -85,7 +76,7 @@ export function ReadingTab({ ws, onEdit, onLog }: { ws: ReflectionWorkspace; onE
 
   const section = (title: string, list: LearningItem[]) => list.length > 0 && (
     <section className="grid grid-cols-[minmax(0,1fr)] gap-2">
-      <h2 className="text-[12px] font-medium text-muted-foreground">{title} <span className="tabular">{list.length}</span></h2>
+      <h2 className="label-caps">{title} <span className="tabular">{list.length}</span></h2>
       <ul className="grid grid-cols-[minmax(0,1fr)] gap-3 sm:grid-cols-2 xl:grid-cols-3">
         {list.map((b) => <BookCard key={b.id} b={b} ws={ws} onEdit={() => onEdit(b)} onLog={() => onLog(b)} />)}
       </ul>
@@ -95,10 +86,10 @@ export function ReadingTab({ ws, onEdit, onLog }: { ws: ReflectionWorkspace; onE
   return (
     <div className="grid grid-cols-[minmax(0,1fr)] gap-5">
       <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
-        <Stat label="Pages this week" value={String(pagesBetween(ws.reading, weekFrom, ws.today))} hint={`${minutesBetween(ws.reading, weekFrom, ws.today)} min`} />
-        <Stat label="Reading streak" value={`${streak} ${streak === 1 ? "day" : "days"}`} hint={streak ? "Days in a row" : "Read today to start one"} />
-        <Stat label="Last 30 days" value={`${pagesBetween(ws.reading, addDays(ws.today, -29), ws.today)} pages`} hint={`${minutesBetween(ws.reading, addDays(ws.today, -29), ws.today)} min`} />
-        <Stat label={`Finished in ${ws.today.slice(0, 4)}`} value={String(finishedIn(ws.books, ws.today.slice(0, 4)))} />
+        <StatTile tint="sand" label="Pages this week" value={String(pagesBetween(ws.reading, weekFrom, ws.today))} hint={`${minutesBetween(ws.reading, weekFrom, ws.today)} min`} />
+        <StatTile tint="sage" label="Reading streak" value={`${streak} ${streak === 1 ? "day" : "days"}`} hint={streak ? "Days in a row" : "Read today to start one"} />
+        <StatTile tint="clay" label="Last 30 days" value={`${pagesBetween(ws.reading, addDays(ws.today, -29), ws.today)} pages`} hint={`${minutesBetween(ws.reading, addDays(ws.today, -29), ws.today)} min`} />
+        <StatTile tint="mist" label={`Finished in ${ws.today.slice(0, 4)}`} value={String(finishedIn(ws.books, ws.today.slice(0, 4)))} />
       </div>
 
       {section(LEARNING_STATUS_LABEL.in_progress, reading)}
@@ -107,7 +98,7 @@ export function ReadingTab({ ws, onEdit, onLog }: { ws: ReflectionWorkspace; onE
         : <button type="button" className="w-fit cursor-pointer text-[12px] text-muted-foreground hover:text-foreground" onClick={() => setShowAll(true)}>Show {done.length} finished</button>)}
 
       <Card className="grid grid-cols-[minmax(0,1fr)] gap-2 p-5">
-        <h2 className="text-[13px] font-medium">Reading log</h2>
+        <h2 className="label-caps">Reading log</h2>
         {!ws.reading.length ? <p className="text-[13px] text-muted-foreground">Nothing logged yet. Use “Log reading” on a book.</p> : (
           <ul className="divide-y divide-border">
             {ws.reading.slice(0, 40).map((s) => (

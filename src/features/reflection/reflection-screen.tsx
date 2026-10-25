@@ -8,6 +8,7 @@ import { BookHeart, Lock, Pencil, Plus, Search, Sparkles, Timer, X } from "lucid
 import {
   AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogTitle, AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
+import { PillTabs } from "@/components/clay/pill-tabs";
 import { ConfirmDelete } from "@/components/data/confirm-delete";
 import { EmptyState } from "@/components/data/empty-state";
 import { ProvenanceBadge } from "@/components/data/provenance";
@@ -55,14 +56,7 @@ export function ReflectionScreen({ ws, tab = "journal", startNew = false }: { ws
   return (
     <div className="grid grid-cols-[minmax(0,1fr)] gap-5">
       <div className="flex flex-wrap items-center gap-2">
-        <div role="tablist" aria-label="Reflection views" className="flex w-max rounded-md bg-muted p-0.5">
-          {TABS.map((t) => (
-            <button key={t.v} role="tab" aria-selected={tab === t.v} onClick={() => router.replace(t.v === "journal" ? pathname : `${pathname}?tab=${t.v}`, { scroll: false })}
-              className={cn("h-7 cursor-pointer rounded px-3 text-[13px] whitespace-nowrap text-muted-foreground", tab === t.v && "bg-surface font-medium text-foreground shadow-card")}>
-              {t.label}
-            </button>
-          ))}
-        </div>
+        <PillTabs label="Reflection views" items={TABS} value={tab} onChange={(v) => router.replace(v === "journal" ? pathname : `${pathname}?tab=${v}`, { scroll: false })} />
         {tab === "meditation" && (
           <div className="ml-auto flex gap-2">
             <Button size="sm" variant="outline" onClick={() => setPractice("any")}><Timer /> Log practice</Button>
@@ -164,9 +158,9 @@ function JournalTab({ ws, startNew }: { ws: ReflectionWorkspace; startNew: boole
         )}
 
         {kinds.length > 1 && (
-          <div role="tablist" aria-label="Entry type" className="flex w-fit max-w-full flex-wrap rounded-md bg-muted p-0.5">
+          <div role="tablist" aria-label="Entry type" className="flex w-fit max-w-full flex-wrap rounded-full bg-tint-mist p-1">
             {(["all", ...kinds] as const).map((k) => (
-              <button key={k} role="tab" aria-selected={kind === k} onClick={() => setKind(k)} className={cn("h-7 cursor-pointer rounded px-3 text-[13px] text-muted-foreground", kind === k && "bg-surface font-medium text-foreground shadow-card")}>
+              <button key={k} role="tab" aria-selected={kind === k} onClick={() => setKind(k)} className={cn("h-9 cursor-pointer rounded-full px-3.5 text-[13px] text-muted-foreground", kind === k && "bg-card font-medium text-foreground shadow-clay")}>
                 {k === "all" ? "All" : KIND_LABEL[k]}
               </button>
             ))}
@@ -246,8 +240,8 @@ function JournalTab({ ws, startNew }: { ws: ReflectionWorkspace; startNew: boole
 function Stat({ label, value }: { label: string; value: number | string }) {
   return (
     <div>
-      <p className="tabular font-display text-xl font-normal tracking-[-0.01em]">{value}</p>
-      <p className="text-[11px] text-muted-foreground">{label}</p>
+      <p className="tabular font-display text-[24px] leading-tight font-normal tracking-[-0.01em]">{value}</p>
+      <p className="label-caps mt-0.5">{label}</p>
     </div>
   );
 }

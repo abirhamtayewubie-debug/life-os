@@ -59,7 +59,7 @@ export function HabitForm({ habit, goals = [], onDone, onCancel }: { habit: Habi
 
       <div className="grid gap-1.5">
         <span className="text-[13px] font-medium">How often</span>
-        <div role="radiogroup" aria-label="How often" className="flex rounded-md bg-muted p-0.5">
+        <div role="radiogroup" aria-label="How often" className="flex rounded-full bg-tint-mist p-1">
           {(["daily", "weekly"] as const).map((c) => (
             <button
               type="button"
@@ -67,7 +67,7 @@ export function HabitForm({ habit, goals = [], onDone, onCancel }: { habit: Habi
               role="radio"
               aria-checked={v.cadence === c}
               onClick={() => set("cadence", c)}
-              className={cn("h-7 flex-1 cursor-pointer rounded text-[13px] text-muted-foreground", v.cadence === c && "bg-surface font-medium text-foreground shadow-card")}
+              className={cn("h-9 flex-1 cursor-pointer rounded-full text-[13px] text-muted-foreground", v.cadence === c && "bg-card font-medium text-foreground shadow-clay")}
             >
               {c === "daily" ? "On set days" : "Times per week"}
             </button>

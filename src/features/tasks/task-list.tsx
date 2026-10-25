@@ -61,14 +61,14 @@ export function TaskItem({ task, all, now, tz, locale, onOpen }: { task: TaskRec
   const overdue = isTaskOverdue(task, now, tz);
   const due = dueText(task, now, tz, locale);
   return (
-    <li className="group flex items-start gap-3 rounded-lg px-2 py-2.5 transition-colors hover:bg-muted/60">
+    <li className="group flex items-start gap-3 px-2 py-3.5">
       <TaskCheckbox task={task} className="mt-0.5" />
       <button type="button" onClick={() => onOpen(task)} className="min-w-0 flex-1 cursor-pointer text-left outline-none">
-        <span className={cn("flex items-center gap-1.5 text-[13px] leading-snug", task.status === "done" && "text-muted-foreground line-through")}>
+        <span className={cn("flex items-center gap-1.5 text-[14px] leading-snug", task.status === "done" && "text-muted-foreground line-through")}>
           {task.is_top_priority && <Star className="size-3 shrink-0 fill-brand text-brand" aria-label="Today's focus" />}
-          <span className="truncate">{task.title}</span>
+          <span className="min-w-0 truncate">{task.title}</span>
         </span>
-        <span className="mt-0.5 flex flex-wrap items-center gap-x-2.5 gap-y-1 text-[11px] text-muted-foreground">
+        <span className="mt-1 flex flex-wrap items-center gap-x-2.5 gap-y-1 text-[11px] text-muted-foreground">
           <span className="inline-flex items-center gap-1"><span className={cn("size-1.5 rounded-full", DOT[task.priority])} aria-hidden />{PRIORITY_LABEL[task.priority]}</span>
           {due && <span className={cn(overdue && "font-medium text-destructive")}>{due}</span>}
           {task.recurrence_rule && <Repeat className="size-3" aria-label="Repeats" />}
@@ -79,7 +79,7 @@ export function TaskItem({ task, all, now, tz, locale, onOpen }: { task: TaskRec
           {task.status === "in_progress" && <Badge variant="brand">Doing</Badge>}
           {task.status === "waiting" && <Badge variant="warning">Blocked</Badge>}
           <span className="capitalize">{task.area}</span>
-          {task.tags.map((g) => <span key={g.id} className="rounded bg-muted px-1.5 py-px text-[10px]">#{g.name}</span>)}
+          {task.tags.map((g) => <span key={g.id} className="rounded-full bg-tint-mist px-2 py-px text-[10px]">#{g.name}</span>)}
           <ProvenanceBadge source={task.source} />
         </span>
       </button>

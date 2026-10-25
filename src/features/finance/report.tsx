@@ -40,7 +40,7 @@ export function ReportTab() {
 
             {spend.length > 0 && (
               <section className="grid gap-2">
-                <h3 className="text-[12px] font-medium text-muted-foreground">Where it went</h3>
+                <h3 className="label-caps">Where it went</h3>
                 <ul className="grid gap-2">
                   {spend.map((c) => {
                     const v = toMinor(c.amount.amount, b.currency);
@@ -63,7 +63,7 @@ export function ReportTab() {
 
             {income.length > 0 && (
               <section className="grid gap-2">
-                <h3 className="text-[12px] font-medium text-muted-foreground">Where it came from</h3>
+                <h3 className="label-caps">Where it came from</h3>
                 <ul className="grid gap-1.5">
                   {income.map((c) => (
                     <li key={c.categoryId ?? "none"} className="flex flex-wrap items-baseline gap-x-2 text-[13px]">
@@ -87,8 +87,8 @@ export function ReportTab() {
 function Stat({ label, children }: { label: string; children: React.ReactNode }) {
   return (
     <div className="grid gap-0.5">
-      <span className="text-[11px] text-muted-foreground">{label}</span>
-      <span className="text-lg font-semibold tracking-tight">{children}</span>
+      <span className="label-caps">{label}</span>
+      <span className="font-display text-[22px] leading-tight font-normal tracking-[-0.01em]">{children}</span>
     </div>
   );
 }

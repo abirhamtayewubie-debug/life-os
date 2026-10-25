@@ -8,6 +8,7 @@ import { EmptyState } from "@/components/data/empty-state";
 import { FormActions, useActionForm } from "@/components/data/action-form";
 import { ProvenanceBadge } from "@/components/data/provenance";
 import { Badge } from "@/components/ui/badge";
+import { StatTile } from "@/components/clay/stat-tile";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
@@ -23,16 +24,6 @@ import { embedUrl, practiceByWeek, practiceMinutes, practiceStreak, thumbnailUrl
 import type { MeditationLink, ReflectionWorkspace } from "./types";
 
 const tooltipStyle = { background: "var(--color-popover)", border: "1px solid var(--color-border)", borderRadius: 8, fontSize: 12 };
-
-function Stat({ label, value, hint }: { label: string; value: string; hint?: string }) {
-  return (
-    <Card className="grid content-start gap-0.5 p-4">
-      <span className="text-[12px] text-muted-foreground">{label}</span>
-      <span className="tabular font-display text-xl font-normal tracking-[-0.01em]">{value}</span>
-      {hint && <span className="text-[11px] text-muted-foreground">{hint}</span>}
-    </Card>
-  );
-}
 
 /** Saved guided meditations (YouTube plays right here), and the practice log. */
 export function MeditationTab({ ws, onEdit, onLog }: { ws: ReflectionWorkspace; onEdit: (m: MeditationLink | null) => void; onLog: (m: MeditationLink | null) => void }) {
@@ -51,9 +42,9 @@ export function MeditationTab({ ws, onEdit, onLog }: { ws: ReflectionWorkspace; 
   return (
     <div className="grid grid-cols-[minmax(0,1fr)] gap-5">
       <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
-        <Stat label="This week" value={`${week} min`} />
-        <Stat label="Practice streak" value={`${streak} ${streak === 1 ? "day" : "days"}`} hint={streak ? "Days in a row" : "Practise today to start one"} />
-        <Stat label="Last 30 days" value={`${last30.length} ${last30.length === 1 ? "session" : "sessions"}`} hint={`${last30.reduce((a, p) => a + p.minutes, 0)} min`} />
+        <StatTile tint="sand" label="This week" value={`${week} min`} />
+        <StatTile tint="sage" label="Practice streak" value={`${streak} ${streak === 1 ? "day" : "days"}`} hint={streak ? "Days in a row" : "Practise today to start one"} />
+        <StatTile tint="clay" label="Last 30 days" value={`${last30.length} ${last30.length === 1 ? "session" : "sessions"}`} hint={`${last30.reduce((a, p) => a + p.minutes, 0)} min`} />
         <Card className="grid gap-1 p-4">
           <span className="text-[12px] text-muted-foreground">Minutes per week</span>
           <div className="h-12" role="img" aria-label={`Meditation minutes per week: ${weeks.map((w) => `${formatShortDate(w.start, ws.locale)} ${w.minutes}`).join(", ")}`}>
@@ -140,7 +131,7 @@ export function MeditationTab({ ws, onEdit, onLog }: { ws: ReflectionWorkspace; 
       </section>
 
       <Card className="grid grid-cols-[minmax(0,1fr)] gap-2 p-5">
-        <h2 className="text-[13px] font-medium">Practice log</h2>
+        <h2 className="label-caps">Practice log</h2>
         {!ws.practice.length ? (
           <p className="text-[13px] text-muted-foreground">Nothing logged yet. Use “Log practice” after you meditate, with or without a saved video.</p>
         ) : (

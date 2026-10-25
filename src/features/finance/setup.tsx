@@ -114,7 +114,7 @@ function CategoryGroup({ kind, cats }: { kind: "income" | "expense"; cats: Categ
   );
   return (
     <div className="grid gap-1">
-      <h3 className="text-[11px] font-medium text-muted-foreground uppercase">{kind === "expense" ? "Spending" : "Income"}</h3>
+      <h3 className="label-caps">{kind === "expense" ? "Spending" : "Income"}</h3>
       {tops.length === 0 ? <p className="text-[12px] text-muted-foreground">None yet.</p> : (
         <ul>{tops.flatMap((t) => [row(t, false), ...cats.filter((c) => c.parent_id === t.id).sort((a, b) => a.name.localeCompare(b.name)).map((c) => row(c, true))])}</ul>
       )}

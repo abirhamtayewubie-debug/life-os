@@ -1,4 +1,4 @@
-import { PageHeader } from "@/components/shell/page-header";
+import { ScreenHeader } from "@/components/shell/screen-header";
 import { CalendarFiles, type FeedStatus } from "@/features/calendar/calendar-files";
 import { CalendarScreen } from "@/features/calendar/calendar-screen";
 import type { CalendarView } from "@/lib/calendar";
@@ -26,8 +26,8 @@ export default async function CalendarPage({ searchParams }: PageProps<"/calenda
   const feed = await feedStatus(data.demo);
   return (
     <div className="animate-rise">
-      <PageHeader
-        title="Calendar"
+      <ScreenHeader
+        title="Your" accent="time" phoneTitle="Calendar" root
         description="Your time at a glance: events, time blocks and the tasks due each day."
         actions={<CalendarFiles timezone={data.timezone} locale={data.locale} feed={feed} demo={data.demo} />}
       />

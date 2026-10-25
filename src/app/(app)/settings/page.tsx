@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { Check, Lock, X } from "lucide-react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { PageHeader } from "@/components/shell/page-header";
+import { ScreenHeader } from "@/components/shell/screen-header";
 import { AiSettingsForm } from "@/features/settings/ai-settings-form";
 import { AppearancePicker } from "@/features/settings/appearance";
 import { ModuleToggles } from "@/features/settings/module-toggles";
@@ -70,7 +70,7 @@ export default async function SettingsPage() {
 
   return (
     <div className="mx-auto max-w-3xl animate-rise">
-      <PageHeader title="Settings" description="Preferences, navigation, privacy and your data." />
+      <ScreenHeader title="Your" accent="settings" accentTone="sage" phoneTitle="Settings" description="Preferences, navigation, privacy and your data." />
       <div className="grid gap-4">
         <Section id="profile" title="Profile & preferences" description="Your time zone decides what “today” means across every module.">
           {demo ? <p className="text-sm text-muted-foreground">Demo mode uses {viewer.profile.timezone} and {viewer.profile.baseCurrency}. Connect Supabase to save your own preferences.</p>

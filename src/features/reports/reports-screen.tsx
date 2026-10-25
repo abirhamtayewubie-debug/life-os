@@ -35,10 +35,10 @@ export function ReportsScreen({ r }: { r: ReportView }) {
   return (
     <div className="grid grid-cols-[minmax(0,1fr)] gap-5">
       <div className="flex flex-wrap items-center gap-2 print:hidden">
-        <div role="radiogroup" aria-label="Report period" className="flex rounded-md bg-muted p-0.5">
+        <div role="radiogroup" aria-label="Report period" className="flex rounded-full bg-tint-mist p-1">
           {PERIODS.map((x) => (
             <button key={x.v} type="button" role="radio" aria-checked={r.period === x.v} onClick={() => go(x.v, r.start <= r.today && r.end >= r.today ? null : r.start)}
-              className={cn("h-7 cursor-pointer rounded px-3 text-[13px] text-muted-foreground", r.period === x.v && "bg-surface font-medium text-foreground shadow-card")}>{x.label}</button>
+              className={cn("h-9 cursor-pointer rounded-full px-3.5 text-[13px] text-muted-foreground", r.period === x.v && "bg-card font-medium text-foreground shadow-clay")}>{x.label}</button>
           ))}
         </div>
         <div className="flex items-center gap-1">

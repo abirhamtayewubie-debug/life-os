@@ -261,10 +261,10 @@ function LoanNewForm({ direction, onDone, onCancel }: { direction: LoanDirection
   const accounts = ws.accounts.filter((a) => !a.archived_at && a.currency === v.currency && !ws.loans.some((l) => l.account_id === a.id));
   return (
     <form noValidate className="grid gap-4" onSubmit={submit((x) => createPersonalLoan({ ...x, personId: personIdFor(ws, x.personName) }), onDone)}>
-      <div role="radiogroup" aria-label="Direction" className="flex w-fit rounded-md bg-muted p-0.5">
+      <div role="radiogroup" aria-label="Direction" className="flex w-fit rounded-full bg-tint-mist p-1">
         {(["borrowed", "lent"] as const).map((d) => (
           <button key={d} type="button" role="radio" aria-checked={v.direction === d} onClick={() => set("direction", d)}
-            className={`h-7 cursor-pointer rounded px-3 text-[13px] ${v.direction === d ? "bg-surface font-medium shadow-card" : "text-muted-foreground"}`}>
+            className={`h-9 cursor-pointer rounded-full px-3.5 text-[13px] ${v.direction === d ? "bg-card font-medium shadow-clay" : "text-muted-foreground"}`}>
             {d === "borrowed" ? "I borrowed" : "I lent"}
           </button>
         ))}
@@ -350,10 +350,10 @@ export function LoanPaymentForm({ loan, kind, onDone, onCancel }: { loan: Person
   const out = borrowed === repay;
   return (
     <form noValidate className="grid gap-4" onSubmit={submit(recordLoanPayment, onDone)}>
-      <div role="radiogroup" aria-label="What happened" className="flex w-fit rounded-md bg-muted p-0.5">
+      <div role="radiogroup" aria-label="What happened" className="flex w-fit rounded-full bg-tint-mist p-1">
         {(["repay", "add"] as const).map((k) => (
           <button key={k} type="button" role="radio" aria-checked={v.kind === k} onClick={() => set("kind", k)}
-            className={`h-7 cursor-pointer rounded px-3 text-[13px] ${v.kind === k ? "bg-surface font-medium shadow-card" : "text-muted-foreground"}`}>
+            className={`h-9 cursor-pointer rounded-full px-3.5 text-[13px] ${v.kind === k ? "bg-card font-medium shadow-clay" : "text-muted-foreground"}`}>
             {k === "repay" ? (borrowed ? "I paid back" : "They paid back") : (borrowed ? "I borrowed more" : "I lent more")}
           </button>
         ))}

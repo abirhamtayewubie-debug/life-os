@@ -57,7 +57,7 @@ export function ReviewsTab({ ws, onWrite }: { ws: ReflectionWorkspace; onWrite: 
             <Card key={kind} className="grid content-start gap-2 p-5">
               <div className="flex items-start gap-2">
                 <div className="min-w-0 flex-1">
-                  <h2 className="text-[13px] font-medium">{current ? (kind === "weekly" ? "This week" : "This month") : (kind === "weekly" ? "Last week" : "Last month")}</h2>
+                  <h2 className="label-caps">{current ? (kind === "weekly" ? "This week" : "This month") : (kind === "weekly" ? "Last week" : "Last month")}</h2>
                   <p className="text-[12px] text-muted-foreground">{periodLabel(p, ws.locale)}</p>
                 </div>
                 {done ? <Badge variant="outline"><CheckCircle2 className="size-3 text-emerald-600" aria-hidden /> Reviewed</Badge> : <Badge variant="outline">Not reviewed yet</Badge>}
@@ -75,9 +75,9 @@ export function ReviewsTab({ ws, onWrite }: { ws: ReflectionWorkspace; onWrite: 
         <div className="flex flex-wrap items-center gap-2">
           <h2 id="rev-history" className="text-[13px] font-medium">Past reviews</h2>
           {kinds.length > 1 && (
-            <div role="tablist" aria-label="Review type" className="ml-auto flex rounded-md bg-muted p-0.5">
+            <div role="tablist" aria-label="Review type" className="ml-auto flex rounded-full bg-tint-mist p-1">
               {(["all", ...kinds] as const).map((k) => (
-                <button key={k} role="tab" aria-selected={filter === k} onClick={() => setFilter(k)} className={cn("h-7 cursor-pointer rounded px-3 text-[12px] text-muted-foreground", filter === k && "bg-surface font-medium text-foreground shadow-card")}>
+                <button key={k} role="tab" aria-selected={filter === k} onClick={() => setFilter(k)} className={cn("h-9 cursor-pointer rounded-full px-3.5 text-[12px] text-muted-foreground", filter === k && "bg-card font-medium text-foreground shadow-clay")}>
                   {k === "all" ? "All" : KIND_LABEL[k]}
                 </button>
               ))}

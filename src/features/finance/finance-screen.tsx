@@ -6,6 +6,7 @@ import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } f
 import { ArrowLeftRight, FileUp, Plus, Settings2 } from "lucide-react";
 import { DetailHeader } from "@/components/clay/detail-header";
 import { PageHeader } from "@/components/shell/page-header";
+import { PillTabs } from "@/components/clay/pill-tabs";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { AccountForm, BudgetForm, CategoryForm, PaymentForm, RateForm, RecurringForm, SavingsForm, TransactionForm, TransferForm } from "./forms";
@@ -86,16 +87,7 @@ export function FinanceScreen({ ws, tab, startNew = false }: { ws: FinanceWorksp
           </>}
         />
         <div className="grid grid-cols-[minmax(0,1fr)] gap-5">
-          <div className="-mx-5 overflow-x-auto px-5 pb-1 md:mx-0 md:px-0">
-            <div role="tablist" aria-label="Finance views" className="flex w-max gap-1.5">
-              {TABS.map((t) => (
-                <button key={t.v} role="tab" aria-selected={tab === t.v} onClick={() => go({ tab: t.v === "overview" ? null : t.v })}
-                  className={cn("h-10 cursor-pointer rounded-full border border-border px-4 text-[13px] whitespace-nowrap text-muted-foreground transition-colors hover:bg-tint-mist", tab === t.v && "border-transparent bg-primary text-primary-foreground hover:bg-primary")}>
-                  {t.label}
-                </button>
-              ))}
-            </div>
-          </div>
+          <PillTabs label="Finance views" items={TABS} value={tab} onChange={(v) => go({ tab: v === "overview" ? null : v })} />
 
           {tab === "overview" ? <Overview />
             : tab === "transactions" ? <TransactionsTab />

@@ -2,6 +2,7 @@
 
 import { Timer } from "lucide-react";
 import { Bar, BarChart, CartesianGrid, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
+import { StatTile } from "@/components/clay/stat-tile";
 import { ConfirmDelete } from "@/components/data/confirm-delete";
 import { EmptyState } from "@/components/data/empty-state";
 import { FormActions, useActionForm } from "@/components/data/action-form";
@@ -19,16 +20,6 @@ const tooltipStyle = { background: "var(--color-popover)", border: "1px solid va
 const axisTick = { fill: "var(--color-muted-foreground)", fontSize: 10 };
 
 const hours = (m: number) => (m < 60 ? `${m} min` : `${Math.floor(m / 60)} h${m % 60 ? ` ${m % 60} min` : ""}`);
-
-function Stat({ label, value, hint }: { label: string; value: string; hint?: string }) {
-  return (
-    <Card className="grid content-start gap-0.5 p-4">
-      <span className="text-[12px] text-muted-foreground">{label}</span>
-      <span className="tabular font-display text-xl font-normal tracking-[-0.01em]">{value}</span>
-      {hint && <span className="text-[11px] text-muted-foreground">{hint}</span>}
-    </Card>
-  );
-}
 
 /** Study time logged: this week, streak, a weekly chart and the session list. */
 export function SessionsTab({ ws, onLog }: { ws: LearningWorkspace; onLog: () => void }) {
@@ -54,13 +45,13 @@ export function SessionsTab({ ws, onLog }: { ws: LearningWorkspace; onLog: () =>
   return (
     <div className="grid gap-5">
       <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
-        <Stat label="This week" value={hours(week)} hint={`Last week ${hours(lastWeek)}`} />
-        <Stat label="Study streak" value={`${streak} ${streak === 1 ? "day" : "days"}`} hint={streak ? "Days in a row with study" : "Log today to start one"} />
-        <Stat label={`Last ${SESSION_HISTORY_DAYS} days`} value={hours(ws.sessions.reduce((a, s) => a + s.minutes, 0))} hint={`${ws.sessions.length} sessions`} />
+        <StatTile tint="sand" label="This week" value={hours(week)} hint={`Last week ${hours(lastWeek)}`} />
+        <StatTile tint="sage" label="Study streak" value={`${streak} ${streak === 1 ? "day" : "days"}`} hint={streak ? "Days in a row with study" : "Log today to start one"} />
+        <StatTile tint="clay" label={`Last ${SESSION_HISTORY_DAYS} days`} value={hours(ws.sessions.reduce((a, s) => a + s.minutes, 0))} hint={`${ws.sessions.length} sessions`} />
       </div>
 
       <Card className="grid gap-2 p-5">
-        <h2 className="text-[13px] font-medium">Minutes per week</h2>
+        <h2 className="label-caps">Minutes per week</h2>
         <div className="h-44" role="img" aria-label={`Study minutes per week: ${weeks.map((w) => `week of ${formatShortDate(w.start, ws.locale)} ${w.minutes}`).join(", ")}`}>
           <ResponsiveContainer width="100%" height="100%">
             <BarChart data={weeks.map((w) => ({ ...w, label: formatShortDate(w.start, ws.locale) }))} margin={{ top: 6, right: 6, left: -16, bottom: 0 }}>
@@ -75,7 +66,7 @@ export function SessionsTab({ ws, onLog }: { ws: LearningWorkspace; onLog: () =>
       </Card>
 
       <Card className="grid grid-cols-[minmax(0,1fr)] gap-2 p-5">
-        <h2 className="text-[13px] font-medium">Sessions</h2>
+        <h2 className="label-caps">Sessions</h2>
         <ul className="divide-y divide-border">
           {ws.sessions.map((s) => {
             const rm = roadmapOf(s.roadmap_id);
