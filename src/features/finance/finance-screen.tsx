@@ -3,6 +3,10 @@
 import { useEffect, useState } from "react";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { ArrowLeftRight, FileUp, Plus, Settings2 } from "lucide-react";
+import { DetailHeader } from "@/components/clay/detail-header";
+import { PageHeader } from "@/components/shell/page-header";
+import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { AccountForm, BudgetForm, CategoryForm, PaymentForm, RateForm, RecurringForm, SavingsForm, TransactionForm, TransferForm } from "./forms";
 import { ImportPanel } from "./import-panel";
@@ -46,6 +50,7 @@ export function FinanceScreen({ ws, tab, startNew = false }: { ws: FinanceWorksp
     router.replace(`${pathname}?${q.toString()}`, { scroll: false });
   };
 
+  const newTx: Editor = ws.accounts.some((a) => !a.archived_at) ? { k: "tx", x: null } : { k: "account", x: null };
   useEffect(() => {
     const onNew = () => setEditor(ws.accounts.some((a) => !a.archived_at) ? { k: "tx", x: null } : { k: "account", x: null });
     window.addEventListener("lifeos:new-transaction", onNew);
@@ -61,12 +66,31 @@ export function FinanceScreen({ ws, tab, startNew = false }: { ws: FinanceWorksp
   return (
     <FinanceContext.Provider value={ws}>
       <NavContext.Provider value={{ open: setEditor, go }}>
+        <DetailHeader
+          title="Finance"
+          actions={[
+            { label: "New transaction", icon: Plus, onSelect: () => setEditor(newTx) },
+            { label: "Transfer", icon: ArrowLeftRight, onSelect: () => setEditor({ k: "transfer" }) },
+            { label: "Import a statement", icon: FileUp, onSelect: () => setEditor({ k: "import" }) },
+            { label: "Accounts & setup", icon: Settings2, onSelect: () => go({ tab: "setup" }) },
+          ]}
+        />
+        <PageHeader
+          className="max-md:hidden"
+          title="Your"
+          accent="finances"
+          description="Accounts, spending, budgets, bills and loans, in each currency you use. Nothing is converted without your own rate."
+          actions={<>
+            <Button variant="outline" className="h-11" onClick={() => setEditor({ k: "transfer" })}><ArrowLeftRight /> Transfer</Button>
+            <Button className="h-11" onClick={() => setEditor(newTx)}><Plus /> Transaction</Button>
+          </>}
+        />
         <div className="grid grid-cols-[minmax(0,1fr)] gap-5">
-          <div className="-mx-1 overflow-x-auto px-1 pb-1">
-            <div role="tablist" aria-label="Finance views" className="flex w-max rounded-md bg-muted p-0.5">
+          <div className="-mx-5 overflow-x-auto px-5 pb-1 md:mx-0 md:px-0">
+            <div role="tablist" aria-label="Finance views" className="flex w-max gap-1.5">
               {TABS.map((t) => (
                 <button key={t.v} role="tab" aria-selected={tab === t.v} onClick={() => go({ tab: t.v === "overview" ? null : t.v })}
-                  className={cn("h-7 cursor-pointer rounded px-3 text-[13px] whitespace-nowrap text-muted-foreground", tab === t.v && "bg-surface font-medium text-foreground shadow-card")}>
+                  className={cn("h-10 cursor-pointer rounded-full border border-border px-4 text-[13px] whitespace-nowrap text-muted-foreground transition-colors hover:bg-tint-mist", tab === t.v && "border-transparent bg-primary text-primary-foreground hover:bg-primary")}>
                   {t.label}
                 </button>
               ))}
