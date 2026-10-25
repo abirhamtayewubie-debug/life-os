@@ -41,9 +41,9 @@ export function SleepScreen({ ws, startNew = false }: { ws: HealthWorkspace; sta
   return (
     <div className="grid grid-cols-[minmax(0,1fr)] gap-5">
       <div className="flex flex-wrap items-center gap-2">
-        <div role="radiogroup" aria-label="Period" className="flex rounded-md bg-muted p-0.5">
+        <div role="radiogroup" aria-label="Period" className="flex rounded-full bg-tint-mist p-1">
           {[7, 14, 30, 90].map((n) => (
-            <button key={n} type="button" role="radio" aria-checked={days === n} onClick={() => setDays(n)} className={cn("h-7 cursor-pointer rounded px-3 text-[13px] text-muted-foreground", days === n && "bg-surface font-medium text-foreground shadow-card")}>{n} nights</button>
+            <button key={n} type="button" role="radio" aria-checked={days === n} onClick={() => setDays(n)} className={cn("h-9 cursor-pointer rounded-full px-3.5 text-[13px] text-muted-foreground", days === n && "bg-card font-medium text-foreground shadow-clay")}>{n} nights</button>
           ))}
         </div>
         <Button size="sm" className="ml-auto" onClick={() => setEditing("new")}><Plus /> {loggedToday ? "Log a night" : "Log last night"}</Button>
@@ -125,8 +125,8 @@ function clockLabel(hhmm: string, locale: string) {
 function Stat({ label, value, sub }: { label: string; value: React.ReactNode; sub?: React.ReactNode }) {
   return (
     <div className="grid content-start gap-0.5">
-      <span className="text-[11px] text-muted-foreground">{label}</span>
-      <span className="tabular font-display text-xl font-normal tracking-[-0.01em]">{value}</span>
+      <span className="label-caps">{label}</span>
+      <span className="tabular font-display text-[24px] leading-tight font-normal tracking-[-0.01em]">{value}</span>
       {sub && <span className="text-[11px] text-muted-foreground">{sub}</span>}
     </div>
   );

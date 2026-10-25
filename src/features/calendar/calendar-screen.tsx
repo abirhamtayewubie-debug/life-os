@@ -139,14 +139,14 @@ export function CalendarScreen({ data, nowIso, startNew = false }: { data: Calen
           <Button variant="outline" size="icon-sm" aria-label="Next" onClick={() => go(data.view, shiftAnchor(data.view, data.date, 1))}><ChevronRight /></Button>
         </div>
         <h2 className="text-[15px] font-medium tracking-tight">{title(data)}</h2>
-        <div role="tablist" aria-label="Calendar view" className="ml-auto flex rounded-md bg-muted p-0.5">
+        <div role="tablist" aria-label="Calendar view" className="ml-auto flex rounded-full bg-tint-mist p-1">
           {VIEWS.map((v) => (
             <button
               key={v.v}
               role="tab"
               aria-selected={data.view === v.v}
               onClick={() => go(v.v, data.date)}
-              className={cn("h-7 cursor-pointer rounded px-3 text-[13px] text-muted-foreground", data.view === v.v && "bg-surface font-medium text-foreground shadow-[var(--shadow-card)]")}
+              className={cn("h-9 cursor-pointer rounded-full px-3.5 text-[13px] text-muted-foreground", data.view === v.v && "bg-card font-medium text-foreground shadow-clay")}
             >
               {v.label}
             </button>

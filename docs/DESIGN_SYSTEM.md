@@ -28,7 +28,7 @@ Semantic text tokens are nudged darker than the raw greys so small text meets WC
 Shape: tiles 22–24px (`rounded-3xl` = 24px), hero and big cards 28px, icon buttons 16px squircles, chips fully rounded. Depth: `shadow-clay` = `0 3px 0 rgb(80 60 30 / .08)` (dark `rgb(0 0 0 / .35)`), used by `shadow-card`.
 
 ## Type
-Fraunces (`font-display`, weight 300–400) for headings, big numbers and list item titles, with an italic accent word (`.accent-italic` clay, `.accent-italic-sage`). Inter 400–600 for UI. Section labels use `.label-caps` (11px, uppercase, 0.2em tracking, faint). Geist Mono for codes. Numbers use `tabular-nums` (`.tabular`).
+Fraunces (`font-display`, weight 300–400) for headings, big numbers and list item titles, with an italic accent word (`.accent-italic` clay, `.accent-italic-sage`). Inter 400–600 for UI. Lucide icons draw at a 1.6 stroke (set once in `globals.css`). Section labels use `.label-caps` (11px, uppercase, 0.2em tracking, faint). Geist Mono for codes. Numbers use `tabular-nums` (`.tabular`).
 
 ## Layout
 - **Phones (< 768px):** bottom nav fixed to the bottom (Today · Plan · + · Habits · Areas), page-colored with a 1px top line; active item is ink with a 4px clay dot. The + opens the quick-add sheet. Areas (`/areas`) replaces the old side drawer and lists every module as tiles with live status from `src/server/areas.ts` (one line on phones; 6 per row and up to three lines on desktop). The top bar is search on the left, bell and avatar (account menu with Light / Night / Match device) on the right.
@@ -38,6 +38,8 @@ Fraunces (`font-display`, weight 300–400) for headings, big numbers and list i
 ## Components (`src/components/ui`)
 Button (default ink, brand, secondary iris-tint, outline, ghost, destructive, link) · Card · Badge (incl. dashed `sample`) · Input / Textarea / NativeSelect · Label · Switch · Progress · Dialog · AlertDialog (destructive confirmations) · Sheet · DropdownMenu · Tooltip · Skeleton · Kbd · Toaster.
 Data components: `ProvenanceBadge`, `EmptyState`, `WidgetCard`.
+Clay components (`src/components/clay`): `IconButton` / `Avatar` (44px squircles), `AreaTile`, `StatTile` (tinted number tile), `PillTabs` (page view switcher; small in-card choices use the `rounded-full bg-tint-mist p-1` segmented style), `DetailHeader` (phone back · title · more).
+Page headers: `ScreenHeader` (`src/components/shell/screen-header.tsx`) gives every module page the phone back bar plus the desktop Fraunces title with an accent word; add new pages to `OWN_PHONE_HEADER` in the top bar. Bottom-nav pages (Calendar, Habits) pass `root` and keep the big title on phones.
 
 ## Motion
 `animate-rise` (360ms) for entering content, `animate-fade-in` for overlays, `slide-in-left` / `slide-in-up` for sheets, `animate-pop` when something is checked off, 500–700ms ease-out for progress. All motion is disabled under `prefers-reduced-motion`.

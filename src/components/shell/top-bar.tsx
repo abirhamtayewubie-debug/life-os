@@ -10,13 +10,17 @@ import { CommandPalette, openCommandPalette } from "./command-palette";
 import { isActivePath } from "./nav-items";
 import { UserMenu } from "./user-menu";
 
-const OWN_PHONE_HEADER = ["/areas", "/finance"];
+const OWN_PHONE_HEADER = [
+  "/areas", "/finance", "/tasks", "/goals", "/health", "/learning", "/reflection", "/relationships", "/admin",
+  "/assistant", "/work", "/reports", "/knowledge", "/settings", "/integrations", "/wheel",
+];
 
 /** "OVERVIEW · TODAY": where you are, shown above the page on tablets and desktop. */
 function Breadcrumb() {
   const pathname = usePathname();
   if (pathname === "/areas") return <span>Life areas</span>;
-  const m = [...MODULES].sort((a, b) => b.href.length - a.href.length).find((mod) => isActivePath(pathname, mod.href.split("?")[0]!));
+  // Longest path wins; a module that is only a tab of another page (/health?tab=sleep) never names the page.
+  const m = [...MODULES].filter((mod) => !mod.href.includes("?")).sort((a, b) => b.href.length - a.href.length).find((mod) => isActivePath(pathname, mod.href));
   if (!m) return null;
   return (
     <span>

@@ -96,10 +96,10 @@ export function TransactionForm({ tx, defaults, onDone, onCancel }: { tx: Transa
   const acct = ws.accounts.find((a) => a.id === v.accountId);
   return (
     <form noValidate className="grid gap-4" onSubmit={submit((x) => saveTransaction(tx?.id ?? null, x), onDone)}>
-      <div role="radiogroup" aria-label="Type" className="flex w-fit rounded-md bg-muted p-0.5">
+      <div role="radiogroup" aria-label="Type" className="flex w-fit rounded-full bg-tint-mist p-1">
         {(["expense", "income", "adjustment"] as const).map((k) => (
           <button key={k} type="button" role="radio" aria-checked={v.kind === k} onClick={() => { set("kind", k); set("categoryId", ""); }}
-            className={`h-7 cursor-pointer rounded px-3 text-[13px] ${v.kind === k ? "bg-surface font-medium shadow-card" : "text-muted-foreground"}`}>
+            className={`h-9 cursor-pointer rounded-full px-3.5 text-[13px] ${v.kind === k ? "bg-card font-medium shadow-clay" : "text-muted-foreground"}`}>
             {k === "expense" ? "Money out" : k === "income" ? "Money in" : "Balance correction"}
           </button>
         ))}

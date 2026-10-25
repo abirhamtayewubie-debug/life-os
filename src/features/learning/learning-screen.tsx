@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { BookOpen, ExternalLink, GraduationCap, Pencil, Plus, Timer } from "lucide-react";
+import { PillTabs } from "@/components/clay/pill-tabs";
 import { ConfirmDelete } from "@/components/data/confirm-delete";
 import { EmptyState } from "@/components/data/empty-state";
 import { ProvenanceBadge } from "@/components/data/provenance";
@@ -51,16 +52,7 @@ export function LearningScreen({ ws, tab = "library", startNew = false }: { ws: 
   return (
     <div className="grid grid-cols-[minmax(0,1fr)] gap-5">
       <div className="flex flex-wrap items-center gap-2">
-        <div className="-mx-1 max-w-full overflow-x-auto px-1">
-          <div role="tablist" aria-label="Learning views" className="flex w-max rounded-md bg-muted p-0.5">
-            {TABS.map((t) => (
-              <button key={t.v} role="tab" aria-selected={tab === t.v} onClick={() => router.replace(t.v === "library" ? pathname : `${pathname}?tab=${t.v}`, { scroll: false })}
-                className={cn("h-7 cursor-pointer rounded px-3 text-[13px] whitespace-nowrap text-muted-foreground", tab === t.v && "bg-surface font-medium text-foreground shadow-card")}>
-                {t.label}
-              </button>
-            ))}
-          </div>
-        </div>
+        <PillTabs label="Learning views" items={TABS} value={tab} onChange={(v) => router.replace(v === "library" ? pathname : `${pathname}?tab=${v}`, { scroll: false })} />
         <div className="ml-auto flex gap-2">
           {tab === "library" ? <Button size="sm" onClick={() => setEditing("new")}><Plus /> Add</Button>
             : tab === "roadmaps" ? <Button size="sm" onClick={() => setRoadmap("new")}><Plus /> Roadmap</Button>
@@ -89,7 +81,7 @@ export function LearningScreen({ ws, tab = "library", startNew = false }: { ws: 
             if (g === "dropped" && !showDropped) return <button key={g} type="button" className="w-fit cursor-pointer text-[12px] text-muted-foreground hover:text-foreground" onClick={() => setShowDropped(true)}>Show {items.length} dropped</button>;
             return (
               <section key={g} aria-labelledby={`group-${g}`} className="grid gap-2">
-                <h2 id={`group-${g}`} className="text-[12px] font-medium text-muted-foreground">{LEARNING_STATUS_LABEL[g]} <span className="tabular">{items.length}</span></h2>
+                <h2 id={`group-${g}`} className="label-caps">{LEARNING_STATUS_LABEL[g]} <span className="tabular">{items.length}</span></h2>
                 <ul className="grid gap-2">{items.map((i) => <ItemRow key={i.id} item={i} ws={ws} onEdit={() => setEditing(i)} />)}</ul>
               </section>
             );

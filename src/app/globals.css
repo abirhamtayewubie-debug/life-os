@@ -234,8 +234,13 @@
   .tabular {
     font-variant-numeric: tabular-nums;
   }
+  /* Thin line icons everywhere: lucide's default 2px stroke drops to 1.6; icons that ask for another weight keep it. */
+  svg.lucide[stroke-width="2"] {
+    stroke-width: 1.6;
+  }
   /* Small uppercase section label: OVERVIEW, PLAN, RECENT. */
   .label-caps {
+    font-family: var(--font-inter), ui-sans-serif, system-ui, sans-serif;
     font-size: 11px;
     font-weight: 500;
     letter-spacing: 0.2em;

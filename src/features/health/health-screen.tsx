@@ -5,6 +5,7 @@ import { useEffect, useState } from "react";
 import { usePathname, useRouter } from "next/navigation";
 import { Activity, Droplets, HeartPulse, Pencil, Plus, Ruler, Smile, Trophy } from "lucide-react";
 import { Bar, BarChart, CartesianGrid, Line, LineChart, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
+import { PillTabs } from "@/components/clay/pill-tabs";
 import { ConfirmDelete } from "@/components/data/confirm-delete";
 import { EmptyState } from "@/components/data/empty-state";
 import { ProvenanceBadge } from "@/components/data/provenance";
@@ -64,16 +65,7 @@ export function HealthScreen({ ws, tab, startNew = false }: { ws: HealthWorkspac
   return (
     <div className="grid grid-cols-[minmax(0,1fr)] gap-5">
       <div className="flex flex-wrap items-center gap-2">
-        <div className="-mx-1 overflow-x-auto px-1">
-          <div role="tablist" aria-label="Health views" className="flex w-max rounded-md bg-muted p-0.5">
-            {TABS.map((t) => (
-              <button key={t.v} role="tab" aria-selected={tab === t.v} onClick={() => router.replace(t.v === "today" ? pathname : `${pathname}?tab=${t.v}`, { scroll: false })}
-                className={cn("h-7 cursor-pointer rounded px-3 text-[13px] whitespace-nowrap text-muted-foreground", tab === t.v && "bg-surface font-medium text-foreground shadow-card")}>
-                {t.label}
-              </button>
-            ))}
-          </div>
-        </div>
+        <PillTabs label="Health views" items={TABS} value={tab} onChange={(v) => router.replace(v === "today" ? pathname : `${pathname}?tab=${v}`, { scroll: false })} className="w-full" />
         <div className={cn("ml-auto flex gap-2", (tab === "sleep" || tab === "progress") && "hidden")}>
           {tab === "workouts" ? <Button size="sm" onClick={() => setEditor({ k: "workout", x: null })}><Plus /> Workout</Button>
             : tab === "programs" ? <Button size="sm" onClick={() => setEditor({ k: "program", x: null })}><Plus /> Program</Button>
@@ -113,8 +105,8 @@ export function HealthScreen({ ws, tab, startNew = false }: { ws: HealthWorkspac
 function Stat({ label, value, sub }: { label: string; value: React.ReactNode; sub?: React.ReactNode }) {
   return (
     <div className="grid content-start gap-0.5">
-      <span className="text-[11px] text-muted-foreground">{label}</span>
-      <span className="tabular font-display text-xl font-normal tracking-[-0.01em]">{value}</span>
+      <span className="label-caps">{label}</span>
+      <span className="tabular font-display text-[24px] leading-tight font-normal tracking-[-0.01em]">{value}</span>
       {sub && <span className="text-[11px] text-muted-foreground">{sub}</span>}
     </div>
   );
@@ -139,7 +131,7 @@ function TodayTab({ ws, onEdit }: { ws: HealthWorkspace; onEdit: (e: Editor) => 
         <Card className="grid gap-3 p-5">
           <div className="flex items-center gap-2">
             <Smile className="size-4 text-muted-foreground" aria-hidden />
-            <h2 className="text-[13px] font-medium">Today&apos;s check-ins</h2>
+            <h2 className="label-caps">Today&apos;s check-ins</h2>
             <Button size="sm" variant="outline" className="ml-auto" onClick={() => onEdit({ k: "checkin", x: null })}><Plus /> Check in</Button>
           </div>
           {todays.length === 0 ? (
@@ -167,7 +159,7 @@ function TodayTab({ ws, onEdit }: { ws: HealthWorkspace; onEdit: (e: Editor) => 
         <Card className="grid gap-3 p-5">
           <div className="flex items-center gap-2">
             <Droplets className="size-4 text-muted-foreground" aria-hidden />
-            <h2 className="text-[13px] font-medium">Water today</h2>
+            <h2 className="label-caps">Water today</h2>
             <span className="ml-auto tabular text-[15px] font-semibold">{(waterTotal / 1000).toFixed(2).replace(/0$/, "")} L</span>
           </div>
           <div className="flex flex-wrap items-center gap-2">
@@ -191,7 +183,7 @@ function TodayTab({ ws, onEdit }: { ws: HealthWorkspace; onEdit: (e: Editor) => 
       </div>
 
       <Card className="grid content-start gap-4 p-5">
-        <h2 className="text-[13px] font-medium">Last 7 days</h2>
+        <h2 className="label-caps">Last 7 days</h2>
         <div className="grid grid-cols-2 gap-4">
           <Stat label="Mood" value={averageOf(week, "mood") ?? "–"} sub={`${week.filter((d) => d.checkins).length} days checked in`} />
           <Stat label="Energy" value={averageOf(week, "energy") ?? "–"} sub="average, 1–5" />
@@ -234,7 +226,7 @@ function WorkoutsTab({ ws, onEdit }: { ws: HealthWorkspace; onEdit: (e: Editor) 
     <div className="grid gap-5">
       <div className="grid gap-5 lg:grid-cols-[minmax(0,1fr)_minmax(0,1.6fr)]">
         <Card className="grid content-start gap-4 p-5">
-          <h2 className="text-[13px] font-medium">This week <span className="font-normal text-muted-foreground">(from {formatShortDate(mon, ws.locale)})</span></h2>
+          <h2 className="label-caps">This week <span className="font-normal text-muted-foreground">(from {formatShortDate(mon, ws.locale)})</span></h2>
           <div className="grid grid-cols-3 gap-3">
             <Stat label="Sessions" value={thisWeek.sessions} />
             <Stat label="Active days" value={thisWeek.activeDays} />
@@ -247,7 +239,7 @@ function WorkoutsTab({ ws, onEdit }: { ws: HealthWorkspace; onEdit: (e: Editor) 
           )}
         </Card>
         <Card className="grid content-start gap-2 p-5">
-          <h2 className="text-[13px] font-medium">Minutes per week</h2>
+          <h2 className="label-caps">Minutes per week</h2>
           <div className="h-40" role="img" aria-label={`Workout minutes per week: ${weeks.map((w) => `week of ${w.label} ${w.minutes} minutes`).join(", ")}`}>
             <ResponsiveContainer width="100%" height="100%">
               <BarChart data={weeks} margin={{ top: 4, right: 0, left: -24, bottom: 0 }}>
@@ -331,7 +323,7 @@ function BodyTab({ ws, onEdit }: { ws: HealthWorkspace; onEdit: (e: Editor) => v
         return (
           <Card key={m} className="grid content-start gap-3 p-4">
             <div className="flex items-baseline gap-2">
-              <h2 className="text-[13px] font-medium">{METRIC_LABEL[m]}</h2>
+              <h2 className="label-caps">{METRIC_LABEL[m]}</h2>
               <ProvenanceBadge source={rows[0].source} />
               <Button size="sm" variant="ghost" className="ml-auto" onClick={() => onEdit({ k: "measure", metric: m })}><Plus /> Add</Button>
             </div>
@@ -413,9 +405,9 @@ function TrendsTab({ ws }: { ws: HealthWorkspace }) {
   return (
     <div className="grid gap-5">
       <div className="flex items-center gap-2">
-        <div role="radiogroup" aria-label="Period" className="flex rounded-md bg-muted p-0.5">
+        <div role="radiogroup" aria-label="Period" className="flex rounded-full bg-tint-mist p-1">
           {[7, 30, 90].map((n) => (
-            <button key={n} type="button" role="radio" aria-checked={days === n} onClick={() => setDays(n)} className={cn("h-7 cursor-pointer rounded px-3 text-[13px] text-muted-foreground", days === n && "bg-surface font-medium text-foreground shadow-card")}>{n} days</button>
+            <button key={n} type="button" role="radio" aria-checked={days === n} onClick={() => setDays(n)} className={cn("h-9 cursor-pointer rounded-full px-3.5 text-[13px] text-muted-foreground", days === n && "bg-card font-medium text-foreground shadow-clay")}>{n} days</button>
           ))}
         </div>
       </div>
@@ -451,7 +443,7 @@ function TrendsTab({ ws }: { ws: HealthWorkspace }) {
       )}
       {water.some((d) => d.ml > 0) && (
         <Card className="grid gap-2 p-5">
-          <h2 className="text-[13px] font-medium">Water per day</h2>
+          <h2 className="label-caps">Water per day</h2>
           <div className="h-32" role="img" aria-label={`Water logged per day over the last ${days} days`}>
             <ResponsiveContainer width="100%" height="100%">
               <BarChart data={water.map((d) => ({ ...d, l: Math.round(d.ml / 100) / 10, label: formatShortDate(d.date, ws.locale) }))} margin={{ top: 4, right: 0, left: -28, bottom: 0 }}>

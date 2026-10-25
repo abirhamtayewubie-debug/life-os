@@ -73,17 +73,17 @@ export function TasksScreen({ ws, filters, nowIso, openId, startNew = false }: {
   const hasExtraFilters = Boolean(filters.q || filters.priority || filters.area || filters.tag || filters.project);
 
   return (
-    <div className="grid gap-6 lg:grid-cols-[13rem_1fr] xl:grid-cols-[13rem_1fr_18rem]">
+    <div className="grid grid-cols-[minmax(0,1fr)] gap-6 lg:grid-cols-[13rem_minmax(0,1fr)] xl:grid-cols-[13rem_minmax(0,1fr)_18rem]">
       {/* Views */}
-      <nav aria-label="Task views" className="flex gap-1 overflow-x-auto pb-1 lg:flex-col lg:overflow-visible">
+      <nav aria-label="Task views" className="-mx-5 flex gap-1.5 overflow-x-auto px-5 pb-1 md:mx-0 md:px-0 lg:flex-col lg:gap-1 lg:overflow-visible">
         {VIEWS.map((v) => (
           <button
             key={v.v}
             onClick={() => go({ view: v.v })}
             aria-current={filters.view === v.v && !hasExtraFilters ? "page" : undefined}
             className={cn(
-              "flex h-8 shrink-0 cursor-pointer items-center gap-2 rounded-md px-2.5 text-[13px] text-muted-foreground transition-colors hover:bg-muted hover:text-foreground",
-              filters.view === v.v && !hasExtraFilters && "bg-muted font-medium text-foreground",
+              "flex h-10 shrink-0 cursor-pointer items-center gap-2 rounded-full border border-border px-4 text-[13px] whitespace-nowrap text-muted-foreground transition-colors hover:bg-tint-mist hover:text-foreground lg:h-11 lg:rounded-[14px] lg:border-transparent lg:px-3",
+              filters.view === v.v && !hasExtraFilters && "border-transparent bg-primary text-primary-foreground hover:bg-primary hover:text-primary-foreground lg:bg-card lg:text-foreground lg:shadow-clay lg:hover:bg-card",
             )}
           >
             <v.icon className="size-4" />
@@ -91,10 +91,10 @@ export function TasksScreen({ ws, filters, nowIso, openId, startNew = false }: {
             {counts[v.v] > 0 && <span className={cn("tabular ml-auto pl-2 text-[11px]", v.v === "overdue" && "text-destructive")}>{counts[v.v]}</span>}
           </button>
         ))}
-        {ws.savedViews.length > 0 && <div className="mt-3 hidden px-2.5 pb-1 text-[11px] font-medium tracking-wide text-subtle-foreground uppercase lg:block">Saved views</div>}
+        {ws.savedViews.length > 0 && <div className="label-caps mt-4 hidden px-3 pb-1 lg:block">Saved views</div>}
         {ws.savedViews.map((sv) => (
           <div key={sv.id} className="group flex shrink-0 items-center">
-            <button onClick={() => go(sv.filters)} className="flex h-8 flex-1 cursor-pointer items-center gap-2 rounded-md px-2.5 text-[13px] text-muted-foreground hover:bg-muted hover:text-foreground">
+            <button onClick={() => go(sv.filters)} className="flex h-10 flex-1 cursor-pointer items-center gap-2 rounded-full border border-border px-4 text-[13px] whitespace-nowrap text-muted-foreground hover:bg-tint-mist hover:text-foreground lg:h-11 lg:rounded-[14px] lg:border-transparent lg:px-3">
               <Bookmark className="size-4" /> {sv.name}
             </button>
             <Button variant="ghost" size="icon-sm" className="size-7 pointer-fine:opacity-0 pointer-fine:group-hover:opacity-100 focus-visible:opacity-100" aria-label={`Delete view ${sv.name}`} onClick={() => run(() => deleteTaskView(sv.id))}>
@@ -144,17 +144,17 @@ export function TasksScreen({ ws, filters, nowIso, openId, startNew = false }: {
           <div className="grid gap-5">
             {groups.map((g) => (
               <div key={g.key}>
-                <h2 className={cn("mb-1 flex items-center gap-2 px-2 text-xs font-medium text-muted-foreground", g.key === "overdue" && "text-destructive")}>
-                  {g.label} <span className="tabular text-subtle-foreground">{g.tasks.length}</span>
+                <h2 className={cn("label-caps mb-2.5 flex items-center gap-2 px-1", g.key === "overdue" && "text-destructive")}>
+                  {g.label} <span className="tabular">{g.tasks.length}</span>
                 </h2>
-                <ul className="grid">
+                <ul className="grid grid-cols-[minmax(0,1fr)] divide-y divide-border rounded-[22px] bg-card px-2 shadow-clay sm:px-3">
                   {g.tasks.map((t) => <TaskItem key={t.id} task={t} all={ws.tasks} now={now} tz={ws.timezone} locale={ws.locale} onOpen={(x) => setOpenTaskId(x.id)} />)}
                 </ul>
               </div>
             ))}
           </div>
         ) : (
-          <div className="rounded-xl border border-dashed border-border">
+          <div className="rounded-[22px] border border-dashed border-border">
             <EmptyState icon={ListChecks} title={hasExtraFilters ? "No tasks match these filters" : EMPTY[filters.view].title} action={!hasExtraFilters && filters.view !== "done" ? <Button size="sm" onClick={() => setCreating(true)}><Plus /> New task</Button> : undefined}>
               {hasExtraFilters ? "Try clearing a filter." : EMPTY[filters.view].body}
             </EmptyState>
@@ -164,15 +164,15 @@ export function TasksScreen({ ws, filters, nowIso, openId, startNew = false }: {
 
       {/* Reminders */}
       <aside aria-label="Reminders" className="grid content-start gap-3 lg:col-span-2 xl:col-span-1">
-        <div className="rounded-3xl bg-card p-5 shadow-card">
-          <h2 className="flex items-center gap-1.5 text-[13px] font-medium"><AlarmClock className="size-3.5 text-muted-foreground" /> Reminders</h2>
+        <div className="rounded-[22px] bg-tint-sand p-5 shadow-clay">
+          <h2 className="label-caps flex items-center gap-1.5"><AlarmClock className="size-3.5" strokeWidth={1.6} /> Reminders</h2>
           {dueReminders.length === 0 && laterReminders.length === 0 && (
             <p className="mt-2 text-xs text-muted-foreground">No reminders set. Open a task to add one.</p>
           )}
           {dueReminders.length > 0 && (
             <ul className="mt-3 grid gap-2">
               {dueReminders.map((r) => (
-                <li key={r.id} className="rounded-lg border border-warning/40 bg-warning/8 p-2.5">
+                <li key={r.id} className="rounded-2xl bg-card p-3 shadow-clay">
                   <p className="text-[13px]">{r.title}</p>
                   <p className="tabular text-[11px] text-muted-foreground">Due {formatTime(r.snoozed_until ?? r.remind_at, ws.timezone, ws.locale)}{r.status === "snoozed" ? " · snoozed" : ""}</p>
                   <div className="mt-2 flex flex-wrap gap-1">
@@ -199,7 +199,7 @@ export function TasksScreen({ ws, filters, nowIso, openId, startNew = false }: {
               })}
             </ul>
           )}
-          <p className="mt-3 border-t border-border pt-2.5 text-[11px] leading-relaxed text-subtle-foreground">
+          <p className="mt-3 border-t border-foreground/10 pt-2.5 text-[11px] leading-relaxed text-subtle-foreground">
             Also sent as notifications to devices where you turned them on in Settings.
           </p>
         </div>

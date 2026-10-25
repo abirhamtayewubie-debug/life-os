@@ -106,7 +106,7 @@ export function AdminScreen({ ws, startNew = false }: { ws: AdminWorkspace; star
 function Section({ title, items, ws, onEdit }: { title: string; items: AdminItem[]; ws: AdminWorkspace; onEdit: (i: AdminItem) => void }) {
   return (
     <section className="grid gap-2" aria-label={title}>
-      <h2 className="text-[12px] font-medium text-muted-foreground">{title} <span className="tabular">{items.length}</span></h2>
+      <h2 className="label-caps">{title} <span className="tabular">{items.length}</span></h2>
       <ul className="grid gap-2">{items.map((i) => <Row key={i.id} item={i} ws={ws} onEdit={() => onEdit(i)} />)}</ul>
     </section>
   );
@@ -118,8 +118,8 @@ function Row({ item, ws, onEdit }: { item: AdminItem; ws: AdminWorkspace; onEdit
   const repeats = item.kind === "renewal" && item.repeat_months;
   return (
     <li>
-      <Card className="flex flex-wrap items-start gap-2 p-3.5">
-        <div className="min-w-0 flex-1">
+      <Card className="flex flex-wrap items-center gap-2 rounded-[22px] p-4">
+        <div className="min-w-0 flex-[1_1_15rem]">
           <p className="flex flex-wrap items-center gap-2 text-[14px] font-medium">
             <span className={item.completed_at ? "text-muted-foreground line-through" : undefined}>{item.title}</span>
             {status === "overdue" && <Badge variant="danger">{-inDays!} {inDays === -1 ? "day" : "days"} overdue</Badge>}

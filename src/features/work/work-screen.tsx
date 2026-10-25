@@ -3,6 +3,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { usePathname, useRouter } from "next/navigation";
 import { Briefcase, Clock, Pencil, Play, Plus, Square, Trash2 } from "lucide-react";
+import { PillTabs } from "@/components/clay/pill-tabs";
 import { ConfirmDelete } from "@/components/data/confirm-delete";
 import { EmptyState } from "@/components/data/empty-state";
 import { ProvenanceBadge } from "@/components/data/provenance";
@@ -66,13 +67,7 @@ export function WorkScreen({ ws, tab, projectId, taskId = null, nowIso, startNew
   return (
     <div className="grid grid-cols-[minmax(0,1fr)] gap-5">
       <div className="flex flex-wrap items-center gap-2">
-        <div role="tablist" aria-label="Work views" className="flex rounded-md bg-muted p-0.5">
-          {TABS.map((t) => (
-            <button key={t.v} role="tab" aria-selected={tab === t.v} onClick={() => go(t.v, SCOPED.includes(t.v) ? scope?.id : null)} className={cn("h-7 cursor-pointer rounded px-3 text-[13px] text-muted-foreground", tab === t.v && "bg-surface font-medium text-foreground shadow-card")}>
-              {t.label}
-            </button>
-          ))}
-        </div>
+        <PillTabs label="Work views" items={TABS} value={tab} onChange={(v) => go(v, SCOPED.includes(v) ? scope?.id : null)} className="w-full" />
         {SCOPED.includes(tab) && ws.projects.length > 0 && (
           <NativeSelect aria-label="Project" className="w-auto max-w-64" value={scope?.id ?? ""} onChange={(e) => go(tab, e.target.value || null)}>
             <option value="">All projects</option>

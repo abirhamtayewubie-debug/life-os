@@ -199,7 +199,7 @@ function Briefing({ ws }: { ws: AssistantWorkspace }) {
     <Card className="grid gap-3 p-4 sm:p-5">
       <div className="flex flex-wrap items-center gap-2">
         <Sunrise className="size-4 text-muted-foreground" aria-hidden />
-        <h2 className="text-[13px] font-medium">Today&apos;s briefing</h2>
+        <h2 className="label-caps">Today&apos;s briefing</h2>
         <Button size="sm" variant="ghost" className="ml-auto" disabled={pending} onClick={() => run(() => writeBriefing())}>
           {pending ? <Loader2 className="animate-spin" /> : <Sparkles />} {b ? "Rewrite" : "Write it"}
         </Button>

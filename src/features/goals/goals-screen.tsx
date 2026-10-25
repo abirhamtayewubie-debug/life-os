@@ -3,6 +3,7 @@
 import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { Ban, CheckCircle2, ChevronRight, Pause, Pencil, Play, Plus, Target, TrendingUp } from "lucide-react";
+import { PillTabs } from "@/components/clay/pill-tabs";
 import { ConfirmDelete } from "@/components/data/confirm-delete";
 import { EmptyState } from "@/components/data/empty-state";
 import { ProvenanceBadge } from "@/components/data/provenance";
@@ -51,13 +52,8 @@ export function GoalsScreen({ ws, startNew = false, initialOpen = null }: { ws: 
   return (
     <div className="grid grid-cols-[minmax(0,1fr)] gap-5">
       <div className="flex flex-wrap items-center gap-2">
-        <div role="tablist" aria-label="Which goals" className="flex rounded-md bg-muted p-0.5">
-          {([["active", "In progress"], ["done", "Achieved & let go"], ["all", "All"]] as const).map(([f, label]) => (
-            <button key={f} role="tab" aria-selected={filter === f} onClick={() => setFilter(f)} className={cn("h-7 cursor-pointer rounded px-3 text-[13px] text-muted-foreground", filter === f && "bg-surface font-medium text-foreground shadow-card")}>
-              {label} <span className="tabular text-[11px] text-subtle-foreground">{counts[f]}</span>
-            </button>
-          ))}
-        </div>
+        <PillTabs label="Which goals" value={filter} onChange={setFilter}
+          items={[{ v: "active", label: "In progress", count: counts.active }, { v: "done", label: "Achieved & let go", count: counts.done }, { v: "all", label: "All", count: counts.all }]} />
         <Button size="sm" className="ml-auto" onClick={() => setEditing({ goal: null })}><Plus /> New goal</Button>
       </div>
 

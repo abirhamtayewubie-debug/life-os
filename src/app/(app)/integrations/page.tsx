@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { BellRing, Bot, CalendarDays, CalendarSync, Clock, HeartPulse, Mail } from "lucide-react";
-import { PageHeader } from "@/components/shell/page-header";
+import { ScreenHeader } from "@/components/shell/screen-header";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -41,7 +41,7 @@ export default async function IntegrationsPage() {
   const fmt = (iso: string | null) => (iso ? new Date(iso).toLocaleString(s.locale, { timeZone: s.timezone, dateStyle: "medium", timeStyle: "short" }) : null);
   return (
     <div className="animate-rise">
-      <PageHeader title="Integrations" description="What Life OS connects to, what each connection can see, and whether it has been seen working." />
+      <ScreenHeader title="Connected" accent="apps" phoneTitle="Integrations" description="What Life OS connects to, what each connection can see, and whether it has been seen working." />
       {s.demo && <p className="mb-4 rounded-md border border-dashed border-border p-3 text-xs text-muted-foreground">Demo mode: nothing is connected and nothing is saved.</p>}
       <div className="grid gap-4 lg:grid-cols-2">
         <Item icon={BellRing} title="Notifications on your devices" state={!s.push.configured ? "not_set_up" : s.push.devices ? "on" : "off"}

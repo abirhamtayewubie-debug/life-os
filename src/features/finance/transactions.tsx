@@ -111,7 +111,7 @@ export function TransactionsTab() {
         <div className="grid gap-3">
           {[...days.entries()].map(([day, txs]) => (
             <section key={day} className="grid gap-1">
-              <h3 className="px-1 text-[11px] font-medium text-muted-foreground uppercase">{formatShortDate(day, ws.locale)}</h3>
+              <h3 className="label-caps px-1">{formatShortDate(day, ws.locale)}</h3>
               <Card className="divide-y divide-border">
                 {txs.map((t) => {
                   const a = acct.get(t.account_id);
