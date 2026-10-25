@@ -10,6 +10,8 @@ import { CommandPalette, openCommandPalette } from "./command-palette";
 import { isActivePath } from "./nav-items";
 import { UserMenu } from "./user-menu";
 
+const OWN_PHONE_HEADER = ["/areas", "/finance"];
+
 /** "OVERVIEW · TODAY": where you are, shown above the page on tablets and desktop. */
 function Breadcrumb() {
   const pathname = usePathname();
@@ -24,8 +26,9 @@ function Breadcrumb() {
 }
 
 export function TopBar({ hidden, name, email, demo }: { hidden: string[]; name: string | null; email: string | null; demo: boolean }) {
-  // On phones the Areas page carries its own title row with search.
-  const ownHeader = usePathname() === "/areas";
+  // On phones these pages carry their own title row (Areas: title + search; detail pages: back · title · more).
+  const pathname = usePathname();
+  const ownHeader = OWN_PHONE_HEADER.some((p) => isActivePath(pathname, p));
   return (
     <header className={cn("sticky top-0 z-30 bg-background/85 pt-[env(safe-area-inset-top)] backdrop-blur-xl supports-[backdrop-filter]:bg-background/70", ownHeader && "max-md:hidden")}>
       <div className="mx-auto flex h-[72px] w-full max-w-[1200px] items-center gap-3 px-5 md:px-6 lg:h-24 lg:px-10">

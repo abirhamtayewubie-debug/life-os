@@ -14,11 +14,11 @@ function Progress({
   return (
     <ProgressPrimitive.Root
       value={v}
-      className={cn("relative h-2 w-full overflow-hidden rounded-full bg-muted", className)}
+      className={cn("relative h-1.5 w-full overflow-hidden rounded-full bg-tint-mist", className)}
       {...props}
     >
       <ProgressPrimitive.Indicator
-        className={cn("h-full rounded-full bg-brand transition-[width] duration-500 ease-out", indicatorClassName)}
+        className={cn("h-full rounded-full bg-sage transition-[width] duration-500 ease-out", indicatorClassName)}
         style={{ width: `${v}%` }}
       />
     </ProgressPrimitive.Root>
