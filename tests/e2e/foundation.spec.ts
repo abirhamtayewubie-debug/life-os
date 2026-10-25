@@ -132,7 +132,7 @@ test("foundation flow: sign up, sample data, persisted changes, isolation, remov
   await page.goto("/");
   await expect(page.getByRole("heading", { name: /Good (morning|afternoon|evening), Ab/ })).toBeVisible();
   await expect(page.getByText("Some records on this page are sample data")).toBeVisible();
-  const priorities = page.getByRole("region", { name: "Today's priorities" });
+  const priorities = page.getByRole("region", { name: "Today's tasks" });
   const first = priorities.getByRole("checkbox").first();
   const label = await first.getAttribute("aria-label");
   await first.click();

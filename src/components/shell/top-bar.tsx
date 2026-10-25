@@ -36,6 +36,8 @@ export function TopBar({ hidden, name, email, demo }: { hidden: string[]; name: 
           <Breadcrumb />
         </div>
         <div className="ml-auto flex items-center gap-2.5">
+          {/* Pages can portal their own actions here on desktop (see PageActions). */}
+          <div id="page-actions" className="hidden items-center gap-2.5 lg:flex" />
           <IconButton onClick={openCommandPalette} aria-label="Search or jump to" aria-keyshortcuts="Control+K Meta+K" className="hidden md:inline-flex">
             <Search strokeWidth={1.6} aria-hidden />
           </IconButton>

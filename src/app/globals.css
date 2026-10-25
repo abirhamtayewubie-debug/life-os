@@ -321,3 +321,13 @@
 .recharts-tooltip-label {
   color: var(--popover-foreground) !important;
 }
+
+/* Today hero sky: the tint follows the time of day (data-sky), in both themes. */
+.clay-sky { --sky-top: var(--hero-sky-top); --sky-bottom: var(--hero-sky-bottom); background: linear-gradient(180deg, var(--sky-top), var(--sky-bottom)); }
+.clay-sky[data-sky="dawn"] { --sky-top: #f1e4d8; --sky-bottom: #efd3c2; }
+.clay-sky[data-sky="day"] { --sky-top: #e8ebe0; --sky-bottom: #efe6d6; }
+.clay-sky[data-sky="night"] { --sky-top: #dedbe0; --sky-bottom: #e6dccd; }
+.dark .clay-sky[data-sky="dawn"] { --sky-top: #2b241f; --sky-bottom: #382a22; }
+.dark .clay-sky[data-sky="day"] { --sky-top: #262722; --sky-bottom: #2d2a23; }
+.dark .clay-sky[data-sky="evening"] { --sky-top: #2a231d; --sky-bottom: #33271f; }
+.dark .clay-sky[data-sky="night"] { --sky-top: #1f1f22; --sky-bottom: #29241f; }

@@ -70,7 +70,7 @@ export function EveningReview({ existing, unfinishedHints }: { existing: RawRevi
 
   return (
     <>
-      <Button variant="outline" size="sm" onClick={() => setOpen(true)}>
+      <Button variant="outline" size="sm" className="h-11" onClick={() => setOpen(true)}>
         <Moon /> {existing ? "Edit evening review" : "Evening review"}
       </Button>
       <Dialog open={open} onOpenChange={setOpen}>

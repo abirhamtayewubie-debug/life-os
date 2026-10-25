@@ -2,7 +2,9 @@ import { FlaskConical } from "lucide-react";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { EmptyState } from "@/components/data/empty-state";
-import { formatLongDate, greetingFor } from "@/lib/dates";
+import { formatLongDate, greetingFor, localHour } from "@/lib/dates";
+import { getHiddenModules } from "@/server/modules";
+import type { SkyPhase } from "@/features/dashboard/clay-today";
 import { CommandCenter } from "@/features/dashboard/command-center";
 import { getDashboard } from "@/server/dashboard";
 
@@ -12,7 +14,7 @@ export default async function HomePage({ searchParams }: PageProps<"/">) {
   const now = new Date();
   const passwordChanged = (await searchParams).password === "changed";
   const notice = passwordChanged && <p role="status" className="mb-4 rounded-xl border border-border bg-muted px-3 py-2 text-sm">Your password was changed.</p>;
-  const { viewer, model, layout, hasAnyData, hasSampleData } = await getDashboard(now);
+  const [{ viewer, model, layout, hasAnyData, hasSampleData }, hidden] = await Promise.all([getDashboard(now), getHiddenModules()]);
   const tz = viewer.profile.timezone;
   const first = viewer.profile.displayName?.split(" ")[0];
   const greeting = `${greetingFor(now, tz)}${first ? `, ${first}` : ""}`;
@@ -38,6 +40,19 @@ export default async function HomePage({ searchParams }: PageProps<"/">) {
     );
   }
 
+  const hour = localHour(now, tz);
+  const sky: SkyPhase = hour >= 5 && hour < 9 ? "dawn" : hour >= 9 && hour < 16 ? "day" : hour >= 16 && hour < 22 ? "evening" : "night";
+  const part = (o: Intl.DateTimeFormatOptions) => new Intl.DateTimeFormat(viewer.profile.locale, { timeZone: tz, ...o }).format(now);
+  const time = part({ hour: "2-digit", minute: "2-digit", hourCycle: "h23" });
+  const hero = {
+    greeting: greetingFor(now, tz),
+    name: first ?? null,
+    shortLabel: `${part({ weekday: "short" })}, ${part({ day: "numeric" })} ${part({ month: "short" })} · ${time}`,
+    longLabel: `${part({ weekday: "long" })} · ${part({ day: "numeric" })} ${part({ month: "long" })} ${part({ year: "numeric" })} · ${time}`,
+    sky,
+  };
+  const dayLabel = `${part({ weekday: "short" })} ${part({ day: "numeric" })}`;
+
   return (
     <>
       {notice}
@@ -48,7 +63,10 @@ export default async function HomePage({ searchParams }: PageProps<"/">) {
           <Link href="/settings#data" className="ml-auto font-medium text-brand hover:underline">Remove sample data</Link>
         </div>
       )}
-      <CommandCenter model={model} initialLayout={layout} demo={viewer.mode === "demo"} locale={viewer.profile.locale} greeting={greeting} longDate={longDate} nowIso={now.toISOString()} />
+      <CommandCenter
+        model={model} initialLayout={layout} demo={viewer.mode === "demo"} locale={viewer.profile.locale}
+        hero={hero} nowLabel={time} dayLabel={dayLabel} assistant={!hidden.includes("assistant")} nowIso={now.toISOString()}
+      />
     </>
   );
 }
