@@ -36,7 +36,7 @@ const MORE: Area[] = [
 ];
 
 /** Every module in one place; replaces the old side drawer on phones. */
-export function AreasScreen({ hidden, status = {} }: { hidden: string[]; status?: Record<string, string> }) {
+export function AreasScreen({ hidden, status = {} }: { hidden: string[]; status?: Record<string, string[]> }) {
   const visible = (list: Area[]) => list.filter((a) => a.key === "settings" || !hidden.includes(a.key));
   const grid = "grid grid-cols-3 gap-3 sm:gap-3.5 lg:grid-cols-6";
   const tiles = (list: Area[]) =>
@@ -74,7 +74,7 @@ export function AreasScreen({ hidden, status = {} }: { hidden: string[]; status?
         {tiles(LIFE)}
         <Link
           href="/settings#modules"
-          className="flex min-h-[148px] flex-col items-center justify-center gap-2 rounded-[22px] border border-dashed border-input text-muted-foreground transition-colors hover:bg-tint-mist"
+          className="flex min-h-[148px] flex-col items-center justify-center gap-2 rounded-[22px] border border-dashed lg:min-h-[196px] border-input text-muted-foreground transition-colors hover:bg-tint-mist"
         >
           <Plus className="size-5" strokeWidth={1.6} aria-hidden />
           <span className="font-display text-[15px]">Add area</span>
